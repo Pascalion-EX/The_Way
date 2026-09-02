@@ -106,7 +106,7 @@ const Navbar = () => {
           <button
             type="button"
             onClick={toggleNavigationMenu}
-            className="relative z-[10002] block cursor-pointer rounded-full transition duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+           className="relative z-[10002] block cursor-pointer border-none bg-transparent outline-none transition duration-200 hover:scale-105 focus:outline-none focus:ring-0 focus:ring-offset-0"
             aria-label={
               navMenuOpen
                 ? "Close navigation menu"
