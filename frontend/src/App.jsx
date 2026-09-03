@@ -29,6 +29,7 @@ import Activities from "./Pages/Activities.jsx";
 import CreateGame from "./Pages/Creategame.jsx";
 import Info from "./Pages/Info.jsx";
 import GameViewer from "./Pages/GamesViewer.jsx";
+import CreateEvent from "./Pages/CreateEvent";
 
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
@@ -85,6 +86,14 @@ const App = () => {
             the floating calendar button
           */}
           <Route element={<ProtectedLayout />}>
+
+          <Route path="/calendar" element={<Calendar />} />
+
+<Route
+  path="/events/create"
+  element={<CreateEvent />}
+/>
+
             
             {/* Home */}
             <Route path="/" element={<Home />} />
