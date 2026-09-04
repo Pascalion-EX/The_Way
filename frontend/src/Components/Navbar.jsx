@@ -245,6 +245,15 @@ const Navbar = () => {
             >
               Chants
             </button>
+                 <button
+              type="button"
+              onClick={() =>
+                handleNavigate("/calendar")
+              }
+              className="cursor-pointer rounded-full border border-gray-500 bg-white px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-200 sm:px-5 sm:text-base"
+            >
+              Calendar
+            </button>
                         <button
               type="button"
               onClick={() => handleNavigate("/Info")}

@@ -214,6 +214,7 @@ const Calendar = () => {
       {/* Main Content */}
       <div className="relative z-10 min-h-screen">
         <Navbar />
+        <br/>
 
         <div className="sm:hidden">
           <br />

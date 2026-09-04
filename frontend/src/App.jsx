@@ -33,7 +33,7 @@ import CreateEvent from "./Pages/CreateEvent";
 import ActivitiesViewer from "./Pages/ActivitiesViewer.jsx";
 import CreateActivities from "./Pages/CreateActivities.jsx";
 import EditActivities from "./Pages/EditActivities.jsx";
-
+import EditGame from "./Pages/EditGame";
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
 
@@ -182,6 +182,10 @@ const App = () => {
             <Route
               path="/create-game"
               element={<CreateGame />}
+            />
+            <Route
+              path="/games/:id/edit"
+              element={<EditGame />}
             />
 
             {/* =========================
