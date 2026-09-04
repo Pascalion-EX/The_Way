@@ -1,56 +1,127 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
-import { assets } from "../assets/assets.js";
 import Navbar from "@/Components/Navbar.jsx";
 import Waves from "../Components/Waves.jsx";
 
 const Lessons = () => {
   const navigate = useNavigate();
-  const { backendUrl, userData, isLoggedin } = useContext(AppContent);
 
-  const [lessons, setLessons] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    backendUrl,
+    userData,
+    isLoggedin,
+  } = useContext(AppContent);
 
-  const [search, setSearch] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+  const [lessons, setLessons] =
+    useState([]);
 
-  const allowedRoles = ["pascal", "admin", "leader"];
+  const [loading, setLoading] =
+    useState(true);
 
-  const canManageLessons = useMemo(() => {
-    const roles = Array.isArray(userData?.role)
-      ? userData.role
-      : userData?.role
-      ? [userData.role]
-      : [];
+  const [search, setSearch] =
+    useState("");
 
-    return roles.some((role) => allowedRoles.includes(role));
-  }, [userData]);
+  const [yearFilter, setYearFilter] =
+    useState("");
 
-  const fetchLessons = async (currentSearch = "", currentYear = "") => {
+  /*
+  |--------------------------------------------------------------------------
+  | Permissions
+  |--------------------------------------------------------------------------
+  */
+
+  const allowedRoles = [
+    "pascal",
+    "admin",
+    "leader",
+    "pamela",
+  ];
+
+  const canManageLessons =
+    useMemo(() => {
+      const roles = Array.isArray(
+        userData?.role
+      )
+        ? userData.role.map((role) =>
+            String(role)
+              .toLowerCase()
+              .trim()
+          )
+        : userData?.role
+        ? [
+            String(userData.role)
+              .toLowerCase()
+              .trim(),
+          ]
+        : [];
+
+      return roles.some((role) =>
+        allowedRoles.includes(role)
+      );
+    }, [userData]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Fetch Lessons
+  |--------------------------------------------------------------------------
+  */
+
+  const fetchLessons = async (
+    currentSearch = "",
+    currentYear = ""
+  ) => {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
+      const params =
+        new URLSearchParams();
 
-      if (currentSearch.trim()) params.append("search", currentSearch.trim());
-      if (currentYear) params.append("year", currentYear);
+      if (currentSearch.trim()) {
+        params.append(
+          "search",
+          currentSearch.trim()
+        );
+      }
+
+      if (currentYear) {
+        params.append(
+          "year",
+          currentYear
+        );
+      }
 
       const url = `${backendUrl}/api/lessons${
-        params.toString() ? `?${params.toString()}` : ""
+        params.toString()
+          ? `?${params.toString()}`
+          : ""
       }`;
 
-      const { data } = await axios.get(url);
+      const { data } =
+        await axios.get(url);
 
       if (data.success) {
-        setLessons(data.lessons);
+        setLessons(
+          data.lessons || []
+        );
       } else {
-        toast.error(data.message || "Failed to load lessons");
+        toast.error(
+          data.message ||
+            "Failed to load lessons"
+        );
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(
+        error.response?.data?.message ||
+          error.message
+      );
     } finally {
       setLoading(false);
     }
@@ -60,65 +131,191 @@ const Lessons = () => {
     fetchLessons();
   }, []);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Search
+  |--------------------------------------------------------------------------
+  */
+
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchLessons(search, yearFilter);
+
+    fetchLessons(
+      search,
+      yearFilter
+    );
   };
 
   const clearFilters = () => {
     setSearch("");
     setYearFilter("");
+
     fetchLessons("", "");
   };
 
-  const deleteLessonHandler = async (lessonId) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this lesson?"
-    );
+  /*
+  |--------------------------------------------------------------------------
+  | Delete
+  |--------------------------------------------------------------------------
+  */
 
-    if (!confirmDelete) return;
+  const deleteLessonHandler =
+    async (lessonId) => {
+      const confirmDelete =
+        window.confirm(
+          "Are you sure you want to delete this lesson?"
+        );
 
-    try {
-      const { data } = await axios.delete(
-        `${backendUrl}/api/lessons/${lessonId}`
-      );
+      if (!confirmDelete) return;
 
-      if (data.success) {
-        toast.success(data.message || "Lesson deleted successfully");
-        fetchLessons(search, yearFilter);
-      } else {
-        toast.error(data.message || "Failed to delete lesson");
+      try {
+        const { data } =
+          await axios.delete(
+            `${backendUrl}/api/lessons/${lessonId}`
+          );
+
+        if (data.success) {
+          toast.success(
+            data.message ||
+              "Lesson deleted successfully"
+          );
+
+          fetchLessons(
+            search,
+            yearFilter
+          );
+        } else {
+          toast.error(
+            data.message ||
+              "Failed to delete lesson"
+          );
+        }
+      } catch (error) {
+        toast.error(
+          error.response?.data
+            ?.message ||
+            error.message
+        );
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+    };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Navigation
+  |--------------------------------------------------------------------------
+  */
+
+  const handleViewLesson = (
+    lesson
+  ) => {
+    navigate(
+      `/lessons/${lesson._id}`,
+      {
+        state: { lesson },
+      }
+    );
+  };
+
+  const handleEditLesson = (
+    lesson
+  ) => {
+    navigate(
+      `/lessons/${lesson._id}/edit`,
+      {
+        state: { lesson },
+      }
+    );
+  };
+
+  /*
+  |--------------------------------------------------------------------------
+  | Preview Helpers
+  |--------------------------------------------------------------------------
+  */
+
+  const getPreviewText = (
+    lesson,
+    maxLength = 110
+  ) => {
+    let text = "";
+
+    /*
+    |--------------------------------------------------------------------------
+    | New modular lessons
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      Array.isArray(
+        lesson?.partitions
+      ) &&
+      lesson.partitions.length > 0
+    ) {
+      const firstPartition =
+        lesson.partitions[0];
+
+      text =
+        firstPartition?.body || "";
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Old lessons
+    |--------------------------------------------------------------------------
+    */
+
+    if (!text && lesson?.body) {
+      text = lesson.body;
+    }
+
+    if (!text) {
+      return "No preview available.";
+    }
+
+    if (
+      text.length <= maxLength
+    ) {
+      return text;
+    }
+
+    return `${text.slice(
+      0,
+      maxLength
+    )}...`;
   };
 
-  const handleViewLesson = (lesson) => {
-    navigate(`/lessons/${lesson._id}`, {
-      state: { lesson },
-    });
+  const getPartitionCount = (
+    lesson
+  ) => {
+    if (
+      Array.isArray(
+        lesson?.partitions
+      ) &&
+      lesson.partitions.length > 0
+    ) {
+      return lesson.partitions.length;
+    }
+
+    if (lesson?.body) {
+      return 1;
+    }
+
+    return 0;
   };
 
-  const handleEditLesson = (lesson) => {
-    navigate(`/lessons/${lesson._id}/edit`, {
-      state: { lesson },
-    });
-  };
-
-  const getPreviewText = (text = "", maxLength = 70) => {
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}...`;
-  };
+  /*
+  |--------------------------------------------------------------------------
+  | Render
+  |--------------------------------------------------------------------------
+  */
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-        
-        <Navbar />
-
+      <Navbar />
 
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
-        {/* Desktop Visual Section */}
+        {/* Desktop Visual */}
+
         <div className="relative hidden overflow-hidden lg:block">
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
 
@@ -143,43 +340,54 @@ const Lessons = () => {
           <div className="relative z-10 flex h-full items-center justify-center px-12">
             <div className="max-w-md">
               <p className="text-sm font-medium uppercase tracking-[0.3em] text-gray-700 drop-shadow-md">
-                Saint George Church Lessons
+                Saint George Church
+                Lessons
               </p>
 
               <h1 className="mt-5 text-5xl font-semibold leading-tight text-gray-900">
-                Set your minds on things that are above, not on things that are
+                Set your minds on
+                things that are above,
+                not on things that are
                 on earth.
               </h1>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-<main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28"> 
-           <div className="mx-auto w-full max-w-4xl">
+        {/* Main */}
+
+        <main className="px-4 pb-10 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-38 xl:px-16">
+          <div className="mx-auto w-full max-w-4xl">
             {/* Header */}
+
             <div>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Lessons
               </h1>
 
               <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
-                Search lessons, filter them by year, and manage them based on
-                your role.
+                Search lessons, filter
+                them by year, and manage
+                them based on your role.
               </p>
             </div>
 
-            {/* Search + Filters */}
+            {/* Search */}
+
             <form
               onSubmit={handleSearch}
               className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
             >
               <input
                 type="text"
-                placeholder="Search by title, name, or body"
+                placeholder="Search lesson content"
                 className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 md:col-span-2"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(
+                    e.target.value
+                  )
+                }
               />
 
               <input
@@ -187,7 +395,11 @@ const Lessons = () => {
                 placeholder="Filter by year"
                 className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                 value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
+                onChange={(e) =>
+                  setYearFilter(
+                    e.target.value
+                  )
+                }
               />
 
               <button
@@ -208,7 +420,11 @@ const Lessons = () => {
               {canManageLessons && (
                 <button
                   type="button"
-                  onClick={() => navigate("/create-lesson")}
+                  onClick={() =>
+                    navigate(
+                      "/create-lesson"
+                    )
+                  }
                   className="h-12 w-full rounded-xl bg-black text-sm font-medium text-white shadow-md transition hover:bg-gray-700 md:col-span-2 xl:col-span-1"
                 >
                   Create Lesson
@@ -216,85 +432,163 @@ const Lessons = () => {
               )}
             </form>
 
-            {/* Permission Notice */}
-            {!canManageLessons && isLoggedin && (
-              <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 sm:p-5">
-                Enjoy Reading The Lessons.
-              </div>
-            )}
+            {/* Notice */}
+
+            {!canManageLessons &&
+              isLoggedin && (
+                <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 sm:p-5">
+                  Enjoy Reading The
+                  Lessons.
+                </div>
+              )}
 
             {/* Lessons */}
+
             <section className="mt-8 sm:mt-10">
               {loading ? (
-                <p className="text-sm text-gray-500">Loading lessons...</p>
-              ) : lessons.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  Loading lessons...
+                </p>
+              ) : lessons.length ===
+                0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 sm:p-6">
                   No lessons found.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                  {lessons.map((lesson) => (
-                    <article
-                      key={lesson._id}
-                      className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
-                    >
-                      {/* Image */}
-                      <img
-                        src={lesson.image}
-                        alt={lesson.title}
-                        className="h-40 w-full object-cover sm:h-48 lg:h-56"
-                      />
+                  {lessons.map(
+                    (lesson) => {
+                      const partitionCount =
+                        getPartitionCount(
+                          lesson
+                        );
 
-                      {/* Card Body */}
-                      <div className="p-4 sm:p-6">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0">
-                            <h3 className="break-words text-xl font-semibold text-gray-900 sm:text-2xl">
-                              {lesson.title}
-                            </h3>
+                      return (
+                        <article
+                          key={
+                            lesson._id
+                          }
+                          className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                        >
+                          {/* Image */}
 
-                            <p className="mt-1 text-sm text-gray-500">
-                              {lesson.name} · Year {lesson.year}
+                          {lesson.image && (
+                            <img
+                              src={
+                                lesson.image
+                              }
+                              alt={
+                                lesson.title
+                              }
+                              className="h-40 w-full object-cover sm:h-48 lg:h-56"
+                            />
+                          )}
+
+                          {/* Body */}
+
+                          <div className="p-4 sm:p-6">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="min-w-0">
+                                <h3 className="break-words text-xl font-semibold text-gray-900 sm:text-2xl">
+                                  {
+                                    lesson.title
+                                  }
+                                </h3>
+
+                                <p className="mt-1 text-sm text-gray-500">
+                                  {
+                                    lesson.name
+                                  }{" "}
+                                  · Year{" "}
+                                  {
+                                    lesson.year
+                                  }
+                                </p>
+                              </div>
+
+                              {canManageLessons && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    deleteLessonHandler(
+                                      lesson._id
+                                    )
+                                  }
+                                  className="w-full rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Partition count */}
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                {
+                                  partitionCount
+                                }{" "}
+                                {partitionCount ===
+                                1
+                                  ? "partition"
+                                  : "partitions"}
+                              </span>
+
+                              {lesson.activity && (
+                                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                  Activity
+                                </span>
+                              )}
+
+                              {lesson.video && (
+                                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                  Video
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Preview */}
+
+                            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-700">
+                              {getPreviewText(
+                                lesson
+                              )}
                             </p>
+
+                            {/* Actions */}
+
+                            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleViewLesson(
+                                    lesson
+                                  )
+                                }
+                                className="w-full rounded-xl border-2 border-black px-6 py-2 text-base font-semibold text-black transition hover:bg-gray-100 sm:w-auto"
+                              >
+                                View
+                              </button>
+
+                              {canManageLessons && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleEditLesson(
+                                      lesson
+                                    )
+                                  }
+                                  className="w-full rounded-xl bg-indigo-600 px-6 py-2 text-base font-semibold text-white transition hover:bg-indigo-500 sm:w-auto"
+                                >
+                                  Edit
+                                </button>
+                              )}
+                            </div>
                           </div>
-
-                          {canManageLessons && (
-                            <button
-                              type="button"
-                              onClick={() => deleteLessonHandler(lesson._id)}
-                              className="w-full rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 sm:w-auto"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-
-                        <p className="mt-4 text-sm leading-6 text-gray-700 whitespace-pre-line">
-                          {getPreviewText(lesson.body)}
-                        </p>
-
-                        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                          <button
-                            type="button"
-                            onClick={() => handleViewLesson(lesson)}
-                            className="w-full rounded-xl border-2 border-black px-6 py-2 text-base font-semibold text-black transition hover:bg-gray-100 sm:w-auto"
-                          >
-                            View
-                          </button>
-
-                          {canManageLessons && (
-                            <button
-                              type="button"
-                              onClick={() => handleEditLesson(lesson)}
-                              className="w-full rounded-xl bg-indigo-600 px-6 py-2 text-base font-semibold text-white transition hover:bg-indigo-500 sm:w-auto"
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
+                        </article>
+                      );
+                    }
+                  )}
                 </div>
               )}
             </section>

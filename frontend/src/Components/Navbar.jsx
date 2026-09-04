@@ -18,7 +18,7 @@ const Navbar = () => {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const allowedAdminRoles = ["admin", "pamela", "pascal"];
+  const allowedAdminRoles = ["admin", "Pamela", "pascal"];
 
   const userRoles = Array.isArray(userData?.role)
     ? userData.role
