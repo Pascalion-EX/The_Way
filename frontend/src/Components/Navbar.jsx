@@ -18,7 +18,7 @@ const Navbar = () => {
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const allowedAdminRoles = ["admin", "Pamela", "pascal"];
+  const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
   const userRoles = Array.isArray(userData?.role)
     ? userData.role
@@ -100,7 +100,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="pointer-events-none fixed inset-x-0 top-0 z-[9999] flex w-full items-start justify-between bg-transparent px-4 py-4 sm:px-8 sm:py-6 lg:px-12">
+      <nav className="pointer-events-none absolute inset-x-0 top-0 z-[9999] flex w-full items-start justify-between bg-transparent px-4 py-4 sm:px-8 sm:py-6 lg:px-12">
         {/* Logo */}
         <div className="pointer-events-auto relative z-[10001]">
           <button
@@ -194,7 +194,7 @@ const Navbar = () => {
 
       {/* Main navigation dropdown */}
       {navMenuOpen && (
-        <div className="pointer-events-auto fixed left-4 right-4 top-32 z-[10000] sm:left-8 sm:right-auto sm:top-36 sm:max-w-[calc(100vw-4rem)] lg:left-12 lg:top-40">
+        <div className="pointer-events-auto absolute left-4 right-4 top-32 z-[10000] sm:left-8 sm:right-auto sm:top-36 sm:max-w-[calc(100vw-4rem)] lg:left-12 lg:top-40">
           <div className="flex max-h-[70vh] flex-wrap gap-3 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
             <button
               type="button"

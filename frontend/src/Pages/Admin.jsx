@@ -13,7 +13,7 @@ const Admin = () => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
 
-  const allowedAdminRoles = ["admin", "Pamela", "pascal"];
+  const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
   const isAdmin = userData
     ? Array.isArray(userData.role)
@@ -31,7 +31,7 @@ const Admin = () => {
         return "bg-blue-100 text-blue-700 border-blue-200";
       case "pascal":
         return "bg-purple-100 text-purple-700 border-purple-200";
-      case "Pamela":
+      case "pamela":
         return "bg-pink-100 text-pink-700 border-pink-200";
       case "parent":
         return "bg-green-100 text-green-700 border-green-200";

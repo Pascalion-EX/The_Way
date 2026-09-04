@@ -5,7 +5,7 @@ import userModel from "../models/userModel.js";
 mongoose.set("sanitizeFilter", true);
 mongoose.set("strictQuery", true);
 
-const allowedRoles = ["admin", "leader", "pascal", "Pamela"];
+const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
 const hasGamePermission = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];
@@ -44,20 +44,19 @@ export const createGame = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and Pamela only.",
+          "Access denied. Admins, leaders, pascals, and pamela only.",
       });
     }
 
     if (
       !name?.trim() ||
       !materials?.trim() ||
-      !explanation?.trim() ||
-      !image?.trim()
+      !explanation?.trim()
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Name, materials, explanation, and image are required.",
+          "Name, materials,and explanation required.",
       });
     }
 
@@ -163,7 +162,7 @@ export const updateGame = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and Pamela only.",
+          "Access denied. Admins, leaders, pascals, and pamela only.",
       });
     }
 
@@ -218,10 +217,6 @@ export const updateGame = async (req, res) => {
 
     if (image !== undefined) {
       if (!image.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Image URL cannot be empty.",
-        });
       }
 
       game.image = image.trim();
@@ -270,7 +265,7 @@ export const deleteGame = async (req, res) => {
       return res.status(403).json({
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and Pamela only.",
+          "Access denied. Admins, leaders, pascals, and pamela only.",
       });
     }
 

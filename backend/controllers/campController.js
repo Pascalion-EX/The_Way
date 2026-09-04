@@ -2,7 +2,7 @@ import Camp from "../models/campsModel.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 
-const createRoles = ['admin', 'leader', 'pascal','Pamela'];
+const createRoles = ['admin', 'leader', 'pascal','pamela'];
 const applyRoles = ['parent', 'child', 'admin', 'leader', 'pascal'];
 const tripTypeOptions = ['Camp', 'Trip', 'Outing', 'Other'];
 

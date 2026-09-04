@@ -431,7 +431,7 @@ const LessonViewer = () => {
   */
 
   const renderNavbar = () => (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-[9999]">
+    <header className="pointer-events-none absolute inset-x-0 top-0 z-[9999]">
       <div className="pointer-events-auto relative z-[9999]">
         <Navbar />
       </div>

@@ -61,7 +61,7 @@ const CreateGame = () => {
   const [video, setVideo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allowedRoles = ["admin", "leader", 'pascal', 'Pamela'];
+  const allowedRoles = ["admin", "leader", 'pascal', 'pamela'];
 
   const canCreate = useMemo(() => {
     const rawRoles = userData?.role;
@@ -100,11 +100,11 @@ const CreateGame = () => {
     if (
       !trimmedName ||
       !trimmedMaterials ||
-      !trimmedExplanation ||
-      !trimmedImage
+      !trimmedExplanation
+      
     ) {
       toast.error(
-        "Game name, materials, explanation, and image are required."
+        "Game name, materials,and explanation are required."
       );
       return;
     }
@@ -165,7 +165,7 @@ const CreateGame = () => {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
-                Only admins, leaders, pascals, and Pamela can create games.
+                Only admins, leaders, pascals, and pamela can create games.
               </p>
 
               <div className="mt-8">
@@ -199,7 +199,7 @@ const CreateGame = () => {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
-                Add a new game with its materials, instructions, image, and
+                Add a new game with its materials, instructions, Optional image, and
                 optional video.
               </p>
             </div>
@@ -245,7 +245,7 @@ const CreateGame = () => {
                     value={image}
                     onChange={(event) => setImage(event.target.value)}
                     disabled={isSubmitting}
-                    required
+                  
                   />
                 </div>
 

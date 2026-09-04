@@ -269,7 +269,7 @@ admin
 leader
 parent
 child
-Pamela
+pamela
 unAssined
 ```
 
@@ -280,13 +280,13 @@ A user can hold multiple roles because `role` is stored as an array.
 | Feature | Roles |
 |---|---|
 | View authenticated content | Any logged-in user |
-| Admin dashboard | `admin`, `Pamela`, `pascal` |
-| Delete users | `admin`, `Pamela`, `pascal` |
-| Manage lessons | `pascal`, `admin`, `leader`, `Pamela` |
-| Manage games | `admin`, `leader`, `pascal`, `Pamela` |
-| Manage chants | `admin`, `leader`, `pascal`, `Pamela` |
-| Manage activities | `admin`, `leader`, `pascal`, `Pamela` intended |
-| Create/manage trips | `admin`, `leader`, `pascal`, `Pamela` intended by backend |
+| Admin dashboard | `admin`, `pamela`, `pascal` |
+| Delete users | `admin`, `pamela`, `pascal` |
+| Manage lessons | `pascal`, `admin`, `leader`, `pamela` |
+| Manage games | `admin`, `leader`, `pascal`, `pamela` |
+| Manage chants | `admin`, `leader`, `pascal`, `pamela` |
+| Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
+| Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |
 | Apply to trips | `parent`, `child`, `admin`, `leader`, `pascal` |
 | Notify trip applicants | `admin`, `leader`, `pascal` |
 
@@ -1293,9 +1293,9 @@ req.userId = decodedToken.id;
 
 The activity controller's permission helper currently checks `req.user` in several operations. Unless `req.user` is populated elsewhere, management operations may fail their role check. The controller should load the user from `req.userId` or the authentication middleware should consistently populate the user object.
 
-### 7. `Pamela` Role Case Normalization
+### 7. `pamela` Role Case Normalization
 
-Some controllers normalize roles to lowercase while their allowed-role arrays contain `"Pamela"` with a capital `P`.
+Some controllers normalize roles to lowercase while their allowed-role arrays contain `"pamela"` with a capital `P`.
 
 For example, a normalized value of:
 
@@ -1306,14 +1306,14 @@ pamela
 will not equal:
 
 ```text
-Pamela
+pamela
 ```
 
 Role values and permission checks should use one consistent case everywhere.
 
 ### 8. Frontend / Backend Role Differences
 
-Some backend controllers allow `Pamela`, while some frontend pages only show management actions for:
+Some backend controllers allow `pamela`, while some frontend pages only show management actions for:
 
 ```text
 admin

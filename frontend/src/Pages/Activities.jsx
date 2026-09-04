@@ -15,7 +15,7 @@ const Activities = () => {
 
   const [search, setSearch] = useState("");
 
-  const allowedRoles = ["pascal", "admin", "leader", "Pamela"];
+  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
 
   const canManageActivities = useMemo(() => {
     const roles = Array.isArray(userData?.role)
@@ -206,7 +206,7 @@ const Activities = () => {
           {!canManageActivities && isLoggedin && (
             <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 sm:p-5">
               You can view activities, but only users with pascal, admin,
-              leader, or Pamela roles can create, edit, or delete activities.
+              leader, or pamela roles can create, edit, or delete activities.
             </div>
           )}
 

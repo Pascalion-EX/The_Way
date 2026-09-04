@@ -5,7 +5,7 @@ import userModel from "../models/userModel.js";
 mongoose.set("sanitizeFilter", true);
 mongoose.set("strictQuery", true);
 
-const allowedRoles = ["admin", "leader", "pascal", "Pamela"];
+const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
 const hasChantPermission = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];

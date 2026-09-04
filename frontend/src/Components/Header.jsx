@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 const Header = () => {
   const navigate = useNavigate();
   const { userData } = useContext(AppContent);
-  const allowedAdminRoles = ["admin", "Pamela", "pascal"];
+  const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
   const hasAdminAccess = userData
     ? Array.isArray(userData.role)

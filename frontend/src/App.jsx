@@ -30,6 +30,9 @@ import CreateGame from "./Pages/Creategame.jsx";
 import Info from "./Pages/Info.jsx";
 import GameViewer from "./Pages/GamesViewer.jsx";
 import CreateEvent from "./Pages/CreateEvent";
+import ActivitiesViewer from "./Pages/ActivitiesViewer.jsx";
+import CreateActivities from "./Pages/CreateActivities.jsx";
+import EditActivities from "./Pages/EditActivities.jsx";
 
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
@@ -188,6 +191,20 @@ const App = () => {
             <Route
               path="/activities"
               element={<Activities />}
+            />
+            <Route
+              path="/activities/:id"
+              element={<ActivitiesViewer />}
+            />
+
+            <Route
+              path="/create-activity"
+              element={<CreateActivities />}
+            />
+
+            <Route
+              path="/activities/:id/edit"
+              element={<EditActivities />}
             />
 
             {/* =========================

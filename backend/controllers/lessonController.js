@@ -1,7 +1,7 @@
 import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 
-const allowedRoles = ["pascal", "admin", "leader", "Pamela"];
+const allowedRoles = ["pascal", "admin", "leader", "pamela"];
 
 /*
 |--------------------------------------------------------------------------

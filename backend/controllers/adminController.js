@@ -1,7 +1,7 @@
 import userModel from "../models/userModel.js";
 import lessonModel from "../models/lessonModel.js";
 
-const allowedAdminRoles = ["admin", "Pamela", "pascal"];
+const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
 const hasAdminAccess = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];
@@ -39,7 +39,7 @@ export const getAdminDashboard = async (req, res) => {
     const adminCount = await userModel.countDocuments({ role: "admin" });
     const leaderCount = await userModel.countDocuments({ role: "leader" });
     const pascalCount = await userModel.countDocuments({ role: "pascal" });
-    const pamelaCount = await userModel.countDocuments({ role: "Pamela" });
+    const pamelaCount = await userModel.countDocuments({ role: "pamela" });
     const parentCount = await userModel.countDocuments({ role: "parent" });
     const childCount = await userModel.countDocuments({ role: "child" });
 

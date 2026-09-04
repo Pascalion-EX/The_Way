@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
     resetOtpExpireAt: {type:Number, default: 0},
     class: {type: Number, default: 0},
     phone: {type: String, default: ''},
-    role: {type: [String], enum: ['pascal','admin','leader','parent','child', 'Pamela' ,'unAssined'],default:['unAssined']},
+    role: {type: [String], enum: ['pascal','admin','leader','parent','child', 'pamela' ,'unAssined'],default:['unAssined']},
 
     
 })

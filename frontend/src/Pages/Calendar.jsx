@@ -18,7 +18,7 @@ const Calendar = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const allowedRoles = ["admin", "leader", "pascal", "Pamela"];
+  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
   const canManageCalendar = userData
     ? Array.isArray(userData.role)
