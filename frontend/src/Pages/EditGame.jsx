@@ -10,7 +10,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
-import axios from "../utils/axios";
+import axios from "../utils/axios.js";
 import { toast } from "react-toastify";
 import Waves from "../Components/Waves.jsx";
 import Navbar from "../Components/Navbar.jsx";

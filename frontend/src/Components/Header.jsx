@@ -14,6 +14,21 @@ const Header = () => {
       : allowedAdminRoles.includes(userData.role)
     : false;
 
+    const videoRequestRoles = [
+  "Pamela",
+  "leader",
+  "pascal",
+  "admin",
+];
+
+const hasVideoRequestAccess = userData
+  ? Array.isArray(userData.role)
+    ? userData.role.some((role) =>
+        videoRequestRoles.includes(role)
+      )
+    : videoRequestRoles.includes(userData.role)
+  : false;
+
   return (
 <div className="flex flex-col items-center mt-20 px-160 py-8 text-center text-gray-800 font-bold 
 bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">     
@@ -73,7 +88,15 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           >
             Admin
           </button>
+          
         )}
+           {hasVideoRequestAccess && (
+          <button
+            onClick={() => navigate("/video-requests")}
+            className="border border-gray-500 rounded-full px-8 py-2.5 bg-gray-800 text-white hover:bg-gray-700 transition-all"
+          >
+            Video Editing Requests
+          </button>)}
         
       </div>
       {/* --- Button Container End --- */}

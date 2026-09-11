@@ -12,6 +12,7 @@ import gameRouter from "./routes/gameRoutes.js";
 import chantRouter from "./routes/chantRoutes.js";
 import activityRouter from "./routes/activitiesRoutes.js";
 import eventRouter from "./routes/eventRoutes.js"
+import videoRequestRouter from "./routes/videoRequestRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -34,6 +35,7 @@ app.use("/api/user", userRouter);
 app.use("/api/events", eventRouter);
 app.use("/api/lessons", lessonRouter);
 app.use("/api/camps", campRouter);
+app.use("/api/video-requests", videoRequestRouter);
 
 app.listen(port, () => console.log(`Server started on port:${port}`));
 

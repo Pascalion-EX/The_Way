@@ -36,7 +36,7 @@ import EditActivities from "./Pages/EditActivities.jsx";
 import EditGame from "./Pages/EditGame";
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
-
+import VideoRequests from "./Pages/VideoRequests";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -120,6 +120,10 @@ const App = () => {
             <Route
               path="/admin"
               element={<Admin />}
+            />
+            <Route
+              path="/video-requests"
+              element={<VideoRequests />}
             />
 
             {/* =========================

@@ -94,7 +94,7 @@ export const createActivity = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Name, materials, explanation, and image are required.",
+          "Name, materials,and explanation are required.",
       });
     }
 
@@ -382,7 +382,7 @@ export const updateActivity = async (
       return res.status(400).json({
         success: false,
         message:
-          "Name, materials, explanation, and image are required.",
+          "Name, materials,and explanation,required.",
       });
     }
 
