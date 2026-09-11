@@ -28,8 +28,7 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center">
-
-        <Navbar />
+               <Navbar />
 
         {/* Mobile spacing only */}
         <div className="sm:hidden">

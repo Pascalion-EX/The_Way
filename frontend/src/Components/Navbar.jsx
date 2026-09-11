@@ -31,6 +31,20 @@ const Navbar = () => {
       String(role).trim().toLowerCase()
     )
   );
+  const videoRequestRoles = [
+  "Pamela",
+  "leader",
+  "pascal",
+  "admin",
+];
+
+const hasVideoRequestAccess = userData
+  ? Array.isArray(userData.role)
+    ? userData.role.some((role) =>
+        videoRequestRoles.includes(role)
+      )
+    : videoRequestRoles.includes(userData.role)
+  : false;
 
   const handleNavigate = (path) => {
     setNavMenuOpen(false);
@@ -269,6 +283,15 @@ const Navbar = () => {
                 className="cursor-pointer rounded-full border border-gray-800 bg-gray-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 sm:px-5 sm:text-base"
               >
                 Admin
+              </button>
+            )}
+                       {hasVideoRequestAccess && (
+              <button
+                type="button"
+                onClick={() => handleNavigate("/video-requests")}
+                className="cursor-pointer rounded-full border border-gray-800 bg-gray-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 sm:px-5 sm:text-base"
+              >
+                Video Editing Requests
               </button>
             )}
           </div>
