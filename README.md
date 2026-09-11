@@ -839,59 +839,6 @@ Reset OTP expiration is currently configured for **12 hours**.
 
 ---
 
-## Environment Variables
-
-Never commit real credentials to Git.
-
-### Backend
-
-Create:
-
-```text
-backend/.env
-```
-
-Example:
-
-```env
-PORT=4000
-NODE_ENV=development
-
-MONGODB_URL=mongodb+srv://USERNAME:PASSWORD@HOST
-JWT_SECRET=replace-with-a-long-random-secret
-
-SMTP_USER=your-smtp-user
-SMTP_PASS=your-smtp-password-or-app-password
-SENDER_EMAIL=your-sender-email@example.com
-```
-
-The database configuration appends the database name to `MONGODB_URL`:
-
-```js
-mongoose.connect(`${process.env.MONGODB_URL}/The way`)
-```
-
-Make sure your MongoDB connection string is compatible with that format.
-
-The current mail transport uses Gmail SMTP on port `465`.
-
-### Frontend
-
-Create:
-
-```text
-frontend/.env
-```
-
-Example:
-
-```env
-VITE_BACKEND_URL=http://localhost:4000
-```
-
-For production, set this to the public HTTPS URL of the backend API.
-
----
 
 ## Installation
 
@@ -1042,31 +989,6 @@ npm start
 
 For a VPS, use a process manager such as PM2 or a systemd service so the backend restarts after failures or reboots.
 
-### Required Production Changes
-
-Before deployment:
-
-1. Set `NODE_ENV=production`.
-2. Use HTTPS.
-3. Set `VITE_BACKEND_URL` to the production API URL.
-4. Replace the hard-coded development CORS origin.
-5. Allow only trusted production frontend origins.
-6. Store secrets outside the repository.
-7. Configure MongoDB network access securely.
-8. Configure a production SMTP sender.
-9. Put the Node process behind Nginx or another reverse proxy.
-10. Add database and file backup procedures.
-
-Because production cookies use:
-
-```text
-secure: true
-sameSite: none
-```
-
-HTTPS is required for normal production authentication behavior.
-
----
 
 ## Project Structure
 
@@ -1431,15 +1353,6 @@ chore: maintenance
 
 ---
 
-## License
-
-The backend package currently declares the `ISC` license, but the repository does not currently contain a dedicated root `LICENSE` file.
-
-If this project is intended to be open source, add a root license file and document the selected license here.
-
-If it is intended only for The Way Service / Saint George Church, replace this section with the appropriate private-use or organizational copyright statement.
-
----
 
 ## Maintainer Note
 
