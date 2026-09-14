@@ -2,17 +2,40 @@ import React, { useContext, useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { Trash2 } from "lucide-react";
 
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
 
 const CalendarView = () => {
-  const { backendUrl } = useContext(AppContent);
+  const { backendUrl, userData } = useContext(AppContent);
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // =========================================================
+  // DELETE PERMISSIONS
+  // =========================================================
+
+  const allowedDeleteRoles = [
+    "admin",
+    "leader",
+    "pascal",
+    "Pamela",
+  ];
+
+  const userRoles = Array.isArray(userData?.role)
+    ? userData.role
+    : userData?.role
+      ? [userData.role]
+      : [];
+
+  const canDeleteEvent = userRoles.some((role) =>
+    allowedDeleteRoles.includes(role)
+  );
 
   // =========================================================
   // FETCH EVENTS
@@ -158,6 +181,65 @@ const CalendarView = () => {
 
       createdBy: event.extendedProps.createdBy,
     });
+  };
+
+  // =========================================================
+  // DELETE EVENT
+  // =========================================================
+
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent?.id) {
+      toast.error("Event ID not found.");
+      return;
+    }
+
+    if (!canDeleteEvent) {
+      toast.error(
+        "You do not have permission to delete events."
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${selectedEvent.title}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+
+      const { data } = await axios.delete(
+        `${backendUrl}/api/events/${selectedEvent.id}`
+      );
+
+      if (data.success) {
+        const deletedEventId = selectedEvent.id;
+
+        setEvents((previousEvents) =>
+          previousEvents.filter(
+            (event) => event.id !== deletedEventId
+          )
+        );
+
+        setSelectedEvent(null);
+
+        toast.success("Event deleted successfully.");
+      } else {
+        toast.error(
+          data.message || "Failed to delete event."
+        );
+      }
+    } catch (error) {
+      console.error("Delete event error:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to delete event."
+      );
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // =========================================================
@@ -325,7 +407,6 @@ const CalendarView = () => {
                 today: "Today",
               }}
             />
-            
           </div>
 
           {/* ================= EMPTY STATE ================= */}
@@ -364,7 +445,11 @@ const CalendarView = () => {
             px-4
             backdrop-blur-sm
           "
-          onClick={() => setSelectedEvent(null)}
+          onClick={() => {
+            if (!deleting) {
+              setSelectedEvent(null);
+            }
+          }}
         >
           <div
             className="
@@ -423,6 +508,7 @@ const CalendarView = () => {
                 onClick={() =>
                   setSelectedEvent(null)
                 }
+                disabled={deleting}
                 className="
                   flex
                   h-9
@@ -435,7 +521,10 @@ const CalendarView = () => {
                   transition
                   hover:bg-gray-100
                   hover:text-gray-700
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
                 "
+                aria-label="Close event details"
               >
                 ×
               </button>
@@ -503,8 +592,7 @@ const CalendarView = () => {
 
               {/* YEARS */}
 
-              {selectedEvent.years?.length >
-                0 && (
+              {selectedEvent.years?.length > 0 && (
                 <DetailItem title="Years">
                   <div
                     className="
@@ -545,9 +633,7 @@ const CalendarView = () => {
                       leading-relaxed
                     "
                   >
-                    {
-                      selectedEvent.description
-                    }
+                    {selectedEvent.description}
                   </p>
                 </DetailItem>
               )}
@@ -557,24 +643,67 @@ const CalendarView = () => {
               {selectedEvent.createdBy?.name && (
                 <DetailItem title="Created By">
                   <p>
-                    {
-                      selectedEvent.createdBy
-                        .name
-                    }
+                    {selectedEvent.createdBy.name}
                   </p>
                 </DetailItem>
               )}
             </div>
 
-            {/* ================= CLOSE ================= */}
+            {/* ================= ACTION BUTTONS ================= */}
 
-            <div className="mt-8">
+            <div
+              className={`
+                mt-8
+                flex
+                gap-3
+                ${
+                  canDeleteEvent
+                    ? "flex-col sm:flex-row"
+                    : ""
+                }
+              `}
+            >
+              {/* DELETE */}
+
+              {canDeleteEvent && (
+                <button
+                  onClick={handleDeleteEvent}
+                  disabled={deleting}
+                  className="
+                    flex
+                    flex-1
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-xl
+                    bg-red-500
+                    px-5
+                    py-3
+                    font-semibold
+                    text-white
+                    transition
+                    hover:bg-red-600
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+                  <Trash2 size={19} />
+
+                  {deleting
+                    ? "Deleting..."
+                    : "Delete"}
+                </button>
+              )}
+
+              {/* CLOSE */}
+
               <button
                 onClick={() =>
                   setSelectedEvent(null)
                 }
+                disabled={deleting}
                 className="
-                  w-full
+                  flex-1
                   rounded-xl
                   bg-[#D4AF37]
                   px-5
@@ -583,6 +712,8 @@ const CalendarView = () => {
                   text-white
                   transition
                   hover:bg-[#b9952e]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
                 "
               >
                 Close
