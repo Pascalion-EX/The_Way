@@ -112,7 +112,7 @@ const CalendarFloatingButton = () => {
               </p>
             </div>
 
-            <CalendarView />
+            <CalendarView onClose={() => setCalendarOpen(false)}/>
           </div>
         </div>
       )}

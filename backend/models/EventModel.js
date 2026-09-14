@@ -19,6 +19,7 @@ const eventSchema = new mongoose.Schema(
         "Trip",
         "Visit",
         "Fasting",
+        "Feast",
         "Mass",
         "Meeting",
         "Other",
@@ -58,12 +59,84 @@ const eventSchema = new mongoose.Schema(
       ref: "user",
       required: true,
     },
+
+    // =====================================================
+    // GENERATED CALENDAR FIELDS
+    // =====================================================
+
+    source: {
+      type: String,
+      enum: [
+        "manual",
+        "coptic-calendar",
+      ],
+      default: "manual",
+    },
+
+    /*
+      Only automatically generated Coptic events get
+      a calendarKey.
+
+      Examples:
+
+      coptic:2027:resurrection
+      coptic:2027:great-lent
+      coptic:2027:nativity-fast
+
+      Manual events do not need one.
+    */
+    calendarKey: {
+      type: String,
+      trim: true,
+    },
+
+    generatedYear: {
+      type: Number,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-const EventModel = mongoose.model("EventModel", eventSchema);
 
-export default EventModel;
+// =========================================================
+// UNIQUE GENERATED EVENT
+// =========================================================
+//
+// sparse means documents without calendarKey are ignored.
+//
+// This prevents:
+//   coptic:2027:resurrection
+//
+// from being inserted twice.
+//
+
+eventSchema.index(
+  {
+    calendarKey: 1,
+  },
+  {
+    unique: true,
+    sparse: true,
+  }
+);
+
+
+// =========================================================
+// USEFUL CALENDAR INDEX
+// =========================================================
+
+eventSchema.index({
+  startDate: 1,
+});
+
+
+const Event =
+  mongoose.models.Event ||
+  mongoose.model(
+    "Event",
+    eventSchema
+  );
+
+export default Event;

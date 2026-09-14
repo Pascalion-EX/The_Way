@@ -5,6 +5,7 @@ import Navbar from "../Components/Navbar";
 import Waves from "../Components/Waves.jsx";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets";
+import { CalendarPlus } from "lucide-react";
 
 const Admin = () => {
   const { backendUrl, userData } = useContext(AppContent);
@@ -12,6 +13,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [generatingCalendar, setGeneratingCalendar] = useState(false);
 
   const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
@@ -41,6 +43,47 @@ const Admin = () => {
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
+  const handleGenerateCopticCalendar = async () => {
+  const confirmed = window.confirm(
+    "Populate the calendar with Coptic fasts and feasts for the next 3 years starting from today?"
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setGeneratingCalendar(true);
+
+    const { data } = await axios.post(
+      `${backendUrl}/api/events/seed-coptic-calendar`,
+      {},
+      {
+        withCredentials: true,
+      }
+    );
+
+    if (data.success) {
+      toast.success(
+        `${data.created} events added. ${data.skipped} existing events skipped.`
+      );
+    } else {
+      toast.error(
+        data.message || "Failed to generate Coptic calendar."
+      );
+    }
+  } catch (error) {
+    console.error(
+      "Generate Coptic calendar error:",
+      error
+    );
+
+    toast.error(
+      error.response?.data?.message ||
+        "Failed to generate Coptic calendar."
+    );
+  } finally {
+    setGeneratingCalendar(false);
+  }
+};
 
   const formatRole = (role) => {
     if (!role) return "No Role";
@@ -153,27 +196,82 @@ const Admin = () => {
       <Navbar />
 
       <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28 relative z-10 mx-auto max-w-7xl px-4 py-28 sm:px-6 lg:px-8">
-        <section className="mb-10">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl sm:p-8">
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-500">
-                  Admin Dashboard
-                </p>
+<section className="mb-10">
+  <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl sm:p-8">
+    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 
-                <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">
-                  Church App Management
-                </h1>
+      {/* LEFT SIDE */}
 
-                <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base">
-                  Manage users, check roles, and view basic application
-                  statistics.
-                </p>
-              </div>
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-blue-500">
+          Admin Dashboard
+        </p>
 
-            </div>
-          </div>
-        </section>
+        <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">
+          Church App Management
+        </h1>
+
+        <p className="mt-3 max-w-2xl text-sm text-gray-600 sm:text-base">
+          Manage users, check roles, and view basic application
+          statistics.
+        </p>
+      </div>
+
+      {/* RIGHT SIDE - COPTIC CALENDAR BUTTON */}
+
+      <div className="flex shrink-0">
+        <button
+          onClick={handleGenerateCopticCalendar}
+          disabled={generatingCalendar}
+          className="
+            flex
+            items-center
+            justify-center
+            gap-2
+            rounded-xl
+            bg-[#D4AF37]
+            px-5
+            py-3
+            font-semibold
+            text-white
+            shadow-md
+            transition
+            hover:bg-[#b9952e]
+            hover:shadow-lg
+            active:scale-95
+            disabled:cursor-not-allowed
+            disabled:opacity-60
+          "
+        >
+          {generatingCalendar ? (
+            <>
+              <span
+                className="
+                  h-5
+                  w-5
+                  animate-spin
+                  rounded-full
+                  border-2
+                  border-white/40
+                  border-t-white
+                "
+              />
+
+              Generating...
+            </>
+          ) : (
+            <>
+              <CalendarPlus size={21} />
+
+              Fill Coptic Calendar
+            </>
+          )}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
 
         {loading ? (
           <div className="rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-xl">

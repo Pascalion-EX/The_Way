@@ -1,15 +1,20 @@
 import React, { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Trash2 } from "lucide-react";
+
+import { Trash2, Plus } from "lucide-react";
 
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
 
-const CalendarView = () => {
+const CalendarView = ({onClose}) => {
   const { backendUrl, userData } = useContext(AppContent);
+
+  const navigate = useNavigate();
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,10 +22,10 @@ const CalendarView = () => {
   const [deleting, setDeleting] = useState(false);
 
   // =========================================================
-  // DELETE PERMISSIONS
+  // EVENT MANAGEMENT PERMISSIONS
   // =========================================================
 
-  const allowedDeleteRoles = [
+  const allowedManageRoles = [
     "admin",
     "leader",
     "pascal",
@@ -33,9 +38,32 @@ const CalendarView = () => {
       ? [userData.role]
       : [];
 
-  const canDeleteEvent = userRoles.some((role) =>
-    allowedDeleteRoles.includes(role)
+  const canManageEvents = userRoles.some((role) =>
+    allowedManageRoles.includes(role)
   );
+
+  const canDeleteEvent = canManageEvents;
+
+  const canCreateEvent = canManageEvents;
+
+  // =========================================================
+  // CREATE EVENT
+  // =========================================================
+
+  const handleCreateEvent = () => {
+    if (!canCreateEvent) {
+      toast.error(
+        "You do not have permission to create events."
+      );
+
+      return;
+    }
+      if (onClose) {
+    onClose();
+  }
+
+    navigate("/events/Create");
+  };
 
   // =========================================================
   // FETCH EVENTS
@@ -61,9 +89,13 @@ const CalendarView = () => {
 
           allDay: event.allDay,
 
-          backgroundColor: getEventColor(event.eventType),
+          backgroundColor: getEventColor(
+            event.eventType
+          ),
 
-          borderColor: getEventColor(event.eventType),
+          borderColor: getEventColor(
+            event.eventType
+          ),
 
           extendedProps: {
             description: event.description,
@@ -78,11 +110,15 @@ const CalendarView = () => {
         setEvents(formattedEvents);
       } else {
         toast.error(
-          data.message || "Failed to load calendar events"
+          data.message ||
+            "Failed to load calendar events"
         );
       }
     } catch (error) {
-      console.error("Calendar fetch error:", error);
+      console.error(
+        "Calendar fetch error:",
+        error
+      );
 
       toast.error(
         error.response?.data?.message ||
@@ -128,6 +164,10 @@ const CalendarView = () => {
     }
   };
 
+  // =========================================================
+  // EVENT TYPE STYLE
+  // =========================================================
+
   const getTypeStyle = (eventType) => {
     switch (eventType) {
       case "Trip":
@@ -171,15 +211,20 @@ const CalendarView = () => {
 
       allDay: event.allDay,
 
-      description: event.extendedProps.description,
+      description:
+        event.extendedProps.description,
 
-      eventType: event.extendedProps.eventType,
+      eventType:
+        event.extendedProps.eventType,
 
-      location: event.extendedProps.location,
+      location:
+        event.extendedProps.location,
 
-      years: event.extendedProps.years,
+      years:
+        event.extendedProps.years,
 
-      createdBy: event.extendedProps.createdBy,
+      createdBy:
+        event.extendedProps.createdBy,
     });
   };
 
@@ -197,6 +242,7 @@ const CalendarView = () => {
       toast.error(
         "You do not have permission to delete events."
       );
+
       return;
     }
 
@@ -214,24 +260,32 @@ const CalendarView = () => {
       );
 
       if (data.success) {
-        const deletedEventId = selectedEvent.id;
+        const deletedEventId =
+          selectedEvent.id;
 
         setEvents((previousEvents) =>
           previousEvents.filter(
-            (event) => event.id !== deletedEventId
+            (event) =>
+              event.id !== deletedEventId
           )
         );
 
         setSelectedEvent(null);
 
-        toast.success("Event deleted successfully.");
+        toast.success(
+          "Event deleted successfully."
+        );
       } else {
         toast.error(
-          data.message || "Failed to delete event."
+          data.message ||
+            "Failed to delete event."
         );
       }
     } catch (error) {
-      console.error("Delete event error:", error);
+      console.error(
+        "Delete event error:",
+        error
+      );
 
       toast.error(
         error.response?.data?.message ||
@@ -249,7 +303,9 @@ const CalendarView = () => {
   const formatDate = (date) => {
     if (!date) return "";
 
-    return new Date(date).toLocaleDateString("en-GB", {
+    return new Date(
+      date
+    ).toLocaleDateString("en-GB", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -260,7 +316,9 @@ const CalendarView = () => {
   const formatTime = (date) => {
     if (!date) return "";
 
-    return new Date(date).toLocaleTimeString("en-GB", {
+    return new Date(
+      date
+    ).toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -329,15 +387,57 @@ const CalendarView = () => {
         >
           {/* ================= HEADER ================= */}
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Church Calendar
-            </h2>
+          <div
+            className="
+              mb-6
+              flex
+              flex-col
+              gap-4
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
+          >
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Church Calendar
+              </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              View meetings, masses, trips, visits and other
-              church events.
-            </p>
+              <p className="mt-1 text-sm text-gray-500">
+                View meetings, masses,
+                trips, visits and other
+                church events.
+              </p>
+            </div>
+
+            {/* ================= CREATE EVENT BUTTON ================= */}
+
+            {canCreateEvent && (
+              <button
+                onClick={handleCreateEvent}
+                className="
+                  flex
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  bg-[#D4AF37]
+                  px-5
+                  py-3
+                  font-semibold
+                  text-white
+                  shadow-sm
+                  transition
+                  hover:bg-[#b9952e]
+                  active:scale-95
+                "
+              >
+                
+                <Plus size={20} />
+
+                Create Event
+              </button>
+            )}
           </div>
 
           {/* ================= LEGEND ================= */}
@@ -461,7 +561,9 @@ const CalendarView = () => {
               shadow-2xl
               sm:p-8
             "
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
             {/* ================= MODAL HEADER ================= */}
 
@@ -499,7 +601,9 @@ const CalendarView = () => {
                       )}
                     `}
                   >
-                    {selectedEvent.eventType}
+                    {
+                      selectedEvent.eventType
+                    }
                   </span>
                 )}
               </div>
@@ -537,7 +641,9 @@ const CalendarView = () => {
 
               <DetailItem title="Date">
                 <p>
-                  {formatDate(selectedEvent.start)}
+                  {formatDate(
+                    selectedEvent.start
+                  )}
                 </p>
               </DetailItem>
 
@@ -569,8 +675,12 @@ const CalendarView = () => {
               {/* END DATE */}
 
               {selectedEvent.end &&
-                formatDate(selectedEvent.start) !==
-                  formatDate(selectedEvent.end) && (
+                formatDate(
+                  selectedEvent.start
+                ) !==
+                  formatDate(
+                    selectedEvent.end
+                  ) && (
                   <DetailItem title="End Date">
                     <p>
                       {formatDate(
@@ -585,14 +695,17 @@ const CalendarView = () => {
               {selectedEvent.location && (
                 <DetailItem title="Location">
                   <p>
-                    {selectedEvent.location}
+                    {
+                      selectedEvent.location
+                    }
                   </p>
                 </DetailItem>
               )}
 
               {/* YEARS */}
 
-              {selectedEvent.years?.length > 0 && (
+              {selectedEvent.years?.length >
+                0 && (
                 <DetailItem title="Years">
                   <div
                     className="
@@ -633,17 +746,23 @@ const CalendarView = () => {
                       leading-relaxed
                     "
                   >
-                    {selectedEvent.description}
+                    {
+                      selectedEvent.description
+                    }
                   </p>
                 </DetailItem>
               )}
 
               {/* CREATED BY */}
 
-              {selectedEvent.createdBy?.name && (
+              {selectedEvent.createdBy
+                ?.name && (
                 <DetailItem title="Created By">
                   <p>
-                    {selectedEvent.createdBy.name}
+                    {
+                      selectedEvent
+                        .createdBy.name
+                    }
                   </p>
                 </DetailItem>
               )}
@@ -667,7 +786,9 @@ const CalendarView = () => {
 
               {canDeleteEvent && (
                 <button
-                  onClick={handleDeleteEvent}
+                  onClick={
+                    handleDeleteEvent
+                  }
                   disabled={deleting}
                   className="
                     flex
@@ -758,7 +879,10 @@ const Legend = ({ color, label }) => {
 // DETAIL COMPONENT
 // =========================================================
 
-const DetailItem = ({ title, children }) => {
+const DetailItem = ({
+  title,
+  children,
+}) => {
   return (
     <div>
       <p

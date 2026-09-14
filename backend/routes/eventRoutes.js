@@ -7,6 +7,9 @@ import {
   updateEvent,
   deleteEvent,
 } from "../controllers/eventController.js";
+import {
+  seedCopticCalendar,
+} from "../controllers/copticCalendarController.js";
 
 import userAuth  from "../middleware/userAuth.js";
 import { eventAdminOnly } from "../middleware/eventPermission.js";
@@ -22,6 +25,12 @@ eventRouter.post(
   userAuth,
   eventAdminOnly,
   createEvent
+);
+eventRouter.post(
+  "/seed-coptic-calendar",
+  userAuth,
+  eventAdminOnly,
+  seedCopticCalendar
 );
 
 eventRouter.put(
