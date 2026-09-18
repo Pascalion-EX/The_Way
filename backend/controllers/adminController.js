@@ -41,7 +41,6 @@ export const getAdminDashboard = async (req, res) => {
     const pascalCount = await userModel.countDocuments({ role: "pascal" });
     const pamelaCount = await userModel.countDocuments({ role: "pamela" });
     const parentCount = await userModel.countDocuments({ role: "parent" });
-    const childCount = await userModel.countDocuments({ role: "child" });
 
     return res.status(200).json({
       success: true,
@@ -53,7 +52,6 @@ export const getAdminDashboard = async (req, res) => {
         pascalCount,
         pamelaCount,
         parentCount,
-        childCount,
       },
       users,
     });

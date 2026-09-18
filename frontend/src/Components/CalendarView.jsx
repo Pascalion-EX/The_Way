@@ -29,7 +29,7 @@ const CalendarView = ({onClose}) => {
     "admin",
     "leader",
     "pascal",
-    "Pamela",
+    "pamela",
   ];
 
   const userRoles = Array.isArray(userData?.role)

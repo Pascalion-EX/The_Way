@@ -1,7 +1,7 @@
 import userModel from "../models/userModel.js";
 
 const VIDEO_REQUEST_ROLES = [
-  "Pamela",
+  "pamela",
   "leader",
   "pascal",
   "admin",

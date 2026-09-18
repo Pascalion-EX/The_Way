@@ -32,7 +32,7 @@ const Navbar = () => {
     )
   );
   const videoRequestRoles = [
-  "Pamela",
+  "pamela",
   "leader",
   "pascal",
   "admin",

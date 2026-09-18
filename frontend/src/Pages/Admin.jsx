@@ -37,8 +37,6 @@ const Admin = () => {
         return "bg-pink-100 text-pink-700 border-pink-200";
       case "parent":
         return "bg-green-100 text-green-700 border-green-200";
-      case "child":
-        return "bg-yellow-100 text-yellow-700 border-yellow-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
@@ -281,9 +279,8 @@ const Admin = () => {
           <>
             <section className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard title="Total Users" value={stats?.totalUsers || 0} />
-              <StatCard title="Leaders" value={stats?.leaderCount || 0} />
+              <StatCard title="Leaders" value={(stats?.leaderCount ?? 0)+(stats?.adminCount ?? 0)+(stats?.pamelaCount ?? 0)+(stats?.pascalCount ?? 0)} />
               <StatCard title="Parents" value={stats?.parentCount || 0} />
-              <StatCard title="Children" value={stats?.childCount || 0} />
             </section>
 
             <section className="rounded-3xl border border-gray-200 bg-white p-4 shadow-xl sm:p-6">

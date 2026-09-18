@@ -268,7 +268,6 @@ pascal
 admin
 leader
 parent
-child
 pamela
 unAssined
 ```
@@ -287,7 +286,7 @@ A user can hold multiple roles because `role` is stored as an array.
 | Manage chants | `admin`, `leader`, `pascal`, `pamela` |
 | Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
 | Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |
-| Apply to trips | `parent`, `child`, `admin`, `leader`, `pascal` |
+| Apply to trips | `parent`, `admin`, `leader`, `pascal` |
 | Notify trip applicants | `admin`, `leader`, `pascal` |
 
 > See [Current Implementation Notes](#current-implementation-notes) for permission inconsistencies currently present between some frontend and backend checks.

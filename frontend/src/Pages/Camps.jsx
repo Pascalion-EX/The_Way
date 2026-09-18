@@ -39,7 +39,7 @@ const Camp = () => {
   });
 
   const createRoles = ["admin", "leader", "pascal"];
-  const applyRoles = ["parent", "child", "admin", "leader", "pascal"];
+  const applyRoles = ["parent", "admin", "leader", "pascal"];
   const leaderFormRoles = ["admin", "leader", "pascal"];
   const notifyRoles = ["admin", "leader", "pascal"];
 

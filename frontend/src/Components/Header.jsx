@@ -15,7 +15,7 @@ const Header = () => {
     : false;
 
     const videoRequestRoles = [
-  "Pamela",
+  "pamela",
   "leader",
   "pascal",
   "admin",
