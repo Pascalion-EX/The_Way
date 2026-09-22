@@ -435,6 +435,9 @@ const ChildProfiles = () => {
       </div>
 
       <Navbar />
+              <div className="hidden lg:block">
+          <br />
+        </div>
 
       <main
         className="

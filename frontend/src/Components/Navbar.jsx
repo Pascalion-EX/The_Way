@@ -275,12 +275,18 @@ const hasVideoRequestAccess = userData
             >
               Info
             </button>
-
+                      {hasVideoRequestAccess && (
+          <button
+            onClick={() => navigate("/childrenProfile")}
+            className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
+          >
+            Children Profile
+          </button>)}
 
                       {hasVideoRequestAccess && (
           <button
             onClick={() => navigate("/attendance")}
-            className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
+            className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
           >
             Attendance
           </button>)}
@@ -289,7 +295,7 @@ const hasVideoRequestAccess = userData
               <button
                 type="button"
                 onClick={() => handleNavigate("/admin")}
-                className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
+                className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
               >
                 Admin
               </button>
@@ -298,7 +304,7 @@ const hasVideoRequestAccess = userData
               <button
                 type="button"
                 onClick={() => handleNavigate("/video-requests")}
-className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"              >
+className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"              >
                 Video Editing Requests
               </button>
             )}
