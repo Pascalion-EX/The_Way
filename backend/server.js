@@ -15,7 +15,6 @@ import eventRouter from "./routes/eventRoutes.js"
 import videoRequestRouter from "./routes/videoRequestRoutes.js";
 import childProfileRouter from "./routes/childProfileRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
-import childProfileRouter from "./routes/childProfileRoutes.js";
 import attendanceRouter from "./routes/attendanceRoutes.js";
 
 const app = express();
@@ -33,7 +32,7 @@ app.get("/", (req, res) => res.send("API IS WORKING!, and nodeman is working"));
 app.use("/api/games", gameRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/notifications", notificationRouter);
-app.use("/api/childProfile", childProfileRouter);
+app.use("/api/children", childProfileRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/chants", chantRouter);
 app.use("/api/activities", activityRouter);

@@ -8,7 +8,7 @@ import {
   getAttendanceByYear,
   updateAttendance,
   deleteAttendance,
-} from "../controllers/attendanceController.js";
+} from "../controllers/attendanceControllers.js";
 
 import userAuth from "../middleware/userAuth.js";
 

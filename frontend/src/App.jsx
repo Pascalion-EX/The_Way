@@ -32,6 +32,7 @@ import GameViewer from "./Pages/GamesViewer.jsx";
 import CreateEvent from "./Pages/CreateEvent";
 import ActivitiesViewer from "./Pages/ActivitiesViewer.jsx";
 import CreateActivities from "./Pages/CreateActivities.jsx";
+import Attendance from "./Pages/Attendance.jsx";
 import EditActivities from "./Pages/EditActivities.jsx";
 import EditGame from "./Pages/EditGame";
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
@@ -169,6 +170,11 @@ const App = () => {
               element={<CreateCamp />}
             />
 
+
+
+
+        
+        <Route path="/attendance" element={<Attendance />} />
             {/* =========================
                 GAMES
             ========================== */}
