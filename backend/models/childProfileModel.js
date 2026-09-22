@@ -33,6 +33,7 @@ const childProfileschema = new mongoose.Schema(
             type: [String],
             enum: ["Milk","Eggs","Peanuts","Tree nuts","Wheat","Soybeans","Fish","Crustacean shellfish","Sesame","Legume (beans)"],
             default: [],
+            required:false,
         },
         address:{
             type : String,

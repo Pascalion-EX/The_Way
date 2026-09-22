@@ -280,7 +280,7 @@ const hasVideoRequestAccess = userData
                       {hasVideoRequestAccess && (
           <button
             onClick={() => navigate("/attendance")}
-            className="border border-gray-500 rounded-full px-4 py-2.5 bg-gray-800 text-white hover:bg-gray-700 transition-all"
+            className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
           >
             Attendance
           </button>)}
@@ -289,7 +289,7 @@ const hasVideoRequestAccess = userData
               <button
                 type="button"
                 onClick={() => handleNavigate("/admin")}
-                className="cursor-pointer rounded-full border border-gray-800 bg-gray-800 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700 sm:px-5 sm:text-base"
+                className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
               >
                 Admin
               </button>
@@ -298,8 +298,7 @@ const hasVideoRequestAccess = userData
               <button
                 type="button"
                 onClick={() => handleNavigate("/video-requests")}
-                className="cursor-pointer rounded-full border border-gray-800 bg-gray-800 px-3 py-2 text-sm font-medium text-white transition hover:bg-gray-700 sm:px-5 sm:text-base"
-              >
+className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"              >
                 Video Editing Requests
               </button>
             )}

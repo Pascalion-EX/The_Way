@@ -83,7 +83,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
                   {hasVideoRequestAccess && (
           <button
             onClick={() => navigate("/attendance")}
-            className="border border-gray-500 rounded-full px-8 py-2.5 bg-gray-800 text-white hover:bg-gray-700 transition-all"
+            className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
           >
             Attendance
           </button>)}
@@ -91,7 +91,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
                 {hasAdminAccess && (
           <button
             onClick={() => navigate("/admin")}
-            className="border border-gray-500 rounded-full px-8 py-2.5 bg-gray-800 text-white hover:bg-gray-700 transition-all"
+            className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
           >
             Admin
           </button>
@@ -100,7 +100,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
            {hasVideoRequestAccess && (
           <button
             onClick={() => navigate("/video-requests")}
-            className="border border-gray-500 rounded-full px-8 py-2.5 bg-gray-800 text-white hover:bg-gray-700 transition-all"
+            className="cursor-pointer rounded-full border border-[#d69e00] bg-[#ffbc00] px-3 py-2 text-sm font-medium text-black transition hover:bg-[#ffdd32] sm:px-5 sm:text-base"
           >
             Video Editing Requests
           </button>)}
