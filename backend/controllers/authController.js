@@ -23,6 +23,9 @@ export const register = async (req, res) => {
   if (!password) {
     return res.json({ success: false, message: "Missing password" });
   }
+  if (role != "parent" && role != "unAssigned"){
+    return res.json({success: false, message: "Welcome to the honeypot"});
+  }
   try {
     const existinguser = await userModel.findOne({ email });
     if (existinguser) {
