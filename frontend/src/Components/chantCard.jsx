@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
@@ -16,9 +16,13 @@ const ChantCard = ({ chant, refreshChants }) => {
       : userData?.role === role
   );
 
-  const isFavorite = chant.favorites?.some(
-    (id) => id?.toString() === userData?._id?.toString()
+  const [isFavorite, setIsFavorite] = useState(
+    chant.isFavorite ?? false
   );
+
+  useEffect(() => {
+    setIsFavorite(chant.isFavorite ?? false);
+  }, [chant.isFavorite]);
 
   const handleFavorite = async (e) => {
     e.stopPropagation();
@@ -29,18 +33,22 @@ const ChantCard = ({ chant, refreshChants }) => {
     }
 
     try {
-      axios.defaults.withCredentials = true;
-
       const { data } = await axios.patch(
-        `${backendUrl}/api/chants/${chant._id}/favorite`
+        `${backendUrl}/api/chants/${chant._id}/favorite`,
+        {},
+        {
+          withCredentials: true,
+        }
       );
 
       if (data.success) {
+        setIsFavorite(data.isFavorite);
         toast.success(data.message);
-        refreshChants();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(
+        error.response?.data?.message || error.message
+      );
     }
   };
 
@@ -54,18 +62,24 @@ const ChantCard = ({ chant, refreshChants }) => {
     if (!confirmDelete) return;
 
     try {
-      axios.defaults.withCredentials = true;
-
       const { data } = await axios.delete(
-        `${backendUrl}/api/chants/${chant._id}`
+        `${backendUrl}/api/chants/${chant._id}`,
+        {
+          withCredentials: true,
+        }
       );
 
       if (data.success) {
         toast.success(data.message);
-        refreshChants();
+
+        if (refreshChants) {
+          await refreshChants();
+        }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      toast.error(
+        error.response?.data?.message || error.message
+      );
     }
   };
 
@@ -127,9 +141,9 @@ const ChantCard = ({ chant, refreshChants }) => {
 
           <button
             onClick={handleFavorite}
-            className={`px-4 py-2 rounded-lg text-sm border transition ${
+            className={`px-4 py-2 rounded-lg text-sm border font-semibold transition ${
               isFavorite
-                ? "bg-yellow-100 text-yellow-700 border-yellow-300"
+                ? "bg-yellow-100 text-yellow-700 border-yellow-400"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
             }`}
           >
@@ -139,7 +153,9 @@ const ChantCard = ({ chant, refreshChants }) => {
           {canManageChants && (
             <>
               <button
-                onClick={() => navigate(`/edit-chant/${chant._id}`)}
+                onClick={() =>
+                  navigate(`/edit-chant/${chant._id}`)
+                }
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700 transition"
               >
                 Edit

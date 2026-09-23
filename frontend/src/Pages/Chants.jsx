@@ -74,6 +74,7 @@ const Chants = () => {
           yGap={20}
         />
       <Navbar />
+      <br/>
 
       <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28">
         <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-3xl shadow-lg p-6 sm:p-8">

@@ -5,8 +5,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
-import { Trash2, Plus } from "lucide-react";
-
+import { Trash2, Plus, Pencil } from "lucide-react";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
@@ -41,9 +40,8 @@ const CalendarView = ({onClose}) => {
   const canManageEvents = userRoles.some((role) =>
     allowedManageRoles.includes(role)
   );
-
   const canDeleteEvent = canManageEvents;
-
+  const canEditEvent = canManageEvents;
   const canCreateEvent = canManageEvents;
 
   // =========================================================
@@ -163,7 +161,33 @@ const CalendarView = ({onClose}) => {
         return "#6B7280";
     }
   };
+  // =========================================================
+// EDIT EVENT
+// =========================================================
 
+const handleEditEvent = () => {
+  if (!selectedEvent?.id) {
+    toast.error("Event ID not found.");
+    return;
+  }
+
+  if (!canEditEvent) {
+    toast.error(
+      "You do not have permission to edit events."
+    );
+    return;
+  }
+
+  const eventId = selectedEvent.id;
+
+  setSelectedEvent(null);
+
+  if (onClose) {
+    onClose();
+  }
+
+  navigate(`/events/${eventId}/edit`);
+};
   // =========================================================
   // EVENT TYPE STYLE
   // =========================================================
@@ -768,78 +792,108 @@ const CalendarView = ({onClose}) => {
               )}
             </div>
 
-            {/* ================= ACTION BUTTONS ================= */}
+{/* ================= ACTION BUTTONS ================= */}
 
-            <div
-              className={`
-                mt-8
-                flex
-                gap-3
-                ${
-                  canDeleteEvent
-                    ? "flex-col sm:flex-row"
-                    : ""
-                }
-              `}
-            >
-              {/* DELETE */}
+<div
+  className="
+    mt-8
+    flex
+    flex-col
+    gap-3
+    sm:flex-row
+  "
+>
+  {/* EDIT */}
 
-              {canDeleteEvent && (
-                <button
-                  onClick={
-                    handleDeleteEvent
-                  }
-                  disabled={deleting}
-                  className="
-                    flex
-                    flex-1
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-xl
-                    bg-red-500
-                    px-5
-                    py-3
-                    font-semibold
-                    text-white
-                    transition
-                    hover:bg-red-600
-                    disabled:cursor-not-allowed
-                    disabled:opacity-50
-                  "
-                >
-                  <Trash2 size={19} />
+  {canEditEvent && (
+    <button
+      onClick={handleEditEvent}
+      disabled={deleting}
+      className="
+        flex
+        flex-1
+        items-center
+        justify-center
+        gap-2
+        rounded-xl
+        bg-[#D4AF37]
+        px-5
+        py-3
+        font-semibold
+        text-white
+        transition
+        hover:bg-[#b9952e]
+        active:scale-95
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      <Pencil size={19} />
 
-                  {deleting
-                    ? "Deleting..."
-                    : "Delete"}
-                </button>
-              )}
+      Edit
+    </button>
+  )}
 
-              {/* CLOSE */}
+  {/* DELETE */}
 
-              <button
-                onClick={() =>
-                  setSelectedEvent(null)
-                }
-                disabled={deleting}
-                className="
-                  flex-1
-                  rounded-xl
-                  bg-[#D4AF37]
-                  px-5
-                  py-3
-                  font-semibold
-                  text-white
-                  transition
-                  hover:bg-[#b9952e]
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
-              >
-                Close
-              </button>
-            </div>
+  {canDeleteEvent && (
+    <button
+      onClick={handleDeleteEvent}
+      disabled={deleting}
+      className="
+        flex
+        flex-1
+        items-center
+        justify-center
+        gap-2
+        rounded-xl
+        bg-red-500
+        px-5
+        py-3
+        font-semibold
+        text-white
+        transition
+        hover:bg-red-600
+        active:scale-95
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
+    >
+      <Trash2 size={19} />
+
+      {deleting
+        ? "Deleting..."
+        : "Delete"}
+    </button>
+  )}
+
+  {/* CLOSE */}
+
+  <button
+    onClick={() =>
+      setSelectedEvent(null)
+    }
+    disabled={deleting}
+    className="
+      flex-1
+      rounded-xl
+      border
+      border-gray-300
+      bg-white
+      px-5
+      py-3
+      font-semibold
+      text-gray-700
+      transition
+      hover:bg-gray-50
+      active:scale-95
+      disabled:cursor-not-allowed
+      disabled:opacity-50
+    "
+  >
+    Close
+  </button>
+</div>
           </div>
         </div>
       )}

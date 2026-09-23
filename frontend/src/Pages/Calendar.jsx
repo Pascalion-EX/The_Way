@@ -14,10 +14,10 @@ const Calendar = () => {
 
   const { backendUrl, userData } = useContext(AppContent);
 
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState(null);
-
+const [events, setEvents] = useState([]);
+const [loading, setLoading] = useState(true);
+const [selectedEvent, setSelectedEvent] = useState(null);
+const [deleting, setDeleting] = useState(false);
   const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
   const canManageCalendar = userData
@@ -54,6 +54,58 @@ const Calendar = () => {
         return "#6B7280";
     }
   };
+
+// =========================================================
+// DELETE EVENT
+// =========================================================
+
+const handleDeleteEvent = async () => {
+  if (!selectedEvent?.id) {
+    toast.error("Event ID not found.");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${selectedEvent.title}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setDeleting(true);
+
+    const { data } = await axios.delete(
+      `${backendUrl}/api/events/${selectedEvent.id}`
+    );
+
+    if (data.success) {
+      const deletedEventId = selectedEvent.id;
+
+      setEvents((prevEvents) =>
+        prevEvents.filter(
+          (event) => event.id !== deletedEventId
+        )
+      );
+
+      setSelectedEvent(null);
+
+      toast.success("Event deleted successfully.");
+    } else {
+      toast.error(
+        data.message || "Failed to delete event."
+      );
+    }
+  } catch (error) {
+    console.error("Delete event error:", error);
+
+    toast.error(
+      error.response?.data?.message ||
+        "Failed to delete event."
+    );
+  } finally {
+    setDeleting(false);
+  }
+};
 
   const getTypeColor = (eventType) => {
     switch (eventType) {
@@ -518,7 +570,7 @@ const Calendar = () => {
                 <button
                   onClick={() =>
                     navigate(
-                      `/events/edit/${selectedEvent.id}`
+                      `/events/${selectedEvent.id}/edit`
                     )
                   }
                   className="
@@ -536,7 +588,30 @@ const Calendar = () => {
                 </button>
               </div>
             )}
-
+    {canManageCalendar && (
+  <div className="flex gap-3 mt-3">
+    <button
+      onClick={handleDeleteEvent}
+      disabled={deleting}
+      className="
+        flex-1
+        bg-red-500
+        hover:bg-red-600
+        disabled:bg-red-300
+        disabled:cursor-not-allowed
+        text-white
+        py-3
+        rounded-xl
+        font-semibold
+        transition
+      "
+    >
+      {deleting
+        ? "Deleting..."
+        : "Delete Event"}
+    </button>
+  </div>
+)}
             <button
               onClick={() =>
                 setSelectedEvent(null)

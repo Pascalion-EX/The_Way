@@ -116,6 +116,7 @@ export const getAllChants = async (req, res) => {
     const { search = "", category = "", favoriteOnly = "false" } = req.query;
 
     const query = {};
+    const userId = req.userId;
 
     if (search.trim()) {
       query.title = {
@@ -129,8 +130,6 @@ export const getAllChants = async (req, res) => {
     }
 
     if (favoriteOnly === "true") {
-      const userId = req.userId;
-
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -144,11 +143,26 @@ export const getAllChants = async (req, res) => {
     const chants = await chantModel
       .find(query)
       .populate("createdBy", "name email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const chantsWithFavoriteStatus = chants.map((chant) => {
+      const isFavorite = userId
+        ? chant.favorites?.some(
+            (favoriteUserId) =>
+              favoriteUserId.toString() === userId.toString()
+          )
+        : false;
+
+      return {
+        ...chant,
+        isFavorite,
+      };
+    });
 
     return res.status(200).json({
       success: true,
-      chants,
+      chants: chantsWithFavoriteStatus,
     });
   } catch (error) {
     return res.status(500).json({
@@ -157,7 +171,6 @@ export const getAllChants = async (req, res) => {
     });
   }
 };
-
 export const getChantById = async (req, res) => {
   try {
     const { id } = req.params;

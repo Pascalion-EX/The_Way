@@ -26,7 +26,55 @@ const ChantViewer = () => {
       ? userData.role.includes(role)
       : userData?.role === role
   );
+const getYouTubeEmbedUrl = (url) => {
+  if (!url) return "";
 
+  try {
+    const parsedUrl = new URL(url);
+
+    // Normal YouTube URL:
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    if (
+      parsedUrl.hostname === "www.youtube.com" ||
+      parsedUrl.hostname === "youtube.com"
+    ) {
+      // Already an embed URL
+      if (parsedUrl.pathname.startsWith("/embed/")) {
+        return url;
+      }
+
+      const videoId = parsedUrl.searchParams.get("v");
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+
+      // YouTube Shorts
+      if (parsedUrl.pathname.startsWith("/shorts/")) {
+        const videoId = parsedUrl.pathname.split("/")[2];
+
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}`;
+        }
+      }
+    }
+
+    // Short YouTube URL:
+    // https://youtu.be/VIDEO_ID
+    if (parsedUrl.hostname === "youtu.be") {
+      const videoId = parsedUrl.pathname.slice(1).split("/")[0];
+
+      if (videoId) {
+        return `https://www.youtube.com/embed/${videoId}`;
+      }
+    }
+
+    return "";
+  } catch (error) {
+    console.error("Invalid video URL:", url);
+    return "";
+  }
+};
   const fetchChant = async () => {
     try {
       setLoading(true);
@@ -179,9 +227,6 @@ const ChantViewer = () => {
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold mb-12">
-            {chant.title}
-          </h1>
 
           <p
             dir={language === "arabic" ? "rtl" : "ltr"}
@@ -279,16 +324,17 @@ const ChantViewer = () => {
                 </audio>
               )}
 
-              {chant.video && (
-                <div className="aspect-video w-full overflow-hidden rounded-2xl border border-gray-200">
-                  <iframe
-                    src={chant.video}
-                    title={chant.title}
-                    className="w-full h-full"
-                    allowFullScreen
-                  />
-                </div>
-              )}
+{chant.video && getYouTubeEmbedUrl(chant.video) && (
+  <div className="aspect-video w-full overflow-hidden rounded-2xl border border-gray-200">
+    <iframe
+      src={getYouTubeEmbedUrl(chant.video)}
+      title={chant.title}
+      className="w-full h-full"
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"      referrerPolicy="strict-origin-when-cross-origin"
+      allowFullScreen
+    />
+  </div>
+)}
             </div>
           )}
 

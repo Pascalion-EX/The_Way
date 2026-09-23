@@ -30,6 +30,7 @@ import CreateGame from "./Pages/Creategame.jsx";
 import Info from "./Pages/Info.jsx";
 import GameViewer from "./Pages/GamesViewer.jsx";
 import CreateEvent from "./Pages/CreateEvent";
+import EditEvent from "./Pages/EditEvent.jsx";
 import ActivitiesViewer from "./Pages/ActivitiesViewer.jsx";
 import CreateActivities from "./Pages/CreateActivities.jsx";
 import Attendance from "./Pages/Attendance.jsx";
@@ -98,7 +99,10 @@ const App = () => {
   path="/events/create"
   element={<CreateEvent />}
 />
-
+<Route
+  path="/events/:id/edit"
+  element={<EditEvent />}
+/>
             
             {/* Home */}
             <Route path="/" element={<Home />} />
