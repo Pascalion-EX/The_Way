@@ -13,7 +13,7 @@ export const checkAuth = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone, role } = req.body;
   if (!name) {
     return res.json({ success: false, message: "Missing name" });
   }
@@ -31,7 +31,7 @@ export const register = async (req, res) => {
 
     const hashedpassword = await bcrypt.hash(password, 10);
 
-    const user = new userModel({ name, email, password: hashedpassword });
+    const user = new userModel({ name, email, password: hashedpassword , phone, role });
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {

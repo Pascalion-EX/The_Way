@@ -63,7 +63,11 @@ const ProtectedLayout = () => {
 const App = () => {
   return (
     <>
-      <ToastContainer />
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        className="!z-[99999]"
+      />
 
       <Routes>
         {/* =========================

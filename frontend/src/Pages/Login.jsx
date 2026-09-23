@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import Waves from "../Components/Waves.jsx";
 import Navbar from "@/Components/Navbar.jsx";
+import { Phone } from "lucide-react";
 
 const DesktopVisual = () => (
   <div className="relative hidden overflow-hidden lg:block">
@@ -55,7 +56,15 @@ const Login = () => {
   const [state, setState] = useState("Login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState("");
+  const [roleOpen, setRoleOpen] = useState(false);
+
+const roleOptions = [
+  { label: "Parent", value: "parent" },
+  { label: "Other", value: "unAssigned" },
+];
 
   const [loading, setLoading] = useState(false);
 
@@ -73,6 +82,8 @@ const Login = () => {
           name,
           email,
           password,
+          phone,
+          role,
         });
 
         if (data.success) {
@@ -151,34 +162,344 @@ const Login = () => {
               className="mt-8 space-y-4"
             >
               {state === "Sign Up" && (
-                <input
-                  type="text"
-                  placeholder="Full name"
-                  className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    id="name-input"
+                    placeholder=" "
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className="
+                      peer
+                      h-12
+                      w-full
+                      rounded-xl
+                      border
+                      border-gray-300
+                      bg-transparent
+                      px-4
+                      pb-1
+                      pt-4
+                      text-sm
+                      outline-none
+                      transition
+                      focus:border-indigo-500
+                      focus:ring-2
+                      focus:ring-indigo-500
+                    "
+                  />
+
+                  <label
+                    htmlFor="name-input"
+                    className="
+                      absolute
+                      left-4
+                      top-1/2
+                      -translate-y-1/2
+                      bg-white
+                      px-1
+                      text-sm
+                      text-gray-500
+                      transition-all
+                      duration-200
+
+                      peer-focus:left-3
+                      peer-focus:top-0
+                      peer-focus:text-xs
+                      peer-focus:text-indigo-500
+
+                      peer-not-placeholder-shown:left-3
+                      peer-not-placeholder-shown:top-0
+                      peer-not-placeholder-shown:text-xs
+                    "
+                  >
+                    Full name
+                  </label>
+                </div>
               )}
 
-              <input
-                type="email"
-                placeholder="Email"
-                className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className="relative w-full">
+                <input
+                  type="email"
+                  id="email-input"
+                  placeholder=" "
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="
+                    peer
+                    h-12
+                    w-full
+                    rounded-xl
+                    border
+                    border-gray-300
+                    bg-transparent
+                    px-4
+                    pb-1
+                    pt-4
+                    text-sm
+                    outline-none
+                    transition
+                    focus:border-indigo-500
+                    focus:ring-2
+                    focus:ring-indigo-500
+                  "
+                />
 
-              <input
-                type="password"
-                placeholder="Password"
-                className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+                <label
+                  htmlFor="email-input"
+                  className="
+                    absolute
+                    left-4
+                    top-1/2
+                    -translate-y-1/2
+                    bg-white
+                    px-1
+                    text-sm
+                    text-gray-500
+                    transition-all
+                    duration-200
 
+                    peer-focus:left-3
+                    peer-focus:top-0
+                    peer-focus:text-xs
+                    peer-focus:text-indigo-500
+
+                    peer-not-placeholder-shown:left-3
+                    peer-not-placeholder-shown:top-0
+                    peer-not-placeholder-shown:text-xs
+                  "
+                >
+                  Email
+                </label>
+              </div>
+              {state === "Sign Up" && (
+                <div className="relative w-full">
+                  {/* Phone Icon */}
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+                    <svg
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M18.427 14.768 17.2 13.542a1.733 1.733 0 0 0-2.45 0l-.613.613a1.732 1.732 0 0 1-2.45 0l-1.838-1.84a1.735 1.735 0 0 1 0-2.452l.612-.613a1.735 1.735 0 0 0 0-2.452L9.237 5.572a1.6 1.6 0 0 0-2.45 0c-3.223 3.2-1.702 6.896 1.519 10.117 3.22 3.221 6.914 4.745 10.12 1.535a1.601 1.601 0 0 0 0-2.456Z"
+                      />
+                    </svg>
+                  </span>
+
+                  {/* Phone Input */}
+                  <input
+                    type="tel"
+                    id="phone-input"
+                    placeholder=" "
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className="
+                      peer
+                      h-12
+                      w-full
+                      rounded-xl
+                      border
+                      border-gray-300
+                      bg-transparent
+                      pb-1
+                      pl-11
+                      pr-4
+                      pt-4
+                      text-sm
+                      outline-none
+                      transition
+                      focus:border-indigo-500
+                      focus:ring-2
+                      focus:ring-indigo-500
+                    "
+                  />
+
+                  {/* Floating Label */}
+                  <label
+                    htmlFor="phone-input"
+                    className="
+                      absolute
+                      left-11
+                      top-1/2
+                      -translate-y-1/2
+                      bg-white
+                      px-1
+                      text-sm
+                      text-gray-500
+                      transition-all
+                      duration-200
+
+                      peer-focus:left-3
+                      peer-focus:top-0
+                      peer-focus:text-xs
+                      peer-focus:text-indigo-500
+
+                      peer-not-placeholder-shown:left-3
+                      peer-not-placeholder-shown:top-0
+                      peer-not-placeholder-shown:text-xs
+                    "
+                  >
+                    Phone Number
+                  </label>
+                </div>
+              )}
+                <div className="relative w-full">
+                  <input
+                    type="password"
+                    id="password-input"
+                    placeholder=" "
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="
+                      peer
+                      h-12
+                      w-full
+                      rounded-xl
+                      border
+                      border-gray-300
+                      bg-transparent
+                      px-4
+                      pb-1
+                      pt-4
+                      text-sm
+                      outline-none
+                      transition
+                      focus:border-indigo-500
+                      focus:ring-2
+                      focus:ring-indigo-500
+                    "
+                  />
+
+                  <label
+                    htmlFor="password-input"
+                    className="
+                      absolute
+                      left-4
+                      top-1/2
+                      -translate-y-1/2
+                      bg-white
+                      px-1
+                      text-sm
+                      text-gray-500
+                      transition-all
+                      duration-200
+
+                      peer-focus:left-3
+                      peer-focus:top-0
+                      peer-focus:text-xs
+                      peer-focus:text-indigo-500
+
+                      peer-not-placeholder-shown:left-3
+                      peer-not-placeholder-shown:top-0
+                      peer-not-placeholder-shown:text-xs
+                    "
+                  >
+                    Password
+                  </label>
+                </div>
+{state === "Sign Up" && (
+  <div className="relative w-full">
+    {/* Dropdown button */}
+    <button
+      type="button"
+      onClick={() => setRoleOpen(!roleOpen)}
+      className="
+        flex
+        h-12
+        w-full
+        items-center
+        justify-between
+        rounded-xl
+        border
+        border-gray-300
+        bg-white
+        px-4
+        text-sm
+        outline-none
+        transition
+        focus:border-indigo-500
+        focus:ring-2
+        focus:ring-indigo-500
+      "
+    >
+      <span className={role ? "text-gray-900" : "text-gray-500"}>
+        {role
+          ? roleOptions.find((option) => option.value === role)?.label
+          : "Select Role"}
+      </span>
+
+      <svg
+        className={`h-4 w-4 transition-transform ${
+          roleOpen ? "rotate-180" : ""
+        }`}
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="m6 9 6 6 6-6"
+        />
+      </svg>
+    </button>
+
+    {/* Dropdown list */}
+    {roleOpen && (
+      <div
+        className="
+          absolute
+          left-0
+          top-[54px]
+          z-50
+          w-full
+          overflow-hidden
+          rounded-xl
+          border
+          border-indigo-500
+          bg-white
+          shadow-lg
+        "
+      >
+        {roleOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => {
+              setRole(option.value);
+              setRoleOpen(false);
+            }}
+            className="
+              w-full
+              px-4
+              py-3
+              text-left
+              text-sm
+              text-gray-700
+              transition
+              hover:bg-indigo-50
+              hover:text-indigo-600
+            "
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
               {state === "Login" && (
                 <div className="flex justify-end">
                   <button
