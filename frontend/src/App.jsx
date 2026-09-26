@@ -42,6 +42,7 @@ import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
 import VideoRequests from "./Pages/VideoRequests";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Footer from "./Components/footer";
 
 /*
   Layout used after authentication.
@@ -267,6 +268,7 @@ const App = () => {
           element={<Navigate to="/" replace />}
         />
       </Routes>
+<Footer/>
     </>
   );
 };

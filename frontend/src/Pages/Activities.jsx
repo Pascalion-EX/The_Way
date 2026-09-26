@@ -5,6 +5,7 @@ import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import Waves from "../Components/Waves.jsx";
 import Navbar from "@/Components/Navbar.jsx";
+import Footer from "@/Components/footer.jsx";
 
 const Activities = () => {
   const navigate = useNavigate();
@@ -290,7 +291,9 @@ const Activities = () => {
             )}
           </section>
         </div>
+
       </main>
+      
     </div>
   );
 };
