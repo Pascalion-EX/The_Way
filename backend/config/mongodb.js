@@ -6,6 +6,6 @@ const connectDB = async ()=>{
 
     mongoose.connection.on(`connected`,()=>console.log('Database is on'));
 
-    await mongoose.connect(`${process.env.MONGODB_URL}/The way`);
+    await mongoose.connect(`${process.env.MONGODB_URL}`);
 };
 export default connectDB;

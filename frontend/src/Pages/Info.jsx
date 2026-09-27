@@ -85,12 +85,13 @@ const Info = () => {
           {/* Hero section */}
           <section className="flex min-h-[65vh] flex-col items-center justify-center text-center">
             <div className="mb-6 inline-flex items-center rounded-full border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-700 shadow-sm">
-              Duty of God's Servant fulfilled
+              Duty of God's Shield fulfilled
             </div>
 
-            <h1 className="max-w-4xl text-4xl font-black tracking-tight text-gray-950 sm:text-5xl md:text-6xl lg:text-7xl">
-              I am the way &
-              <span className="block text-amber-600">the truth and the life</span>
+            <h1   className="max-w-4xl text-4xl font-black tracking-[-0.045em] text-gray-950 sm:text-5xl md:text-6xl lg:text-7xl"
+  style={{ fontFamily: '"League Spartan", sans-serif' }}>
+              I AM <span className="block text-amber-500">THE WAY</span>
+              THE TRUTH AND THE LIFE
             </h1>
 
 
@@ -186,50 +187,6 @@ const Info = () => {
                   </p>
                 </article>
               ))}
-            </div>
-          </section>
-
-          {/* Role section */}
-          <section className="py-16">
-            <div className="rounded-[2rem] border border-gray-200 bg-white p-8 shadow-xl sm:p-12">
-              <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.25em] text-amber-600">
-                    Secure access
-                  </p>
-
-                  <h2 className="mt-3 text-3xl font-black text-gray-950 sm:text-4xl">
-                    A suitable experience for every role
-                  </h2>
-
-                  <p className="mt-5 leading-8 text-gray-600">
-                    The website uses role-based permissions to control who can
-                    view, create, update, and delete different types of content.
-                  </p>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <RoleCard
-                    title="Children and Parents"
-                    description="View lessons, activities, chants, games, camps, and service announcements."
-                  />
-
-                  <RoleCard
-                    title="Servants and Leaders"
-                    description="Create educational content, organize events, and manage service resources."
-                  />
-
-                  <RoleCard
-                    title="Pascals"
-                    description="Prepare lessons, activities, plans, presentations, and resources."
-                  />
-
-                  <RoleCard
-                    title="Administrators"
-                    description="Manage users, permissions, content, and the overall platform."
-                  />
-                </div>
-              </div>
             </div>
           </section>
 
