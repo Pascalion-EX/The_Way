@@ -31,7 +31,7 @@ const normalizeRoles = (role) => {
 // VIDEO REQUEST USER ACCESS
 //
 // Allowed:
-// Pamela
+// pamela
 // leader
 // pascal
 // admin
@@ -148,15 +148,15 @@ export const pascalOnly = async (
     const roles = normalizeRoles(user.role);
 
 
-    const hasPascalRole =
+    const haspascalRole =
       roles.includes("pascal");
 
 
-    if (!hasPascalRole) {
+    if (!haspascalRole) {
       return res.status(403).json({
         success: false,
         message:
-          "Only Pascal users can manage video editing requests.",
+          "Only pascal users can manage video editing requests.",
       });
     }
 
@@ -167,7 +167,7 @@ export const pascalOnly = async (
 
   } catch (error) {
     console.error(
-      "Pascal authorization error:",
+      "pascal authorization error:",
       error
     );
 

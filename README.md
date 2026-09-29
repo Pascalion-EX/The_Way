@@ -2,7 +2,7 @@
 
 A full-stack church service platform built for **The Way Service at Saint George Church**. The application centralizes service resources and church activities in one authenticated platform, including lessons, games, activities, chants, trips/camps, user profiles, email verification, role-based management, and an administrative dashboard.
 
-Repository: https://github.com/Pascalion-EX/The_Way
+Repository: https://github.com/pascalion-EX/The_Way
 
 ---
 
@@ -853,7 +853,7 @@ Install:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Pascalion-EX/The_Way.git
+git clone https://github.com/pascalion-EX/The_Way.git
 cd The_Way
 ```
 

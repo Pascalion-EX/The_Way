@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { assets } from "../assets/assets.js";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
+import NotificationBell from "./NotificationBell.jsx";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -135,57 +136,63 @@ const hasVideoRequestAccess = userData
             />
           </button>
         </div>
-
-        {/* User menu button */}
+            
+       {/* User controls */}
         <div className="pointer-events-auto relative z-[10001]">
           {userData ? (
-            <>
-              <button
-                type="button"
-                onClick={toggleUserMenu}
-                className="relative z-[10002] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 sm:h-11 sm:w-11"
-                aria-label={
-                  userMenuOpen
-                    ? "Close user menu"
-                    : "Open user menu"
-                }
-                aria-expanded={userMenuOpen}
-              >
-                {userData.name?.[0]?.toUpperCase() || "U"}
-              </button>
+            <div className="flex items-center gap-2">
+              
+              {/* Notifications */}
+              <NotificationBell />
 
-              {userMenuOpen && (
-                <div className="pointer-events-auto absolute right-0 top-full z-[10003] mt-3 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white text-sm text-gray-800 shadow-xl">
-                  {!userData.isAccountVerified && (
+              {/* User */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={toggleUserMenu}
+                  className="relative z-[10002] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-black text-sm font-semibold text-white transition hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 sm:h-11 sm:w-11"
+                  aria-label={
+                    userMenuOpen
+                      ? "Close user menu"
+                      : "Open user menu"
+                  }
+                  aria-expanded={userMenuOpen}
+                >
+                  {userData.name?.[0]?.toUpperCase() || "U"}
+                </button>
+
+                {userMenuOpen && (
+                  <div className="pointer-events-auto absolute right-0 top-full z-[10003] mt-3 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white text-sm text-gray-800 shadow-xl">
+
+                    {!userData.isAccountVerified && (
+                      <button
+                        type="button"
+                        onClick={sendVerifyOtp}
+                        className="block w-full cursor-pointer px-4 py-3 text-left transition hover:bg-gray-100"
+                      >
+                        Verify Email
+                      </button>
+                    )}
+
                     <button
                       type="button"
-                      onClick={sendVerifyOtp}
-                      className="block w-full cursor-pointer px-4 py-3 text-left transition hover:bg-gray-100"
+                      onClick={() => handleNavigate("/profile")}
+                      className="block w-full cursor-pointer px-4 py-3 text-left text-gray-800 transition hover:bg-gray-100"
                     >
-                      Verify Email
+                      Profile
                     </button>
-                  )}
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleNavigate("/profile")
-                    }
-                    className="block w-full cursor-pointer px-4 py-3 text-left text-gray-800 transition hover:bg-gray-100"
-                  >
-                    Profile
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={logout}
-                    className="block w-full cursor-pointer px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="block w-full cursor-pointer px-4 py-3 text-left text-red-600 transition hover:bg-red-50"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           ) : (
             <button
               type="button"

@@ -24,7 +24,7 @@ const videoRequestRouter = express.Router();
 // USER ROUTES
 //
 // Allowed roles:
-// Pamela
+// pamela
 // leader
 // pascal
 // admin

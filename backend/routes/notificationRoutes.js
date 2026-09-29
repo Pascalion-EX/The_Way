@@ -8,6 +8,7 @@ import {
   markNotificationAsSeen,
   markAllNotificationsAsSeen,
   deleteNotification,
+  deleteNotificationsByRoles,
 } from "../controllers/notificationController.js";
 
 import userAuth from "../middleware/userAuth.js";
@@ -30,6 +31,12 @@ notificationRouter.post(
   "/",
   userAuth,
   createNotification
+);
+
+notificationRouter.put(
+  "/clear/roles",
+  userAuth,
+  deleteNotificationsByRoles
 );
 
 notificationRouter.post(

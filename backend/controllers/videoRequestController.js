@@ -23,7 +23,7 @@ const escapeHtml = (value = "") => {
 // ============================================================
 // CREATE VIDEO REQUEST
 // Allowed roles will be checked in middleware:
-// Pamela, leader, pascal, admin
+// pamela, leader, pascal, admin
 // ============================================================
 
 export const createVideoRequest = async (req, res) => {
@@ -284,7 +284,7 @@ Pending
 
 // ============================================================
 // GET LOGGED-IN USER'S REQUESTS
-// Pamela / leader / admin / pascal
+// pamela / leader / admin / pascal
 // ============================================================
 
 export const getMyVideoRequests = async (req, res) => {

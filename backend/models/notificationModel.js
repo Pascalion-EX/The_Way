@@ -28,7 +28,7 @@ const notificationSchema = new mongoose.Schema(
           "admin",
           "leader",
           "pascal",
-          "Pamela",
+          "pamela",
           "parent",
           "child",
           "unAssined",

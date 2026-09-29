@@ -81,7 +81,7 @@ const VideoRequests = () => {
   );
 
 
-  const isPascal =
+  const ispascal =
     roles.includes("pascal");
 
 
@@ -98,7 +98,7 @@ const VideoRequests = () => {
       try {
         setLoading(true);
 
-        const endpoint = isPascal
+        const endpoint = ispascal
           ? `${backendUrl}/api/video-requests`
           : `${backendUrl}/api/video-requests/my`;
 
@@ -133,7 +133,7 @@ const VideoRequests = () => {
     },
     [
       backendUrl,
-      isPascal,
+      ispascal,
       userData,
     ]
   );
@@ -189,7 +189,7 @@ const VideoRequests = () => {
     id,
     changes
   ) => {
-    if (!isPascal) {
+    if (!ispascal) {
       return;
     }
 
@@ -272,7 +272,7 @@ const VideoRequests = () => {
   const deleteRequest = async (
     id
   ) => {
-    if (!isPascal) {
+    if (!ispascal) {
       return;
     }
 
@@ -580,7 +580,7 @@ const VideoRequests = () => {
 
                 <h2 className="text-2xl font-semibold">
 
-                  {isPascal
+                  {ispascal
                     ? "Editing Queue"
                     : "My Requests"}
 
@@ -588,7 +588,7 @@ const VideoRequests = () => {
 
                 <p className="mt-1 text-sm text-gray-500">
 
-                  {isPascal
+                  {ispascal
                     ? "Manage all submitted video editing requests."
                     : "Track the requests you have submitted."}
 
@@ -876,7 +876,7 @@ const VideoRequests = () => {
                           PASCAL CONTROLS
                       ========================================== */}
 
-                      {isPascal && (
+                      {ispascal && (
 
                         <div className="mt-6 border-t border-gray-200 pt-6">
 
