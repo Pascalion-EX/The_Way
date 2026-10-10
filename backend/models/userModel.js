@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
     isAccountVerified: {type:Boolean, default: false},
     resetOtp: {type:String, default: ''},
     resetOtpExpireAt: {type:Number, default: 0},
-    class: {type: Number, default: 0},
+    class: {type: Number, default: 0, min: 0, max: 12, validate: Number.isInteger},
     phone: {type: String, default: ''},
     role: {type: [String], enum: ['pascal','admin','leader','parent', 'pamela' ,'unAssigned'],default:['unAssigned']},
 

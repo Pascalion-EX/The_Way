@@ -36,10 +36,19 @@ export const updateProfile = async (req, res) => {
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (phone !== undefined) updateData.phone = phone;
-    if (userClass !== undefined) updateData.class = userClass;
+    if (userClass !== undefined) {
+      const normalizedClass = typeof userClass === "string" && userClass.trim() !== "" ? Number(userClass) : userClass;
+      if (!Number.isInteger(normalizedClass) || normalizedClass < 0 || normalizedClass > 12) {
+        return res.status(400).json({
+          success: false,
+          message: "Class must be a whole number from 0 to 12. Use 0 for no class.",
+        });
+      }
+      updateData.class = normalizedClass;
+    }
 
     const user = await userModel
-      .findByIdAndUpdate(userId, updateData, { new: true })
+      .findByIdAndUpdate(userId, updateData, { new: true, runValidators: true })
       .select("-password -verifyOtp -resetOtp");
 
     if (!user) {

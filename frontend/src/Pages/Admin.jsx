@@ -4,11 +4,10 @@ import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
 import Waves from "../Components/Waves.jsx";
 import { toast } from "react-toastify";
-import { assets } from "../assets/assets";
 import { CalendarPlus } from "lucide-react";
 
 const Admin = () => {
-  const { backendUrl, userData } = useContext(AppContent);
+  const { backendUrl, userData, getUserData } = useContext(AppContent);
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -133,6 +132,61 @@ const Admin = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete user");
+    }
+  };
+
+  const handleSaveClass = async (user, userClass) => {
+    try {
+      const { data } = await axios.patch(
+        `${backendUrl}/api/admin/users/${user._id}/class`,
+        { class: userClass },
+        { withCredentials: true }
+      );
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to update class");
+        return false;
+      }
+
+      setUsers((prev) => prev.map((entry) => entry._id === user._id ? { ...entry, class: data.user.class } : entry));
+      toast.success(data.message);
+      await getUserData();
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update class");
+      return false;
+    }
+  };
+
+  const handleSaveRoles = async (user, role) => {
+    try {
+      const { data } = await axios.patch(
+        `${backendUrl}/api/admin/users/${user._id}/roles`,
+        { role },
+        { withCredentials: true }
+      );
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to update roles");
+        return false;
+      }
+
+      setUsers((prev) => prev.map((entry) => entry._id === user._id ? { ...entry, role: data.user.role } : entry));
+      setStats((prev) => {
+        if (!prev) return prev;
+        const updatedStats = { ...prev };
+        const previousRoles = Array.isArray(user.role) ? user.role : [user.role];
+        for (const value of ["admin", "leader", "pascal", "pamela", "parent"]) {
+          updatedStats[`${value}Count`] += Number(data.user.role.includes(value)) - Number(previousRoles.includes(value));
+        }
+        return updatedStats;
+      });
+      toast.success(data.message);
+      await getUserData();
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update roles");
+      return false;
     }
   };
 
@@ -329,6 +383,7 @@ const Admin = () => {
                             >
                               {formatRole(user.role)}
                             </span>
+                            <UserRoleEditor user={user} onSave={handleSaveRoles} />
                           </td>
 
                           <td className="px-4 py-4">
@@ -344,7 +399,8 @@ const Admin = () => {
                           </td>
 
                           <td className="px-4 py-4 text-gray-600">
-                            {user.class || user.year || "No Class"}
+                            {user.class || "No Class"}
+                            <UserClassEditor user={user} onSave={handleSaveClass} />
                           </td>
 
                           <td className="px-4 py-4">
@@ -384,6 +440,133 @@ const StatCard = ({ title, value }) => {
     <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl transition hover:-translate-y-1 hover:shadow-2xl">
       <p className="text-sm font-medium text-gray-500">{title}</p>
       <h3 className="mt-3 text-3xl font-bold text-gray-900">{value}</h3>
+    </div>
+  );
+};
+
+const UserClassEditor = ({ user, onSave }) => {
+  const [editing, setEditing] = useState(false);
+  const [userClass, setUserClass] = useState("");
+  const [saving, setSaving] = useState(false);
+  const numericClass = Number(userClass);
+  const validClass = userClass !== "" && Number.isSafeInteger(numericClass) && numericClass >= 0 && numericClass <= 12;
+
+  const save = async (event) => {
+    event.preventDefault();
+    if (!validClass || saving) return;
+    setSaving(true);
+    try {
+      if (await onSave(user, numericClass)) setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        aria-label={`Edit class for ${user.name || user.email}`}
+        onClick={() => {
+          setUserClass(String(user.class ?? 0));
+          setEditing(true);
+        }}
+        className="mt-2 block text-xs font-semibold text-blue-600 hover:text-blue-800"
+      >
+        Edit class
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={save} className="mt-3 min-w-48 rounded-xl border border-gray-200 bg-white p-3">
+      <label className="block text-xs font-semibold">
+        Assign class
+        <input
+          type="number"
+          min="0"
+          max="12"
+          step="1"
+          required
+          value={userClass}
+          onChange={(event) => setUserClass(event.target.value)}
+          disabled={saving}
+          className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </label>
+      <p className="mt-2 text-xs text-gray-500">Classes 1–12. Use 0 for no class.</p>
+      <div className="mt-3 flex gap-2">
+        <button type="submit" disabled={saving || !validClass} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+          {saving ? "Saving..." : "Save class"}
+        </button>
+        <button type="button" onClick={() => setEditing(false)} disabled={saving} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const UserRoleEditor = ({ user, onSave }) => {
+  const [editing, setEditing] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const roles = ["pascal", "admin", "pamela", "leader", "parent", "unAssigned"];
+
+  const toggleRole = (role) => {
+    setSelectedRoles((prev) => {
+      if (prev.includes(role)) return prev.filter((value) => value !== role);
+      if (role === "unAssigned") return [role];
+      return [...prev.filter((value) => value !== "unAssigned"), role];
+    });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      if (await onSave(user, selectedRoles)) setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        aria-label={`Edit roles for ${user.name || user.email}`}
+        onClick={() => {
+          setSelectedRoles(Array.isArray(user.role) ? user.role : user.role ? [user.role] : []);
+          setEditing(true);
+        }}
+        className="mt-2 block text-xs font-semibold text-blue-600 hover:text-blue-800"
+      >
+        Edit roles
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-3 min-w-48 rounded-xl border border-gray-200 bg-white p-3">
+      <fieldset disabled={saving}>
+        <legend className="mb-2 text-xs font-semibold">Assign roles</legend>
+        <div className="grid grid-cols-2 gap-2">
+          {roles.map((role) => (
+            <label key={role} className="flex items-center gap-2 text-xs capitalize">
+              <input type="checkbox" checked={selectedRoles.includes(role)} onChange={() => toggleRole(role)} />
+              {role === "unAssigned" ? "Unassigned" : role}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="mt-3 flex gap-2">
+        <button type="button" onClick={save} disabled={saving || selectedRoles.length === 0} className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">
+          {saving ? "Saving..." : "Save roles"}
+        </button>
+        <button type="button" onClick={() => setEditing(false)} disabled={saving} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold disabled:opacity-50">
+          Cancel
+        </button>
+      </div>
     </div>
   );
 };

@@ -33,7 +33,7 @@ const Profile = () => {
       name: "",
       email: "",
       phone: "",
-      class: "",
+      class: 0,
     });
 
   // ======================================================
@@ -132,7 +132,7 @@ const Profile = () => {
         name: userData.name || "",
         email: userData.email || "",
         phone: userData.phone || "",
-        class: userData.class || "",
+        class: userData.class ?? 0,
       });
     }
   }, [userData]);
@@ -222,7 +222,7 @@ const Profile = () => {
       name: userData?.name || "",
       email: userData?.email || "",
       phone: userData?.phone || "",
-      class: userData?.class || "",
+      class: userData?.class ?? 0,
     });
 
     setIsEditing(false);
@@ -233,13 +233,18 @@ const Profile = () => {
   // ======================================================
 
   const handleSave = async () => {
+    const userClass = Number(editData.class);
+    if (!Number.isInteger(userClass) || userClass < 0 || userClass > 12) {
+      toast.error("Class must be a whole number from 0 to 12. Use 0 for no class.");
+      return;
+    }
     try {
       setLoading(true);
 
       const { data } =
         await axios.put(
           `${backendUrl}/api/user/update-profile`,
-          editData,
+          { ...editData, class: userClass },
           {
             withCredentials: true,
           }
@@ -820,13 +825,16 @@ const Profile = () => {
                       <input
                         type="number"
                         name="class"
+                        min="0"
+                        max="12"
+                        step="1"
                         value={
                           editData.class
                         }
                         onChange={
                           handleChange
                         }
-                        placeholder="Enter class"
+                        placeholder="0–12 (0 means no class)"
                         className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     ) : (
