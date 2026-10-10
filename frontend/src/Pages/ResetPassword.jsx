@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { assets } from "../assets/assets.js";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
@@ -58,11 +58,25 @@ const ResetPassword = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [cooldown, setCooldown] = useState({ email: "", until: 0 });
+  const [currentTime, setCurrentTime] = useState(Date.now);
+  const resendSeconds = email.trim() === cooldown.email ? Math.max(0, Math.ceil((cooldown.until - currentTime) / 1000)) : 0;
+
+  useEffect(() => {
+    if (cooldown.until <= Date.now()) return;
+    const timer = setInterval(() => {
+      const timestamp = Date.now();
+      setCurrentTime(timestamp);
+      if (timestamp >= cooldown.until) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown.until]);
 
   const sendOtpHandler = async (e) => {
     e.preventDefault();
 
     const trimmedEmail = email.trim();
+    if (isSendingOtp || (trimmedEmail === cooldown.email && cooldown.until > Date.now())) return;
 
     if (!trimmedEmail) {
       toast.error("Email is required");
@@ -80,6 +94,8 @@ const ResetPassword = () => {
       );
 
       if (data.success) {
+        setCurrentTime(Date.now());
+        setCooldown({ email: trimmedEmail, until: data.otpResendAvailableAt || Date.now() + 60_000 });
         toast.success(data.message || "OTP sent to your email");
         setEmail(trimmedEmail);
         setStep(2);
@@ -87,6 +103,10 @@ const ResetPassword = () => {
         toast.error(data.message || "Failed to send OTP");
       }
     } catch (error) {
+      if (error.response?.status === 429) {
+        setCurrentTime(Date.now());
+        setCooldown({ email: trimmedEmail, until: error.response.data.otpResendAvailableAt || Date.now() + error.response.data.retryAfter * 1000 });
+      }
       toast.error(error.response?.data?.message || error.message);
     } finally {
       setIsSendingOtp(false);
@@ -179,10 +199,10 @@ const ResetPassword = () => {
 
                   <button
                     type="submit"
-                    disabled={isSendingOtp}
+                    disabled={isSendingOtp || resendSeconds > 0}
                     className="h-12 w-full rounded-xl bg-indigo-600 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSendingOtp ? "Sending OTP..." : "Send OTP"}
+                    {isSendingOtp ? "Requesting OTP..." : resendSeconds > 0 ? `Request another OTP in ${resendSeconds}s` : "Send OTP"}
                   </button>
                 </form>
               ) : (

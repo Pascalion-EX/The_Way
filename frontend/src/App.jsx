@@ -77,10 +77,9 @@ const App = () => {
 
         <Route path="/login" element={<Login />} />
 
-        <Route
-          path="/email-verify"
-          element={<EmailVerify />}
-        />
+        <Route element={<ProtectedRoute requireVerified={false} />}>
+          <Route path="/email-verify" element={<EmailVerify />} />
+        </Route>
 
         <Route
           path="/reset-password"

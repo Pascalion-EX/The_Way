@@ -6,6 +6,7 @@ import {
 } from "react";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
+import globalAxios from "axios";
 
 export const AppContent = createContext();
 
@@ -85,6 +86,18 @@ export const AppContextProvider = ({ children }) => {
   useEffect(() => {
     getAuthState();
   }, [getAuthState]);
+
+  useEffect(() => {
+    const handleError = (error) => {
+      if (error.response?.data?.code === "EMAIL_VERIFICATION_REQUIRED") {
+        setUserData((prev) => prev ? { ...prev, isAccountVerified: false } : prev);
+      }
+      return Promise.reject(error);
+    };
+    const clients = [axios, globalAxios];
+    const interceptors = clients.map((client) => client.interceptors.response.use(undefined, handleError));
+    return () => clients.forEach((client, index) => client.interceptors.response.eject(interceptors[index]));
+  }, []);
 
   const value = {
     backendUrl,

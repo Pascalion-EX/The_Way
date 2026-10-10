@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import userModel from "../models/userModel.js";
 
-const userAuth = async (req, res, next) => {
+export const authenticateUser = async (req, res, next) => {
   try {
     const token = req.cookies?.token;
 
@@ -44,5 +45,34 @@ const userAuth = async (req, res, next) => {
     });
   }
 };
+
+export const requireVerifiedUser = async (req, res, next) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ success: false, message: "Not authorized. Please log in again." });
+    }
+
+    const user = await userModel.findById(req.userId).select("isAccountVerified");
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found. Please log in again." });
+    }
+
+    if (!user.isAccountVerified) {
+      return res.status(403).json({
+        success: false,
+        code: "EMAIL_VERIFICATION_REQUIRED",
+        message: "Please verify your email before using the site.",
+        redirectTo: "/email-verify",
+      });
+    }
+
+    return next();
+  } catch {
+    return res.status(500).json({ success: false, message: "Unable to check email verification." });
+  }
+};
+
+const userAuth = (req, res, next) =>
+  authenticateUser(req, res, () => requireVerifiedUser(req, res, next));
 
 export default userAuth;

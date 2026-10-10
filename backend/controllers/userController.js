@@ -17,6 +17,8 @@ export const getUserData = async (req, res) => {
         email: user.email,
         phone: user.phone,
         class: user.class,
+        verificationEmailQueued: Boolean(user.emailJobs?.verification),
+        otpResendAvailableAt: user.verifyOtpRequestedAt ? user.verifyOtpRequestedAt + 60_000 : 0,
       },
     });
   } catch (error) {
@@ -49,7 +51,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await userModel
       .findByIdAndUpdate(userId, updateData, { new: true, runValidators: true })
-      .select("-password -verifyOtp -resetOtp");
+      .select("-password -verifyOtp -resetOtp -emailJobs");
 
     if (!user) {
       return res.status(404).json({

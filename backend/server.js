@@ -16,10 +16,12 @@ import videoRequestRouter from "./routes/videoRequestRoutes.js";
 import childProfileRouter from "./routes/childProfileRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
 import attendanceRouter from "./routes/attendanceRoutes.js";
+import { startEmailWorker } from "./services/emailQueue.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
-connectDB();
+await connectDB();
+startEmailWorker();
 
 const allowedOrigins = ["http://localhost:5173"];
 

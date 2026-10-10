@@ -1,7 +1,9 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
-import transporter from "../config/nodemailer.js";
+import { createEmailJob } from "../services/emailQueue.js";
+import { randomInt } from "node:crypto";
+import { queueOtpRequest } from "../services/otpRequests.js";
 
 
 export const checkAuth = async (req, res) => {
@@ -34,7 +36,24 @@ export const register = async (req, res) => {
 
     const hashedpassword = await bcrypt.hash(password, 10);
 
-    const user = new userModel({ name, email, password: hashedpassword , phone, role });
+    const otp = String(randomInt(100000, 1000000));
+    const otpExpiresAt = Date.now() + 12 * 60 * 60 * 1000;
+    const user = new userModel({
+      name, email, password: hashedpassword, phone, role,
+      verifyOtp: otp, verifyOtpExpireAt: otpExpiresAt,
+      verifyOtpRequestedAt: Date.now(),
+      emailJobs: {
+        welcome: createEmailJob({
+          to: email, subject: "Welcome to the Way service",
+          text: `Welcome to the Way service website. Your account has been created with email id: ${email}`,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        }),
+        verification: createEmailJob({
+          to: email, subject: "The Way service OTP", text: `Dear ${name},\nYour OTP is ${otp}`,
+          expiresAt: otpExpiresAt,
+        }),
+      },
+    });
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -48,15 +67,7 @@ export const register = async (req, res) => {
       maxAge: 2 * 24 * 60 * 60 * 1000,
     });
 
-    const mailoptions = {
-      from: process.env.SENDER_EMAIL,
-      to: email,
-      subject: "Welcome to the Way service",
-      text: `Welcome to the Way service website. Your account has been created with email id: ${email}`,
-    };
-
-    await transporter.sendMail(mailoptions);
-    return res.json({ success: true });
+    return res.json({ success: true, message: "Account created. Your verification email will arrive shortly.", emailQueued: true });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -201,26 +212,17 @@ export const sendVerifyotp = async (req, res) => {
       });
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-
-    user.verifyOtp = otp;
-    user.verifyOtpExpireAt = Date.now() + 12 * 60 * 60 * 1000;
-
-    await user.save();
-
-    const mailoptions = {
-      from: process.env.SENDER_EMAIL,
-      to: user.email,
-      subject: "The Way service OTP",
-      text: `Dear ${user.name},
-Your OTP is ${otp}`,
-    };
-
-    await transporter.sendMail(mailoptions);
+    const result = await queueOtpRequest(user, "verification");
+    if (!result.success) {
+      if (result.retryAfter) res.set("Retry-After", String(result.retryAfter));
+      return res.status(result.status).json(result);
+    }
 
     return res.json({
       success: true,
-      message: "OTP sent",
+      message: "Verification email requested. It will arrive shortly; delivery retries automatically.",
+      emailQueued: true,
+      otpResendAvailableAt: result.otpResendAvailableAt,
     });
   } catch (error) {
     return res.json({ success: false, message: error.message });
@@ -230,15 +232,15 @@ Your OTP is ${otp}`,
 export const verifyEmail = async (req, res) => {
   const userId = req.userId;
   const {otp } = req.body;
-  if (!userId || !otp) {
-    return res.json({ success: false, message: "missing details" });
+  if (!userId || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+    return res.json({ success: false, message: "Enter a valid 6-digit OTP" });
   }
   try {
     const user = await userModel.findById(userId);
     if (!user) {
       return res.json({ success: false, message: "User not found" });
     }
-    if (user.verifyOtp == "" || user.verifyOtp != otp) {
+    if (user.verifyOtp === "" || user.verifyOtp !== otp) {
       return res.json({
         success: false,
         message: "Your OTP is wrong or empty",
@@ -251,6 +253,7 @@ export const verifyEmail = async (req, res) => {
     user.isAccountVerified = true;
     user.verifyOtp = "";
     user.verifyOtpExpireAt = 0;
+    user.emailJobs.verification = undefined;
 
     await user.save();
     return res.json({
@@ -281,22 +284,12 @@ export const sendResetOtp = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
-    const otp = String(Math.floor(100000 + Math.random() * 900000));
-    user.resetOtp = otp;
-    user.resetOtpExpireAt = Date.now() + 12 * 60 * 60 * 1000;
-
-    await user.save();
-
-    const mailoptions = {
-      from: process.env.SENDER_EMAIL,
-      to: user.email,
-      subject: "Password Reset OTP",
-      text: `Welcome to the Way service website. 
-            Your Password Reset OTP is ${otp}.
-            Use this OTP to proceed with resetting your password.`,
-    };
-    await transporter.sendMail(mailoptions);
-    return res.json({ success: true, message: "OTP sent to your Email" });
+    const result = await queueOtpRequest(user, "passwordReset");
+    if (!result.success) {
+      if (result.retryAfter) res.set("Retry-After", String(result.retryAfter));
+      return res.status(result.status).json(result);
+    }
+    return res.json({ success: true, message: "Password reset email requested. It will arrive shortly.", emailQueued: true, otpResendAvailableAt: result.otpResendAvailableAt });
   } catch (error) {
     return res.json({ success: false, message: error.message });
   }
@@ -333,6 +326,7 @@ export const resetPassword = async (req, res) => {
     user.password = hashedpassword;
     user.resetOtp = "";
     user.resetOtpExpireAt = 0;
+    user.emailJobs.passwordReset = undefined;
 
     await user.save();
 
