@@ -35,17 +35,14 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
 
 
       <h1 className="flex items-center gap-2 text-xl sm:text-3xl font-semibold mb-2">
-        Hey {userData ? userData.name : "Servant"}{" "}
+        Hey, {userData ? userData.name : "Servant"}{" "}
         
       </h1>
 
       <h2 className="text-3xl sm:text-5xl font-bold mb-4">
-        Welcome to The Way's Website
+        Welcome to The Way
       </h2>
 
-      <p className="mb-8 max-w-md">
-        Everything that you will need for the service is here!
-      </p>
 
       {/* --- Button Container Start --- */}
       <div className="flex flex-wrap justify-center gap-4">
@@ -119,7 +116,13 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           </button>
           
         )}
-  
+           {hasVideoRequestAccess && (
+          <button
+            onClick={() => navigate("/video-requests")}
+            className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
+          >
+            Video Editing Requests
+          </button>)}
         
       </div>
       {/* --- Button Container End --- */}

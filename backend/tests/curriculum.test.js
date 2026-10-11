@@ -5,7 +5,7 @@ import curriculumModel from "../models/curriculumModel.js";
 import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 import {
-  createCurriculum, getCurricula, getCurriculumById, updateCurriculum, deleteCurriculum,
+  createCurriculum, getcurriculum, getCurriculumById, updateCurriculum, deleteCurriculum,
 } from "../controllers/curriculumController.js";
 import { validateCurriculumTree } from "../utils/curriculumTree.js";
 
@@ -129,7 +129,7 @@ test("read endpoints return graph data and handle invalid or missing ids", async
   t.mock.method(curriculumModel.collection, "find", () => ({ toArray: async () => [curriculumRecord()] }));
   const find = t.mock.method(curriculumModel.collection, "findOne", async () => curriculumRecord());
   const list = response();
-  await getCurricula({}, list);
+  await getcurriculum({}, list);
   assert.equal(list.statusCode, 200);
   assert.equal(list.body.curriculum[0].graph.nodes.length, 4);
   const read = response();

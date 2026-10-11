@@ -93,7 +93,7 @@ export const createCurriculum = async (req, res) => {
   }
 };
 
-export const getCurricula = async (req, res) => {
+export const getcurriculum = async (req, res) => {
   try {
     const curriculum = await curriculumModel.find().sort({ createdAt: -1 }).populate("nodes.lesson");
     return res.status(200).json({ success: true, curriculum: curriculum.map(serialize) });

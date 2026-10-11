@@ -10,7 +10,7 @@ import Login from "./Pages/Login";
 import Home from "./Pages/Home";
 import Calendar from "./Pages/Calendar.jsx";
 import Lessons from "./Pages/Lessons";
-import Curricula from "./Pages/Curricula.jsx";
+import Curriculum from "./Pages/Curriculum.jsx";
 import EmailVerify from "./Pages/EmailVerify";
 import ResetPassword from "./Pages/ResetPassword";
 import CreateLesson from "./Pages/CreateLesson";
@@ -127,7 +127,7 @@ const App = () => {
             
             {/* Home */}
             <Route path="/" element={<Home />} />
-            <Route path="/curriculum" element={<Curricula />} />
+            <Route path="/curriculum" element={<Curriculum />} />
 
             {/* Info */}
             <Route path="/info" element={<Info />} />

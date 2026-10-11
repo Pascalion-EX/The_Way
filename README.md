@@ -69,13 +69,13 @@ The frontend communicates with the backend through REST endpoints and uses an HT
 
 ### Lessons
 
-Curricula organize existing lessons into named trees with connected lesson nodes.
+curriculum organize existing lessons into named trees with connected lesson nodes.
 See [Curriculum API](backend/CURRICULA.md) for endpoints, validation, and examples.
-Open **Curricula** from the navigation menu (`/curriculum`) to explore the tree.
+Open **curriculum** from the navigation menu (`/curriculum`) to explore the tree.
 Drag the background to pan, drag individual nodes to rearrange the view, and click
 a lesson to open it. Zoom, fit, reset, and wiggle controls are above the tree;
 wiggle respects reduced-motion preferences. Layout changes are temporary.
-The Curricula navigation button is shown to `admin`, `pascal`, `pamela`, and
+The curriculum navigation button is shown to `admin`, `pascal`, `pamela`, and
 `leader` roles. These users can create curriculum, edit lesson connections, and
 delete curriculum on this page. Deleting a curriculum preserves its lessons.
 Selected curriculum are retained in the URL as `?curriculum=<id>`.

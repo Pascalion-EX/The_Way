@@ -9,11 +9,11 @@ import Navbar from "../Components/Navbar.jsx";
 import CurriculumTree from "../Components/CurriculumTree.jsx";
 import CurriculumEditor from "../Components/CurriculumEditor.jsx";
 
-export default function Curricula() {
+export default function Curriculum() {
   const { backendUrl, userData } = useContext(AppContent);
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const [curriculum, setCurricula] = useState([]);
+  const [curriculumList, setCurriculumList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -23,14 +23,14 @@ export default function Curricula() {
   const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
   const canManage = roles.some((role) => ["pascal", "admin", "leader", "pamela"].includes(role));
   const selectedId = params.get("curriculum");
-  const selected = curriculum.find((curriculum) => curriculum._id === selectedId) || (!selectedId ? curriculum[0] : null);
-  const filtered = curriculum.filter((curriculum) => curriculum.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const selected = curriculumList.find((curriculum) => curriculum._id === selectedId) || (!selectedId ? curriculumList[0] : null);
+  const filtered = curriculumList.filter((curriculum) => curriculum.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   useEffect(() => {
     const controller = new AbortController();
     axios.get(`${backendUrl}/api/curriculum`, { signal: controller.signal }).then(({ data }) => {
       if (!data.success) throw new Error(data.message || "Unable to load curriculum");
-      setCurricula(data.curriculum || []);
+      setCurriculumList(data.curriculum || []);
       setError("");
     }).catch((failure) => {
       if (!controller.signal.aborted) setError(failure.response?.data?.message || failure.message);
@@ -39,7 +39,7 @@ export default function Curricula() {
   }, [backendUrl, reload]);
 
   const onSaved = (curriculum) => {
-    setCurricula((current) => [curriculum, ...current.filter((item) => item._id !== curriculum._id)]);
+    setCurriculumList((current) => [curriculum, ...current.filter((item) => item._id !== curriculum._id)]);
     setParams({ curriculum: curriculum._id });
     setEditor(null);
     toast.success("Curriculum saved");
@@ -53,8 +53,8 @@ export default function Curricula() {
     try {
       const { data } = await axios.delete(`${backendUrl}/api/curriculum/${curriculum._id}`);
       if (!data.success) throw new Error(data.message || "Unable to delete curriculum");
-      const remaining = curriculum.filter((item) => item._id !== curriculum._id);
-      setCurricula((current) => current.filter((item) => item._id !== curriculum._id));
+      const remaining = curriculumList.filter((item) => item._id !== curriculum._id);
+      setCurriculumList((current) => current.filter((item) => item._id !== curriculum._id));
       setParams((current) => {
         const next = new URLSearchParams(current);
         if (!next.get("curriculum") || next.get("curriculum") === curriculum._id) {
@@ -79,7 +79,7 @@ export default function Curricula() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.25em] text-[#a57922]">Saint George Church · The Way</p>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Curricula</h1>
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Curriculum</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-gray-500 sm:text-base">Every lesson is a step forward. Follow the connections and explore your learning journey.</p>
           </div>
           {canManage && <button type="button" disabled={Boolean(deletingId)} onClick={() => setEditor({ curriculum: null })} className="inline-flex items-center gap-2 rounded-xl bg-black px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-gray-800 disabled:opacity-50"><Plus size={18} />Create curriculum</button>}
@@ -89,7 +89,7 @@ export default function Curricula() {
           <div role="status" className="flex min-h-[400px] items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm text-gray-500"><span className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-indigo-600" />Loading curriculum…</div>
         ) : error ? (
           <div role="alert" className="rounded-2xl border border-red-100 bg-red-50 p-6 text-sm text-red-700">{error}<button type="button" onClick={() => { setLoading(true); setReload((value) => value + 1); }} className="ml-4 font-semibold underline">Try again</button></div>
-        ) : curriculum.length === 0 ? (
+        ) : curriculumList.length === 0 ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border border-gray-200 bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-8 text-center">
             <GitBranch size={40} className="mb-5 text-indigo-500" />
             <h2 className="text-xl font-semibold">A new learning journey starts here</h2>
@@ -98,7 +98,7 @@ export default function Curricula() {
           </div>
         ) : (
           <div className="grid items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-            <aside className="rounded-2xl border border-gray-200 bg-transparent p-4 shadow-sm">
+            <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
               <h2 className="mb-4 text-sm font-semibold">Your learning paths</h2>
               <label className="relative mb-4 block"><span className="sr-only">Search curriculum</span><Search size={16} className="absolute left-3 top-3.5 text-gray-400" /><input className="h-11 w-full rounded-xl border border-gray-200 pl-9 pr-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500" placeholder="Find a curriculum" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
               <div className="max-h-[420px] space-y-2 overflow-y-auto">
@@ -108,7 +108,7 @@ export default function Curricula() {
                   <GitBranch size={20} className="shrink-0 text-indigo-500" />
                   <span className="min-w-0 flex-1"><span className="block break-words text-sm font-semibold" dir="auto">{curriculum.name}</span><span className="mt-1 block text-xs text-gray-500">{curriculum.nodes.length} lessons</span></span><ChevronRight size={16} className="shrink-0 text-gray-400" />
                 </button>)}
-                {!filtered.length && <p className="py-4 text-sm text-gray-500">No curriculum match your search.</p>}
+                {!filtered.length && <p className="py-4 text-sm text-gray-500">No matching curriculum found.</p>}
               </div>
               <div className="mt-5 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 p-4"><p className="text-sm font-medium text-indigo-900">Grow in knowledge, one lesson at a time.</p><p className="mt-2 text-xs leading-5 text-gray-500">The root is your starting point. Follow each branch to discover what comes next.</p></div>
             </aside>
