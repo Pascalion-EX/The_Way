@@ -1,6 +1,5 @@
 import React from "react";
 import Navbar from "../Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
 
 const Info = () => {
   const informationCards = [
@@ -57,25 +56,7 @@ const Info = () => {
     },
   ];
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-gray-900">
-      {/* Background */}
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(110, 110, 110, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={60}
-          waveAmpY={40}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
+    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
 
       {/* Page content */}
       <div className="relative z-10">
@@ -93,7 +74,6 @@ const Info = () => {
               I AM <span className="block text-amber-500">THE WAY</span>
               THE TRUTH AND THE LIFE
             </h1>
-
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <a
@@ -150,7 +130,6 @@ const Info = () => {
               ))}
             </div>
           </section>
-
 
           {/* Features */}
           <section id="features" className="scroll-mt-28 py-16">
@@ -221,7 +200,6 @@ const Info = () => {
             </div>
           </section>
         </main>
-
 
       </div>
     </div>

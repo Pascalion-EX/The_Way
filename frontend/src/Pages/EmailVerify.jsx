@@ -113,7 +113,7 @@ const EmailVerify = () => {
   if (userData?.isAccountVerified) return <Navigate to={destination} replace />;
 
   return (
-    <div className='relative min-h-screen overflow-hidden bg-[url("/bg.jpg")] bg-cover bg-center text-gray-800'>
+    <div className="relative min-h-screen overflow-hidden text-gray-800 bg-transparent">
       {/* Background overlay */}
       <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" />
 

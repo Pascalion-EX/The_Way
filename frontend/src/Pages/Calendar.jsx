@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import Navbar from "../Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -243,28 +243,10 @@ const handleDeleteEvent = async () => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 relative overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(110, 110, 110, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={60}
-          waveAmpY={40}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
+    <div className="min-h-screen text-gray-900 relative overflow-hidden bg-transparent">
 
       {/* Main Content */}
-      <div className="relative z-10 min-h-screen">
+      <div className="relative z-10 min-h-screen bg-transparent">
         <Navbar />
         <br/>
 

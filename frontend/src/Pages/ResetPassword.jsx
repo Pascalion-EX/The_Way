@@ -4,29 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
-import Waves from "../Components/Waves.jsx";
 
   const DesktopVisual = () => (
     <div className="relative hidden overflow-hidden lg:block">
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-      <div className="absolute inset-0">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
-
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white" />
 
       <div className="relative z-10 flex h-full items-center justify-center px-12">
         <div className="max-w-md">
@@ -156,10 +136,8 @@ const ResetPassword = () => {
     }
   };
 
-
-
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-gray-900">
+    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
       {/* Logo */}
       <div className="relative z-20 px-4 pt-5 sm:px-8 lg:absolute lg:left-12 lg:top-6 lg:p-0">
         <img
@@ -170,12 +148,12 @@ const ResetPassword = () => {
         />
       </div>
 
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
         <DesktopVisual />
 
-        <main className="flex items-start justify-center px-4 pb-10 pt-8 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
+        <main className="min-w-0 flex items-start justify-center px-4 pb-10 pt-8 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
           <div className="w-full max-w-md">
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8 lg:border-0 lg:p-0 lg:shadow-none">
+            <div className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
               <h1 className="break-words text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Reset password
               </h1>

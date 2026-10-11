@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 
 import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
-import Waves from "../Components/Waves.jsx";
 
 const Profile = () => {
   const {
@@ -588,30 +587,11 @@ const Profile = () => {
   // ======================================================
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-
-      {/* Background */}
-
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-transparent">
 
       <div className="relative z-10">
         <Navbar />
         <br/>
-
 
         <main className="relative z-10 mx-auto max-w-6xl px-4 pb-10 pt-28 sm:px-6 lg:px-8">
           <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">

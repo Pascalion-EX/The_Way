@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import Navbar from "../Components/Navbar";
-import Waves from "../Components/Waves.jsx";
+
 import { AppContent } from "../Context/AppContext.jsx";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "../utils/axios";
@@ -189,8 +189,8 @@ const getYouTubeEmbedUrl = (url) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 relative overflow-hidden">
-        <Waves />
+      <div className="min-h-screen relative overflow-hidden bg-transparent">
+        
         <Navbar />
         <div className="relative z-10 flex items-center justify-center min-h-[70vh] text-gray-700 font-semibold">
           Loading chant...
@@ -258,20 +258,8 @@ const getYouTubeEmbedUrl = (url) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 relative overflow-hidden">
-              <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(110, 110, 110, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={60}
-          waveAmpY={40}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
+    <div className="min-h-screen relative overflow-hidden bg-transparent">
+              
       <Navbar />
 
       <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28">

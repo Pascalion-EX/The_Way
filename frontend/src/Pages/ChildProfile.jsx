@@ -18,7 +18,6 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
 
 // ======================================================
 // EMPTY FORM
@@ -403,36 +402,11 @@ const ChildProfiles = () => {
 
   return (
     <div
-      className="
-        relative
-        min-h-screen
-        overflow-hidden
-        bg-gradient-to-br
-        from-indigo-50
-        via-white
-        to-purple-50
-        text-gray-900
-      "
+      className=" relative min-h-screen overflow-hidden text-gray-900  bg-transparent"
     >
       {/* ================================================= */}
       {/* BACKGROUND */}
       {/* ================================================= */}
-
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(255,255,255,0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
 
       <Navbar />
               <div className="hidden lg:block">

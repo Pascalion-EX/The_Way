@@ -4,7 +4,7 @@ import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets.js";
-import Waves from "../Components/Waves.jsx";
+
 import Navbar from "@/Components/Navbar.jsx";
 
 const Games = () => {
@@ -112,28 +112,9 @@ const handleViewGame = (game) => {
 
   return (
 
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+      <div className="relative isolate grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
         {/* Desktop Visual Section */}
         <div className="relative hidden overflow-hidden lg:block">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-          <div className="absolute inset-0">
-            <Waves
-              lineColor="#e4b54f"
-              backgroundColor="rgba(255, 255, 255, 0)"
-              waveSpeedX={0.08}
-              waveSpeedY={0.03}
-              waveAmpX={40}
-              waveAmpY={20}
-              friction={0.9}
-              tension={0.01}
-              maxCursorMove={320}
-              xGap={10}
-              yGap={20}
-            />
-          </div>
-
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white" />
 
           <div className="relative z-10 flex h-full items-center justify-center px-12">
             <div className="max-w-md">
@@ -149,8 +130,8 @@ const handleViewGame = (game) => {
         </div>
         <Navbar/>
         {/* Main Content */}
-        <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
-          <div className="mx-auto w-full max-w-4xl">
+        <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
+          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
             {/* Header */}
             <div>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
+
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
@@ -256,26 +256,9 @@ const EditEvent = () => {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-white text-gray-900 relative overflow-hidden">
-        <div className="fixed inset-0 z-0 pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
+      <div className="min-h-screen text-gray-900 relative overflow-hidden bg-transparent">
 
-          <Waves
-            lineColor="#e4b54f7e"
-            backgroundColor="rgba(110, 110, 110, 0)"
-            waveSpeedX={0.08}
-            waveSpeedY={0.03}
-            waveAmpX={60}
-            waveAmpY={40}
-            friction={0.9}
-            tension={0.01}
-            maxCursorMove={320}
-            xGap={10}
-            yGap={20}
-          />
-        </div>
-
-        <div className="relative z-10 min-h-screen">
+        <div className="relative z-10 min-h-screen bg-transparent">
           <Navbar />
 
           <main className="pt-28 pb-16 px-4 sm:px-6 lg:px-8">
@@ -300,34 +283,16 @@ const EditEvent = () => {
   // =========================================================
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 relative overflow-hidden">
+    <div className="min-h-screen text-gray-900 relative overflow-hidden bg-transparent">
       {/* =====================================================
           BACKGROUND
       ====================================================== */}
-
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(110, 110, 110, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={60}
-          waveAmpY={40}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
 
       {/* =====================================================
           PAGE
       ====================================================== */}
 
-      <div className="relative z-10 min-h-screen">
+      <div className="relative z-10 min-h-screen bg-transparent">
         <Navbar />
 
         <div className="sm:hidden">

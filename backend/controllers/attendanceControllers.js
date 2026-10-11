@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Attendance from "../models/attendanceModel.js";
 import childProfilemodel from "../models/childProfileModel.js";
 
@@ -182,7 +183,8 @@ export const takeWeeklyAttendance = async (req, res) => {
 
     // Verify that all children actually exist
     const children = await childProfilemodel.find({
-      _id: { $in: childIds },
+      // Preserve this intentional operator when sanitizeFilter is enabled.
+      _id: mongoose.trusted({ $in: childIds }),
     });
 
     if (children.length !== childIds.length) {

@@ -268,7 +268,7 @@ const Waves = ({
     }
     function updateMouse(x, y) {
       const mouse = mouseRef.current,
-        b = boundingRef.current;
+        b = container.getBoundingClientRect();
       mouse.x = x - b.left;
       mouse.y = y - b.top;
       if (!mouse.set) {
@@ -282,12 +282,15 @@ const Waves = ({
 
     setSize();
     setLines();
+    const resizeObserver = new ResizeObserver(onResize);
+    resizeObserver.observe(container);
     frameIdRef.current = requestAnimationFrame(tick);
     window.addEventListener('resize', onResize);
     window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('touchmove', onTouchMove, { passive: false });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchmove', onTouchMove);

@@ -10,6 +10,7 @@ import Login from "./Pages/Login";
 import Home from "./Pages/Home";
 import Calendar from "./Pages/Calendar.jsx";
 import Lessons from "./Pages/Lessons";
+import Curricula from "./Pages/Curricula.jsx";
 import EmailVerify from "./Pages/EmailVerify";
 import ResetPassword from "./Pages/ResetPassword";
 import CreateLesson from "./Pages/CreateLesson";
@@ -43,6 +44,7 @@ import VideoRequests from "./Pages/VideoRequests";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Footer from "./Components/footer";
+import Waves from "./Components/Waves.jsx";
 
 /*
   Layout used after authentication.
@@ -63,13 +65,28 @@ const ProtectedLayout = () => {
 
 const App = () => {
   return (
-    <>
+    <div className="relative isolate flex min-h-screen flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
+        <Waves
+          lineColor="#e4b54f7e"
+          waveSpeedX={0.08}
+          waveSpeedY={0.03}
+          waveAmpX={60}
+          waveAmpY={40}
+          friction={0.9}
+          tension={0.01}
+          maxCursorMove={320}
+          xGap={10}
+          yGap={20}
+        />
+      </div>
       <ToastContainer 
         position="top-right"
         autoClose={3000}
         className="!z-[99999]"
       />
 
+      <div className="relative z-10 flex-1">
       <Routes>
         {/* =========================
             PUBLIC ROUTES
@@ -110,6 +127,7 @@ const App = () => {
             
             {/* Home */}
             <Route path="/" element={<Home />} />
+            <Route path="/curriculum" element={<Curricula />} />
 
             {/* Info */}
             <Route path="/info" element={<Info />} />
@@ -267,8 +285,9 @@ const App = () => {
           element={<Navigate to="/" replace />}
         />
       </Routes>
-<Footer/>
-    </>
+      </div>
+      <Footer />
+    </div>
   );
 };
 

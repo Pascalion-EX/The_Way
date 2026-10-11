@@ -3,30 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
-import Waves from "../Components/Waves.jsx";
+
 import Navbar from "@/Components/Navbar.jsx";
 
 const DesktopVisual = () => (
   <div className="relative hidden overflow-hidden lg:block">
-    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50" />
-
-    <div className="absolute inset-0">
-      <Waves
-        lineColor="#e4b54f"
-        backgroundColor="rgba(255, 255, 255, 0)"
-        waveSpeedX={0.08}
-        waveSpeedY={0.03}
-        waveAmpX={40}
-        waveAmpY={20}
-        friction={0.9}
-        tension={0.01}
-        maxCursorMove={320}
-        xGap={10}
-        yGap={20}
-      />
-    </div>
-
-    <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white" />
 
     <div className="relative z-10 flex h-full items-center justify-center px-12">
       <div className="max-w-md">
@@ -222,14 +203,14 @@ const CreateLesson = () => {
 
   if (!canCreate) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-white text-gray-900">
+      <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
         <Navbar />
 
-        <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+        <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
           <DesktopVisual />
 
-          <main className="flex items-start justify-center px-4 pb-10 pt-40 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
-            <div className="w-full max-w-3xl rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8 lg:border-0 lg:p-0 lg:shadow-none">
+          <main className="min-w-0 flex items-start justify-center px-4 pb-10 pt-40 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
+            <div className="w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
               <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Create lesson
               </h1>
@@ -255,14 +236,14 @@ const CreateLesson = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-gray-900">
+    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
       <Navbar />
 
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
         <DesktopVisual />
 
-        <main className="px-4 pb-12 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-36 xl:px-16">
-          <div className="mx-auto w-full max-w-4xl">
+        <main className="min-w-0 px-4 pb-12 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-36 xl:px-16">
+          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="mb-6 sm:mb-8">
               <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Create lesson

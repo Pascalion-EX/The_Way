@@ -100,7 +100,16 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           >
             Attendance
           </button>)}
-
+            {hasAdminAccess && (
+          <button
+            onClick={() => navigate("/curriculum")}
+            className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
+          >
+            Curriculum
+          </button>
+          
+        )}        
+                  
                 {hasAdminAccess && (
           <button
             onClick={() => navigate("/admin")}
@@ -110,13 +119,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           </button>
           
         )}
-           {hasVideoRequestAccess && (
-          <button
-            onClick={() => navigate("/video-requests")}
-            className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
-          >
-            Video Editing Requests
-          </button>)}
+  
         
       </div>
       {/* --- Button Container End --- */}

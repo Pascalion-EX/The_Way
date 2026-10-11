@@ -32,6 +32,9 @@ const Navbar = () => {
       String(role).trim().toLowerCase()
     )
   );
+  const hasCurriculumAccess = userRoles.some((role) =>
+    ["admin", "pascal", "pamela", "leader"].includes(role)
+  );
   const videoRequestRoles = [
   "pamela",
   "leader",
@@ -216,7 +219,7 @@ const hasVideoRequestAccess = userData
       {/* Main navigation dropdown */}
       {navMenuOpen && (
         <div className="pointer-events-auto absolute left-4 right-4 top-32 z-[10000] sm:left-8 sm:right-auto sm:top-36 sm:max-w-[calc(100vw-4rem)] lg:left-12 lg:top-40">
-          <div className="flex max-h-[70vh] flex-wrap gap-3 overflow-y-auto rounded-2xl border border-gray-200 bg-white p-4 shadow-xl">
+          <div className="flex max-h-[70vh] flex-wrap gap-3 overflow-y-auto rounded-2xl border border-gray-200 bg-transparent p-4 shadow-xl backdrop-blur-md">
             <button
               type="button"
               onClick={() => handleNavigate("/")}
@@ -232,6 +235,8 @@ const hasVideoRequestAccess = userData
             >
               Lessons
             </button>
+
+
 
             <button
               type="button"
@@ -315,6 +320,14 @@ className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-
                 Video Editing Requests
               </button>
             )}
+
+                        {hasCurriculumAccess && <button
+              type="button"
+              onClick={() => handleNavigate("/curriculum")}
+              className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"
+            >
+              Curriculum
+            </button>}
           </div>
         </div>
       )}

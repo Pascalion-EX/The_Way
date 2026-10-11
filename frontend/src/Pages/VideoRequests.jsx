@@ -9,13 +9,11 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
-import Waves from "@/Components/Waves.jsx";
 import Navbar from "../Components/Navbar.jsx";
 import VideoRequestForm from "../Components/VideoRequestForm.jsx";
 
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
-
 
 const PAGE_ROLES = [
   "pamela",
@@ -24,14 +22,12 @@ const PAGE_ROLES = [
   "admin",
 ];
 
-
 const STATUS_OPTIONS = [
   "Pending",
   "In Progress",
   "Completed",
   "Rejected",
 ];
-
 
 const PRIORITY_OPTIONS = [
   "Low",
@@ -40,7 +36,6 @@ const PRIORITY_OPTIONS = [
   "Urgent",
 ];
 
-
 const VideoRequests = () => {
   const navigate = useNavigate();
 
@@ -48,7 +43,6 @@ const VideoRequests = () => {
     userData,
     backendUrl,
   } = useContext(AppContent);
-
 
   const [requests, setRequests] = useState([]);
 
@@ -59,7 +53,6 @@ const VideoRequests = () => {
 
   const [deletingId, setDeletingId] =
     useState(null);
-
 
   // ============================================================
   // USER ROLES
@@ -75,15 +68,12 @@ const VideoRequests = () => {
       : [userData.role];
   }, [userData]);
 
-
   const hasPageAccess = roles.some((role) =>
     PAGE_ROLES.includes(role)
   );
 
-
   const ispascal =
     roles.includes("pascal");
-
 
   // ============================================================
   // FETCH REQUESTS
@@ -102,14 +92,12 @@ const VideoRequests = () => {
           ? `${backendUrl}/api/video-requests`
           : `${backendUrl}/api/video-requests/my`;
 
-
         const { data } = await axios.get(
           endpoint,
           {
             withCredentials: true,
           }
         );
-
 
         if (data.success) {
           setRequests(data.requests || []);
@@ -138,18 +126,15 @@ const VideoRequests = () => {
     ]
   );
 
-
   useEffect(() => {
     if (!userData) {
       return;
     }
 
-
     if (!hasPageAccess) {
       setLoading(false);
       return;
     }
-
 
     fetchRequests();
 
@@ -158,7 +143,6 @@ const VideoRequests = () => {
     hasPageAccess,
     fetchRequests,
   ]);
-
 
   // ============================================================
   // NEW REQUEST CALLBACK
@@ -172,13 +156,11 @@ const VideoRequests = () => {
       return;
     }
 
-
     setRequests((prev) => [
       newRequest,
       ...prev,
     ]);
   };
-
 
   // ============================================================
   // UPDATE REQUEST
@@ -193,10 +175,8 @@ const VideoRequests = () => {
       return;
     }
 
-
     try {
       setUpdatingId(id);
-
 
       const { data } = await axios.put(
         `${backendUrl}/api/video-requests/${id}`,
@@ -205,7 +185,6 @@ const VideoRequests = () => {
           withCredentials: true,
         }
       );
-
 
       if (!data.success) {
         toast.error(
@@ -216,7 +195,6 @@ const VideoRequests = () => {
         return;
       }
 
-
       setRequests((prev) =>
         prev.map((request) =>
           request._id === id
@@ -224,7 +202,6 @@ const VideoRequests = () => {
             : request
         )
       );
-
 
       toast.success(
         "Request updated."
@@ -241,7 +218,6 @@ const VideoRequests = () => {
       setUpdatingId(null);
     }
   };
-
 
   // ============================================================
   // NOTES
@@ -263,7 +239,6 @@ const VideoRequests = () => {
     );
   };
 
-
   // ============================================================
   // DELETE REQUEST
   // PASCAL ONLY
@@ -276,21 +251,17 @@ const VideoRequests = () => {
       return;
     }
 
-
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this video editing request?"
       );
 
-
     if (!confirmed) {
       return;
     }
 
-
     try {
       setDeletingId(id);
-
 
       const { data } =
         await axios.delete(
@@ -299,7 +270,6 @@ const VideoRequests = () => {
             withCredentials: true,
           }
         );
-
 
       if (!data.success) {
         toast.error(
@@ -310,14 +280,12 @@ const VideoRequests = () => {
         return;
       }
 
-
       setRequests((prev) =>
         prev.filter(
           (request) =>
             request._id !== id
         )
       );
-
 
       toast.success(
         "Request deleted."
@@ -335,7 +303,6 @@ const VideoRequests = () => {
     }
   };
 
-
   // ============================================================
   // HELPERS
   // ============================================================
@@ -346,7 +313,6 @@ const VideoRequests = () => {
     if (!date) {
       return "No deadline";
     }
-
 
     return new Date(
       date
@@ -360,14 +326,12 @@ const VideoRequests = () => {
     );
   };
 
-
   const formatCreatedAt = (
     date
   ) => {
     if (!date) {
       return "";
     }
-
 
     return new Date(
       date
@@ -382,7 +346,6 @@ const VideoRequests = () => {
       }
     );
   };
-
 
   const getStatusClasses = (
     status
@@ -402,7 +365,6 @@ const VideoRequests = () => {
     }
   };
 
-
   const getPriorityClasses = (
     priority
   ) => {
@@ -421,7 +383,6 @@ const VideoRequests = () => {
     }
   };
 
-
   // ============================================================
   // ACCESS DENIED
   // ============================================================
@@ -431,32 +392,16 @@ const VideoRequests = () => {
     !hasPageAccess
   ) {
     return (
-      <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900">
+      <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
 
         {/* WAVES BACKGROUND */}
-        <div className="pointer-events-none absolute inset-0 z-0">
-          <Waves
-            lineColor="#e4b54f7e"
-            backgroundColor="rgba(255, 255, 255, 0)"
-            waveSpeedX={0.08}
-            waveSpeedY={0.03}
-            waveAmpX={40}
-            waveAmpY={20}
-            friction={0.9}
-            tension={0.01}
-            maxCursorMove={320}
-            xGap={10}
-            yGap={20}
-          />
-        </div>
-
 
         {/* PAGE CONTENT */}
         <div className="relative z-10">
           <Navbar />
           <br/>
 
-          <div className="flex min-h-screen items-center justify-center px-4">
+          <div className="flex min-h-screen items-center justify-center px-4 bg-transparent">
             <div className="max-w-md rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
 
               <h1 className="text-2xl font-semibold text-gray-900">
@@ -492,34 +437,16 @@ const VideoRequests = () => {
     );
   }
 
-
   // ============================================================
   // PAGE
   // ============================================================
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900">
+    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
 
       {/* ======================================================
           WAVES BACKGROUND
       ====================================================== */}
-
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
-
 
       {/* ======================================================
           PAGE CONTENT
@@ -529,8 +456,6 @@ const VideoRequests = () => {
 
         <Navbar />
           <br/>
-
-
 
         <main className="mx-auto max-w-7xl px-4 pb-16 pt-28 sm:px-6 lg:px-8">
 
@@ -555,7 +480,6 @@ const VideoRequests = () => {
 
           </div>
 
-
           {/* ==================================================
               REQUEST FORM
           ================================================== */}
@@ -566,7 +490,6 @@ const VideoRequests = () => {
               handleRequestCreated
             }
           />
-
 
           {/* ==================================================
               REQUEST LIST
@@ -596,7 +519,6 @@ const VideoRequests = () => {
 
               </div>
 
-
               <button
                 onClick={
                   fetchRequests
@@ -622,7 +544,6 @@ const VideoRequests = () => {
               </button>
 
             </div>
-
 
             {/* ==================================================
                 LOADING
@@ -694,7 +615,6 @@ const VideoRequests = () => {
                               }
                             </h3>
 
-
                             {/* Status */}
                             <span
                               className={`
@@ -710,7 +630,6 @@ const VideoRequests = () => {
                                 request.status
                               }
                             </span>
-
 
                             {/* Priority */}
                             <span
@@ -730,7 +649,6 @@ const VideoRequests = () => {
 
                           </div>
 
-
                           {/* Requester */}
                           {request.requestedBy && (
 
@@ -745,7 +663,6 @@ const VideoRequests = () => {
                                     .name
                                 }
                               </span>
-
 
                               {request
                                 .requestedBy
@@ -765,7 +682,6 @@ const VideoRequests = () => {
 
                           )}
 
-
                           {/* Created */}
                           <p className="mt-1 text-xs text-gray-400">
 
@@ -780,7 +696,6 @@ const VideoRequests = () => {
                           </p>
 
                         </div>
-
 
                         {/* Deadline */}
                         <div className="text-sm text-gray-500">
@@ -799,7 +714,6 @@ const VideoRequests = () => {
 
                       </div>
 
-
                       {/* ==========================================
                           DESCRIPTION
                       ========================================== */}
@@ -817,7 +731,6 @@ const VideoRequests = () => {
                         </p>
 
                       </div>
-
 
                       {/* ==========================================
                           LINKS
@@ -843,7 +756,6 @@ const VideoRequests = () => {
                         >
                           Open Video Files
                         </a>
-
 
                         {request.referenceLink && (
 
@@ -871,7 +783,6 @@ const VideoRequests = () => {
 
                       </div>
 
-
                       {/* ==========================================
                           PASCAL CONTROLS
                       ========================================== */}
@@ -884,9 +795,7 @@ const VideoRequests = () => {
                             Management
                           </h4>
 
-
                           <div className="grid gap-4 sm:grid-cols-2">
-
 
                             {/* ====================================
                                 STATUS
@@ -897,7 +806,6 @@ const VideoRequests = () => {
                               <label className="mb-2 block text-sm font-medium">
                                 Status
                               </label>
-
 
                               <select
                                 value={
@@ -959,7 +867,6 @@ const VideoRequests = () => {
 
                             </div>
 
-
                             {/* ====================================
                                 PRIORITY
                             ==================================== */}
@@ -969,7 +876,6 @@ const VideoRequests = () => {
                               <label className="mb-2 block text-sm font-medium">
                                 Priority
                               </label>
-
 
                               <select
                                 value={
@@ -1033,7 +939,6 @@ const VideoRequests = () => {
 
                           </div>
 
-
                           {/* ======================================
                               NOTES
                           ====================================== */}
@@ -1043,7 +948,6 @@ const VideoRequests = () => {
                             <label className="mb-2 block text-sm font-medium">
                               Editor Notes
                             </label>
-
 
                             <textarea
                               rows={3}
@@ -1077,13 +981,11 @@ const VideoRequests = () => {
 
                           </div>
 
-
                           {/* ======================================
                               ACTIONS
                           ====================================== */}
 
                           <div className="mt-4 flex flex-wrap justify-end gap-3">
-
 
                             <button
                               onClick={() =>
@@ -1117,7 +1019,6 @@ const VideoRequests = () => {
                                 ? "Saving..."
                                 : "Save Notes"}
                             </button>
-
 
                             <button
                               onClick={() =>
@@ -1171,6 +1072,5 @@ const VideoRequests = () => {
     </div>
   );
 };
-
 
 export default VideoRequests;

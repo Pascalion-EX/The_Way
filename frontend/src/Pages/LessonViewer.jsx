@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import Navbar from "@/Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
 
 const getEmbedUrl = (url = "") => {
   if (!url) return "";
@@ -388,42 +387,6 @@ const LessonViewer = () => {
   |--------------------------------------------------------------------------
   */
 
-  const renderBackground = () => (
-    <>
-      <div className="pointer-events-none fixed inset-y-0 left-0 z-0 hidden w-[clamp(120px,18vw,320px)] scale-x-[-1] lg:block">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={15}
-          yGap={25}
-        />
-      </div>
-
-      <div className="pointer-events-none fixed inset-y-0 right-0 z-0 hidden w-[clamp(120px,18vw,320px)] lg:block">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={15}
-          yGap={25}
-        />
-      </div>
-    </>
-  );
-
   /*
   |--------------------------------------------------------------------------
   | Navbar
@@ -446,8 +409,8 @@ const LessonViewer = () => {
 
   if (!lesson) {
     return (
-      <div className="relative isolate min-h-screen overflow-x-hidden bg-white text-gray-900">
-        {renderBackground()}
+      <div className="relative isolate min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
+        
         {renderNavbar()}
 
         <main className="relative z-10 px-4 pb-12 pt-52 sm:px-8 sm:pt-48 lg:px-16 lg:pb-28 lg:pt-44">
@@ -497,8 +460,8 @@ const LessonViewer = () => {
   */
 
   return (
-    <div className="relative isolate min-h-screen overflow-x-hidden bg-white text-gray-900">
-      {renderBackground()}
+    <div className="relative isolate min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
+      
       {renderNavbar()}
 
       <main className="relative z-10 px-4 pb-12 pt-52 sm:px-8 sm:pt-48 lg:px-16 lg:pb-28 lg:pt-44">

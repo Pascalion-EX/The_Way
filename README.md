@@ -69,6 +69,17 @@ The frontend communicates with the backend through REST endpoints and uses an HT
 
 ### Lessons
 
+Curricula organize existing lessons into named trees with connected lesson nodes.
+See [Curriculum API](backend/CURRICULA.md) for endpoints, validation, and examples.
+Open **Curricula** from the navigation menu (`/curriculum`) to explore the tree.
+Drag the background to pan, drag individual nodes to rearrange the view, and click
+a lesson to open it. Zoom, fit, reset, and wiggle controls are above the tree;
+wiggle respects reduced-motion preferences. Layout changes are temporary.
+The Curricula navigation button is shown to `admin`, `pascal`, `pamela`, and
+`leader` roles. These users can create curriculum, edit lesson connections, and
+delete curriculum on this page. Deleting a curriculum preserves its lessons.
+Selected curriculum are retained in the URL as `?curriculum=<id>`.
+
 - View all lessons
 - Search by title, name, or lesson body
 - Filter by school/service year
@@ -256,6 +267,17 @@ The `userAuth` middleware:
 5. Continues to the protected controller.
 
 The JWT currently expires after **2 days**.
+
+Registration and login issue the JWT in an `HttpOnly; Secure` cookie with a
+two-day lifetime and `Path=/`. Logout clears it using the same cookie settings.
+`HttpOnly` prevents JavaScript from reading the token; `Secure` restricts cookie
+transmission to HTTPS (browsers make an exception for localhost).
+See [MDN's cookie attribute documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie#attributes).
+
+HTTPS-only cookies are enabled by default. For local development over plain HTTP,
+you can set `AUTH_COOKIE_SECURE=false` in `backend/.env`. This override is ignored
+when `NODE_ENV=production`. Production uses `SameSite=None` for cross-site
+frontend/API deployments; other environments use `SameSite=Strict`.
 
 ---
 
@@ -1098,7 +1120,7 @@ The current project already includes several useful security practices:
 - Password hashing with bcrypt
 - HTTP-only authentication cookies
 - JWT expiration
-- Secure cookies in production
+- Secure cookies by default, with a non-production HTTP development override
 - Authentication middleware
 - Server-side role checks for major protected operations
 - Generic invalid-login response to reduce account enumeration during login

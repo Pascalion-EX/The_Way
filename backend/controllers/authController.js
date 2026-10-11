@@ -4,6 +4,7 @@ import userModel from "../models/userModel.js";
 import { createEmailJob } from "../services/emailQueue.js";
 import { randomInt } from "node:crypto";
 import { queueOtpRequest } from "../services/otpRequests.js";
+import { AUTH_TOKEN_TTL_SECONDS, getAuthCookieOptions } from "../config/authCookie.js";
 
 
 export const checkAuth = async (req, res) => {
@@ -57,14 +58,12 @@ export const register = async (req, res) => {
     await user.save();
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "2d",
+      expiresIn: AUTH_TOKEN_TTL_SECONDS,
     });
 
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 2 * 24 * 60 * 60 * 1000,
+      ...getAuthCookieOptions(),
+      maxAge: AUTH_TOKEN_TTL_SECONDS * 1000,
     });
 
     return res.json({ success: true, message: "Account created. Your verification email will arrive shortly.", emailQueued: true });
@@ -150,18 +149,13 @@ export const login = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "2d",
+        expiresIn: AUTH_TOKEN_TTL_SECONDS,
       }
     );
 
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite:
-        process.env.NODE_ENV === "production"
-          ? "none"
-          : "strict",
-      maxAge: 2 * 24 * 60 * 60 * 1000,
+      ...getAuthCookieOptions(),
+      maxAge: AUTH_TOKEN_TTL_SECONDS * 1000,
     });
 
     return res.status(200).json({
@@ -180,12 +174,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.clearCookie("token", getAuthCookieOptions());
     return res.json({ success: true, message: "Logged Out" });
   } catch (error) {
     return res.json({ success: false, message: error.message });

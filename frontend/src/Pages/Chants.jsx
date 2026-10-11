@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import Navbar from "../Components/Navbar";
-import Waves from "../Components/Waves.jsx";
+
 import ChantCard from "../Components/chantCard.jsx";
 import { AppContent } from "../Context/AppContext.jsx";
 import { useNavigate } from "react-router-dom";
@@ -59,20 +59,8 @@ const Chants = () => {
   }, [search, category, favoriteOnly]);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-gray-50">
-              <Waves
-          lineColor="#e4b54f7e"
-          backgroundColor="rgba(110, 110, 110, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={60}
-          waveAmpY={40}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
+    <div className="min-h-screen relative overflow-hidden bg-transparent">
+              
       <Navbar />
       <br/>
 

@@ -1,0 +1,45 @@
+.curriculum-viewport {
+  position: relative;
+  height: clamp(400px, 65vh, 720px);
+  overflow: hidden;
+  background-color: #fafaff;
+  background-image: radial-gradient(#dcd9eb 1px, transparent 1px);
+  background-size: 24px 24px;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.curriculum-viewport:focus-visible { outline: 2px solid #6366f1; outline-offset: -3px; }
+.curriculum-viewport.is-dragging, .is-dragging .curriculum-node-card { cursor: grabbing; }
+.curriculum-stage { position: absolute; inset: 0; transform-origin: 0 0; }
+.curriculum-connections { position: absolute; width: 1px; height: 1px; overflow: visible; pointer-events: none; }
+.curriculum-node { position: absolute; width: 220px; height: 100px; }
+.curriculum-node-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: white;
+  color: #111827;
+  box-shadow: 0 4px 18px #312e810a;
+  cursor: grab;
+  transition: border-color .2s, box-shadow .2s;
+}
+.curriculum-node-card.is-root { background: #312e81; border-color: #4338ca; color: white; box-shadow: 0 8px 24px #312e8126; }
+.curriculum-node-card:hover { border-color: #e4b54f; box-shadow: 0 8px 24px #312e811a; }
+.curriculum-node-card:focus-visible { outline: 3px solid #e4b54f; outline-offset: 4px; }
+.curriculum-node-card[aria-disabled="true"] { opacity: .65; }
+.curriculum-node-card.has-wiggle { animation: curriculum-wiggle 4s ease-in-out infinite; }
+.curriculum-node-card:hover, .curriculum-node-card:focus-visible { animation-play-state: paused; }
+@keyframes curriculum-wiggle {
+  0%, 100% { transform: translateY(0) rotate(-.6deg); }
+  50% { transform: translateY(-3px) rotate(.6deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .curriculum-node-card.has-wiggle { animation: none; }
+  .curriculum-node-card { transition: none; }
+}

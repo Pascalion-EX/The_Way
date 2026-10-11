@@ -22,7 +22,7 @@ const attendanceSchema = new mongoose.Schema(
 
     recordedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
       required: true,
     },
 

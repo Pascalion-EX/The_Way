@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import Navbar from "../Components/Navbar.jsx";
-import Waves from "../Components/Waves.jsx";
 
 const getEmbedUrl = (url = "") => {
   if (!url) return "";
@@ -157,46 +156,9 @@ const GameViewer = () => {
     }
   };
 
-  const renderBackground = () => (
-    <>
-      <div className="pointer-events-none fixed inset-y-0 left-0 z-0 hidden w-[clamp(120px,18vw,320px)] scale-x-[-1] lg:block">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={15}
-          yGap={25}
-        />
-      </div>
-
-      <div className="pointer-events-none fixed inset-y-0 right-0 z-0 hidden w-[clamp(120px,18vw,320px)] lg:block">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={15}
-          yGap={25}
-        />
-      </div>
-    </>
-  );
-
   if (!game) {
     return (
-      <div className="relative min-h-screen overflow-x-hidden bg-white text-gray-900">
-        {renderBackground()}
+      <div className="relative min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
 
         <div className="relative z-30">
           <Navbar />
@@ -235,8 +197,7 @@ const GameViewer = () => {
   const isYouTubeVideo = embedUrl.includes("youtube.com/embed");
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-white text-gray-900">
-      {renderBackground()}
+    <div className="relative min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
 
       <div className="relative z-30">
         <Navbar />

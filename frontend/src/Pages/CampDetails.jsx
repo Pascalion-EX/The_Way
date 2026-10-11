@@ -4,30 +4,11 @@ import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets.js";
-import Waves from "../Components/Waves.jsx";
+
 import Navbar from "@/Components/Navbar.jsx";
 
   const DesktopVisual = () => (
     <div className="relative hidden overflow-hidden lg:block">
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-indigo-50" />
-
-      <div className="absolute inset-0">
-        <Waves
-          lineColor="#e4b54f"
-          backgroundColor="rgba(255, 255, 255, 0)"
-          waveSpeedX={0.08}
-          waveSpeedY={0.03}
-          waveAmpX={40}
-          waveAmpY={20}
-          friction={0.9}
-          tension={0.01}
-          maxCursorMove={320}
-          xGap={10}
-          yGap={20}
-        />
-      </div>
-
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white" />
 
       <div className="relative z-10 flex h-full items-center justify-center px-12">
         <div className="max-w-md">
@@ -98,8 +79,6 @@ const CampDetails = () => {
         </span>
       ));
   };
-
-
 
   const renderContent = () => {
     if (loading) {
@@ -213,12 +192,12 @@ const CampDetails = () => {
 
   return (
 
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] bg-transparent">
         <DesktopVisual />
         <Navbar/>
 
-        <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
-          <div className="mx-auto w-full max-w-5xl">
+        <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
+          <div className="mx-auto w-full max-w-5xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="mb-6 flex flex-col gap-4 md:mb-8 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">

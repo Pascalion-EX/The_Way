@@ -12,6 +12,61 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Shared by page scrollbars and scrollable panels. */
+:root {
+  --scrollbar-thumb: rgba(100, 116, 139, 0.38);
+  --scrollbar-thumb-hover: rgba(100, 116, 139, 0.62);
+  --scrollbar-thumb-active: rgba(100, 116, 139, 0.78);
+}
+
+.dark {
+  --scrollbar-thumb: rgba(148, 163, 184, 0.38);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.62);
+  --scrollbar-thumb-active: rgba(148, 163, 184, 0.78);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+@media (forced-colors: active) {
+  * {
+    scrollbar-color: auto;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: ButtonText;
+  }
+}
+
 *{
     font-family: "Nunito", sans-serif;
     .pixel-wave {
