@@ -215,7 +215,7 @@ Authorized administrators can:
 | CORS | Cross-origin request configuration |
 | Nodemailer | Email/OTP delivery |
 | dotenv | Environment configuration |
-| Nodemon | Development server restart |
+| Node.js watch mode | Development server restart |
 
 ---
 
@@ -307,6 +307,9 @@ A user can hold multiple roles because `role` is stored as an array.
 | Manage games | `admin`, `leader`, `pascal`, `pamela` |
 | Manage chants | `admin`, `leader`, `pascal`, `pamela` |
 | Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
+| Read/manage child profiles and attendance | `admin`, `leader`, `pascal`, `pamela` |
+| Publish/broadcast/clear/delete shared notifications | `admin`, `leader`, `pascal`, `pamela` |
+| Read own notifications and mark them seen | Any verified account |
 | Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |
 | Apply to trips | `parent`, `admin`, `leader`, `pascal` |
 | Notify trip applicants | `admin`, `leader`, `pascal` |
@@ -836,7 +839,8 @@ User submits OTP
 Account marked verified
 ```
 
-Verification OTP expiration is currently configured for **12 hours**.
+Verification OTPs expire after **10 minutes** and allow at most **five attempts**.
+Attempt reservation and successful consumption use atomic database updates.
 
 ### Password Reset
 
@@ -856,7 +860,11 @@ OTP validated
 New password hashed and stored
 ```
 
-Reset OTP expiration is currently configured for **12 hours**.
+Reset OTPs expire after **10 minutes** and allow at most **five attempts**.
+Successful password replacement consumes the code atomically, preventing replay.
+Verification and reset request/submission routes share MongoDB-backed rate limits:
+100 requests per IP and 15 per verification account or recovery email in each
+15-minute window. These limits apply across backend workers and survive restarts.
 
 ---
 
@@ -867,7 +875,7 @@ Reset OTP expiration is currently configured for **12 hours**.
 
 Install:
 
-- Node.js 20+ recommended
+- Node.js 20.19.0 or newer
 - npm
 - MongoDB or MongoDB Atlas
 - An SMTP/Gmail account for verification and reset emails
@@ -885,7 +893,8 @@ cd The_Way
 npm install
 ```
 
-The root currently contains PDF-related dependencies used by frontend source files.
+The root contains `concurrently` for development scripts. PDF dependencies are
+declared in the frontend package that imports them.
 
 ### 3. Install Backend Dependencies
 
@@ -954,11 +963,8 @@ npm run dev
 
 which is intended to run both applications with `concurrently`.
 
-However, `concurrently` is currently not declared in the root `package.json`. Either continue using two terminals or add it to the root development dependencies:
-
-```bash
-npm install --save-dev concurrently
-```
+`concurrently` is declared in the root development dependencies. Include development
+dependencies when installing packages to use the root development scripts.
 
 Then:
 
@@ -1123,15 +1129,19 @@ The current project already includes several useful security practices:
 - Secure cookies by default, with a non-production HTTP development override
 - Authentication middleware
 - Server-side role checks for major protected operations
+- Staff-only child profiles, attendance, and shared notification management
+- Ten-minute OTP expiry, five-attempt budgets, and atomic one-time consumption
+- Shared database-backed account/IP rate limits for OTP operations
 - Generic invalid-login response to reduce account enumeration during login
 - Mongoose `sanitizeFilter` / `strictQuery` usage in parts of the backend
 - Sensitive user fields excluded from admin dashboard queries
 
 ### Important Repository Security Issue
 
-At the time this documentation was generated, the repository tree contains tracked `.env` files and tracked `node_modules` directories.
-
-These should not be committed.
+Environment files and installed `node_modules` directories are excluded from Git.
+Install dependencies from the committed lockfiles; do not commit credentials or
+installed package folders. The security remediation removed previously tracked
+root/backend dependency folders from the index while preserving local files.
 
 Recommended `.gitignore` entries:
 
@@ -1179,13 +1189,17 @@ If any real database password, JWT secret, SMTP password, API key, or other cred
 
 These notes describe the repository as it currently exists and are useful before further development or deployment.
 
-### 1. `.env` Files Are Tracked
+### 1. Environment Files Are Local
 
-Both backend and frontend `.env` files appear in the repository tree. Remove them from Git history/index and rotate any exposed credentials.
+Backend and frontend `.env` files are local and ignored by Git. The security review
+found no `.env` filenames in locally reachable history; credentials must still be
+managed separately from source control.
 
-### 2. `node_modules` Is Tracked
+### 2. Dependencies Are Recreated from Lockfiles
 
-The root/backend repository tree contains committed dependency folders. These should be removed from version control and recreated with `npm install`.
+The previously tracked root/backend dependency folders have been removed from the
+Git index. Use `npm ci` in the root, backend, and frontend directories to recreate
+the versions captured by each lockfile.
 
 ### 3. Development CORS Is Hard-Coded
 
@@ -1199,7 +1213,7 @@ Production origins must be added or loaded from environment configuration before
 
 ### 4. Root `concurrently` Dependency
 
-The root `package.json` uses the `concurrently` command but does not currently declare it as a root dependency/devDependency.
+The root `package.json` declares `concurrently` in development dependencies.
 
 ### 5. Camp Schema Contains `applicants` Twice
 

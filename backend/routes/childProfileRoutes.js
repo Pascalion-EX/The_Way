@@ -6,15 +6,18 @@ import { createChildProfile,
      deleteChildProfile,
     } from "../controllers/childProfileController.js";
 import userAuth from "../middleware/userAuth.js";
+import { requireStaff } from "../middleware/staffAuth.js";
 import express from "express";
 
 const childProfileRouter = express.Router();
 
-childProfileRouter.get("/", userAuth, getAllChildProfiles);
-childProfileRouter.post("/", userAuth, createChildProfile);
-childProfileRouter.get("/:id", userAuth, getChildProfileById);
-childProfileRouter.get("/grade/:grade", userAuth, getChildrenByGrade);
-childProfileRouter.put("/:id", userAuth, updateChildProfile);
-childProfileRouter.delete("/:id", userAuth, deleteChildProfile);
+childProfileRouter.use(userAuth, requireStaff);
+
+childProfileRouter.get("/", getAllChildProfiles);
+childProfileRouter.post("/", createChildProfile);
+childProfileRouter.get("/:id", getChildProfileById);
+childProfileRouter.get("/grade/:grade", getChildrenByGrade);
+childProfileRouter.put("/:id", updateChildProfile);
+childProfileRouter.delete("/:id", deleteChildProfile);
 
 export default childProfileRouter;

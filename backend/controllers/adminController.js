@@ -37,7 +37,7 @@ export const updateUserClassByAdmin = async (req, res) => {
       id,
       { class: userClass },
       { new: true, runValidators: true }
-    ).select("-password -verifyOtp -resetOtp -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
+    ).select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User to update was not found" });
@@ -71,7 +71,7 @@ export const getAdminDashboard = async (req, res) => {
 
     const users = await userModel
       .find()
-      .select("-password -verifyOtp -resetOtp -verifyOtpExpireAt -resetOtpExpireAt -emailJobs")
+      .select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs")
       .sort({ createdAt: -1 });
 
     const totalUsers = await userModel.countDocuments();
@@ -184,7 +184,7 @@ export const updateUserRolesByAdmin = async (req, res) => {
       id,
       { role: [...new Set(role)] },
       { new: true, runValidators: true }
-    ).select("-password -verifyOtp -resetOtp -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
+    ).select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
 
     if (!user) {
       return res.status(404).json({ success: false, message: "User to update was not found" });

@@ -2,8 +2,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import { createEmailJob } from "../services/emailQueue.js";
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import { queueOtpRequest } from "../services/otpRequests.js";
+import { OTP_TTL_MS } from "../services/otpPolicy.js";
+import { reserveOtpAttempt, consumeOtpAttempt, otpMatches } from "../services/otpAttempts.js";
 import { AUTH_TOKEN_TTL_SECONDS, getAuthCookieOptions } from "../config/authCookie.js";
 
 
@@ -38,11 +40,13 @@ export const register = async (req, res) => {
     const hashedpassword = await bcrypt.hash(password, 10);
 
     const otp = String(randomInt(100000, 1000000));
-    const otpExpiresAt = Date.now() + 12 * 60 * 60 * 1000;
+    const otpRequestedAt = Date.now();
+    const otpExpiresAt = otpRequestedAt + OTP_TTL_MS;
     const user = new userModel({
       name, email, password: hashedpassword, phone, role,
       verifyOtp: otp, verifyOtpExpireAt: otpExpiresAt,
-      verifyOtpRequestedAt: Date.now(),
+      verifyOtpRequestedAt: otpRequestedAt,
+      verifyOtpAttempts: 0, verifyOtpGeneration: randomUUID(),
       emailJobs: {
         welcome: createEmailJob({
           to: email, subject: "Welcome to the Way service",
@@ -220,37 +224,24 @@ export const sendVerifyotp = async (req, res) => {
 
 export const verifyEmail = async (req, res) => {
   const userId = req.userId;
-  const {otp } = req.body;
+  const { otp } = req.body || {};
   if (!userId || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
-    return res.json({ success: false, message: "Enter a valid 6-digit OTP" });
+    return res.status(400).json({ success: false, message: "Enter a valid 6-digit OTP" });
   }
   try {
-    const user = await userModel.findById(userId);
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
+    const attempt = await reserveOtpAttempt({ _id: userId }, "verification");
+    if (!attempt.success) return res.status(attempt.status).json(attempt);
+    if (!otpMatches(attempt.user.verifyOtp, otp)) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
-    if (user.verifyOtp === "" || user.verifyOtp !== otp) {
-      return res.json({
-        success: false,
-        message: "Your OTP is wrong or empty",
-      });
-    }
-    if (user.verifyOtpExpireAt < Date.now()) {
-      return res.json({ success: false, message: "OTP Expired" });
-    }
-
-    user.isAccountVerified = true;
-    user.verifyOtp = "";
-    user.verifyOtpExpireAt = 0;
-    user.emailJobs.verification = undefined;
-
-    await user.save();
+    const result = await consumeOtpAttempt(attempt.user, "verification", { isAccountVerified: true });
+    if (!result.success) return res.status(result.status).json(result);
     return res.json({
       success: true,
       message: "Email is verified successfully",
     });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: "Unable to verify email" });
   }
 };
 export const isAuthenticated = async (req, res) => {
@@ -262,12 +253,13 @@ export const isAuthenticated = async (req, res) => {
 };
 
 export const sendResetOtp = async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.json({ success: false, message: "Email is required" });
+  const { email } = req.body || {};
+  if (typeof email !== "string" || !email.trim()) {
+    return res.status(400).json({ success: false, message: "Email is required" });
   }
 
   try {
+    // Existing accounts store the supplied address verbatim; preserve that identity.
     const user = await userModel.findOne({ email });
     if (!user) {
       return res.json({ success: false, message: "User not found" });
@@ -284,21 +276,22 @@ export const sendResetOtp = async (req, res) => {
   }
 };
 export const resetPassword = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  if (!email || !otp || !newPassword) {
-    return res.json({
+  const { email, otp, newPassword } = req.body || {};
+  if (typeof email !== "string" || !email.trim() ||
+      typeof otp !== "string" || !/^\d{6}$/.test(otp) ||
+      typeof newPassword !== "string" || !newPassword) {
+    return res.status(400).json({
       success: false,
-      message: "Email, otp, and new password are required",
+      message: "Email, a valid 6-digit OTP, and new password are required",
     });
   }
 
   try {
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return res.json({ success: false, message: "User not found" });
-    }
-    if (user.resetOtp === "" || user.resetOtp != otp) {
-      return res.json({ success: false, message: "Invalid OTP" });
+    const attempt = await reserveOtpAttempt({ email }, "passwordReset");
+    if (!attempt.success) return res.status(attempt.status).json(attempt);
+    const user = attempt.user;
+    if (!otpMatches(user.resetOtp, otp)) {
+      return res.status(400).json({ success: false, message: "Invalid OTP" });
     }
     const isMatch = await bcrypt.compare(newPassword, user.password);
     if (isMatch) {
@@ -307,24 +300,16 @@ export const resetPassword = async (req, res) => {
         message: "This is the same password as the old one.",
       });
     }
-    if (user.resetOtpExpireAt < Date.now()) {
-      return res.json({ success: false, message: "OTP Expired" });
-    }
-
     const hashedpassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedpassword;
-    user.resetOtp = "";
-    user.resetOtpExpireAt = 0;
-    user.emailJobs.passwordReset = undefined;
-
-    await user.save();
+    const result = await consumeOtpAttempt(user, "passwordReset", { password: hashedpassword });
+    if (!result.success) return res.status(result.status).json(result);
 
     return res.json({
       success: true,
       message: "Password has been reset successfully",
     });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    return res.status(500).json({ success: false, message: "Unable to reset password" });
   }
 };
 

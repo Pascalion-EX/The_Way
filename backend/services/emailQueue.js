@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
+import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "./otpPolicy.js";
 
 export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset"];
 const LEASE_MS = 5 * 60 * 1000;
@@ -35,14 +36,25 @@ export async function processNextEmailJob(kind, {
       [`${path}.lockedUntil`]: new Date(startedAt.getTime() + LEASE_MS),
     },
     $inc: { [`${path}.attempts`]: 1 },
-  }, { new: true }).select(`emailJobs.${kind} isAccountVerified verifyOtp resetOtp email`);
+  }, { returnDocument: "after" }).select(`emailJobs.${kind} isAccountVerified email
+    verifyOtp verifyOtpRequestedAt verifyOtpExpireAt verifyOtpAttempts
+    resetOtp resetOtpRequestedAt resetOtpExpireAt resetOtpAttempts`);
 
   if (!user) return false;
   const job = user.emailJobs[kind];
   const lease = { _id: user._id, [`${path}.leaseToken`]: leaseToken };
   const discard = () => users.updateOne(lease, { $unset: { [path]: "" } });
 
-  if (new Date(job.expiresAt) <= now() || user.email !== job.to ||
+  const checkedAt = now().getTime();
+  const prefix = kind === "welcome" ? null : otpPrefix(kind);
+  const inactiveCode = prefix && (
+    !user[prefix] || !user[`${prefix}RequestedAt`] ||
+    user[`${prefix}RequestedAt`] > checkedAt ||
+    user[`${prefix}RequestedAt`] + OTP_TTL_MS <= checkedAt ||
+    user[`${prefix}ExpireAt`] <= checkedAt ||
+    user[`${prefix}Attempts`] >= OTP_MAX_ATTEMPTS
+  );
+  if (new Date(job.expiresAt).getTime() <= checkedAt || user.email !== job.to || inactiveCode ||
       (kind === "verification" && (user.isAccountVerified || !user.verifyOtp)) ||
       (kind === "passwordReset" && !user.resetOtp)) {
     await discard();

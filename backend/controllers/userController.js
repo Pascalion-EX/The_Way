@@ -51,7 +51,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await userModel
       .findByIdAndUpdate(userId, updateData, { new: true, runValidators: true })
-      .select("-password -verifyOtp -resetOtp -emailJobs");
+      .select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -emailJobs");
 
     if (!user) {
       return res.status(404).json({

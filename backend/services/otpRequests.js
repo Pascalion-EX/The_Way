@@ -1,21 +1,22 @@
 import mongoose from "mongoose";
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import userModel from "../models/userModel.js";
 import { createEmailJob } from "./emailQueue.js";
+import { OTP_TTL_MS, otpPrefix } from "./otpPolicy.js";
 
 export const OTP_COOLDOWN_MS = 60_000;
 
 export async function queueOtpRequest(user, kind, { users = userModel, now = Date.now } = {}) {
   const verification = kind === "verification";
-  if (!verification && kind !== "passwordReset") throw new Error("Invalid OTP kind");
-  const prefix = verification ? "verifyOtp" : "resetOtp";
+  const prefix = otpPrefix(kind);
   const requestedAt = `${prefix}RequestedAt`;
   const timestamp = now();
   const otp = String(randomInt(100000, 1000000));
-  const expiresAt = timestamp + 12 * 60 * 60 * 1000;
+  const expiresAt = timestamp + OTP_TTL_MS;
   // Atomically reserve the cooldown and replace the OTP/job, including across tabs.
   const updated = await users.findOneAndUpdate({
     _id: user._id,
+    email: user.email,
     ...(verification ? { isAccountVerified: mongoose.trusted({ $ne: true }) } : {}),
     $or: [
       { [requestedAt]: mongoose.trusted({ $lte: timestamp - OTP_COOLDOWN_MS }) },
@@ -26,6 +27,8 @@ export async function queueOtpRequest(user, kind, { users = userModel, now = Dat
       [prefix]: otp,
       [`${prefix}ExpireAt`]: expiresAt,
       [requestedAt]: timestamp,
+      [`${prefix}Attempts`]: 0,
+      [`${prefix}Generation`]: randomUUID(),
       [`emailJobs.${kind}`]: createEmailJob({
         to: user.email,
         subject: verification ? "The Way service OTP" : "Password Reset OTP",
@@ -33,7 +36,7 @@ export async function queueOtpRequest(user, kind, { users = userModel, now = Dat
         expiresAt,
       }),
     },
-  }, { new: true, runValidators: true });
+  }, { returnDocument: "after", runValidators: true });
 
   if (updated) return { success: true, otpResendAvailableAt: timestamp + OTP_COOLDOWN_MS };
 

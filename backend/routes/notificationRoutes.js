@@ -12,6 +12,7 @@ import {
 } from "../controllers/notificationController.js";
 
 import userAuth from "../middleware/userAuth.js";
+import { requireStaff } from "../middleware/staffAuth.js";
 
 const notificationRouter = express.Router();
 
@@ -30,18 +31,21 @@ notificationRouter.get(
 notificationRouter.post(
   "/",
   userAuth,
+  requireStaff,
   createNotification
 );
 
 notificationRouter.put(
   "/clear/roles",
   userAuth,
+  requireStaff,
   deleteNotificationsByRoles
 );
 
 notificationRouter.post(
   "/role/:role",
   userAuth,
+  requireStaff,
   sendNotificationToRole
 );
 
@@ -60,6 +64,7 @@ notificationRouter.put(
 notificationRouter.delete(
   "/:id",
   userAuth,
+  requireStaff,
   deleteNotification
 );
 

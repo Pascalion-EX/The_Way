@@ -11,44 +11,37 @@ import {
 } from "../controllers/attendanceControllers.js";
 
 import userAuth from "../middleware/userAuth.js";
+import { requireStaff } from "../middleware/staffAuth.js";
 
 const attendanceRouter = express.Router();
 
-attendanceRouter.post("/", userAuth, takeAttendance);
+attendanceRouter.use(userAuth, requireStaff);
 
-attendanceRouter.post(
-  "/weekly",
-  userAuth,
-  takeWeeklyAttendance
-);
+attendanceRouter.post("/", takeAttendance);
+attendanceRouter.post("/weekly", takeWeeklyAttendance);
 
 attendanceRouter.get(
   "/date/:date",
-  userAuth,
   getAttendanceByDate
 );
 
 attendanceRouter.get(
   "/child/:childId",
-  userAuth,
   getChildAttendance
 );
 
 attendanceRouter.get(
   "/year/:year",
-  userAuth,
   getAttendanceByYear
 );
 
 attendanceRouter.put(
   "/:id",
-  userAuth,
   updateAttendance
 );
 
 attendanceRouter.delete(
   "/:id",
-  userAuth,
   deleteAttendance
 );
 

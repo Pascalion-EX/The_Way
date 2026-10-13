@@ -10,6 +10,23 @@ The request timestamp and new OTP/job are saved in one atomic update. Requests
 during the cooldown receive HTTP 429 with `Retry-After` and
 `otpResendAvailableAt`; automatic delivery retries do not extend the cooldown.
 
+Verification and password-reset codes expire ten minutes after issuance and
+allow at most five submissions per code. MongoDB atomically increments the
+attempt counter before comparing the submitted code, including across server
+processes. A resend resets the counter and replaces the generation identifier.
+Successful verification or password replacement consumes that generation in the
+same atomic database write, so concurrent submissions cannot reuse it or erase
+a newer resend. Codes issued under the old expiry policy are still limited to
+ten minutes from their saved request timestamp; codes without a valid timestamp
+must be requested again. OTP routes also enforce shared account/IP abuse limits.
+All four request/submission endpoints share a limit of 100 requests per IP per
+15-minute window; verification accounts and recovery email addresses each have
+a 15-request budget per window. These counters are stored in `authratelimits`
+with hashed identifiers and an expiry TTL index. The database must permit writes
+and TTL-index creation for this collection. Counter failures reject requests
+with HTTP 503 instead of disabling the limits. Express uses the socket peer IP;
+configure only actual trusted proxy hops when deploying behind a proxy.
+
 The backend starts the worker after MongoDB connects. No additional service or
 package is required. Every two seconds, it claims a due job of each type with an
 atomic MongoDB update. A five-minute lease prevents simultaneous claims and lets
@@ -22,7 +39,7 @@ polls with increasing delays, returning to normal polling after recovery.
 
 SMTP connections are pooled and have explicit DNS, connection, greeting, and
 socket timeouts. Delivery failures are retried after 5, 10, 20, 40, 80, and 160
-seconds, then every five minutes. Retries continue until expiry: 12 hours for
+seconds, then every five minutes. Retries continue until expiry: ten minutes for
 OTPs and 24 hours for welcome emails. Expired jobs and jobs for verified accounts,
 consumed codes, or changed addresses are discarded. Successful delivery removes
 the payload. Logs include the job ID and error code, without mail contents.
@@ -40,7 +57,5 @@ excluded from admin/profile responses. The client receives only a queued flag.
 Tests (no real accounts or email delivery):
 
 ```sh
-node backend/tests/emailQueue.test.js
-node backend/tests/emailVerification.test.js
-node backend/tests/adminRoles.test.js
+node --test backend/tests/authCookie.test.js backend/tests/otpSecurity.test.js
 ```
