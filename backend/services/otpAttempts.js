@@ -90,6 +90,8 @@ export async function consumeOtpAttempt(user, kind, accountChanges, {
       [generation]: "",
     },
     $unset: { [`emailJobs.${kind}`]: "" },
+    // Revoke sessions in the same atomic write that consumes the reset code.
+    ...(kind === "passwordReset" ? { $inc: { tokenVersion: 1 } } : {}),
   }, { returnDocument: "after", runValidators: true });
   return updated ? { success: true } : invalidOtp();
 }

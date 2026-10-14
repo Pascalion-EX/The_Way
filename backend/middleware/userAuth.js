@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
+import { verifyAuthToken } from "../services/authTokens.js";
 
 export const authenticateUser = async (req, res, next) => {
   try {
@@ -12,12 +12,20 @@ export const authenticateUser = async (req, res, next) => {
       });
     }
 
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    const decodedToken = verifyAuthToken(token);
 
-    if (!decodedToken?.id) {
+    if (!decodedToken) {
       return res.status(401).json({
         success: false,
         message: "Invalid authentication token.",
+      });
+    }
+
+    const user = await userModel.findById(decodedToken.id).select("tokenVersion");
+    if (!user || user.tokenVersion !== decodedToken.tokenVersion) {
+      return res.status(401).json({
+        success: false,
+        message: "Your session is no longer valid. Please log in again.",
       });
     }
 
@@ -32,7 +40,7 @@ export const authenticateUser = async (req, res, next) => {
       });
     }
 
-    if (error.name === "JsonWebTokenError") {
+    if (error.name === "JsonWebTokenError" || error.name === "NotBeforeError") {
       return res.status(401).json({
         success: false,
         message: "Invalid authentication token.",

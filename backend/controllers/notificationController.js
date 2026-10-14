@@ -406,31 +406,33 @@ export const markNotificationAsSeen = async (req, res) => {
       });
     }
 
+    const user = await getLoggedInUser(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Authorize and update atomically, using current roles from the database.
     const notification =
-      await notificationModel.findById(id);
+      await notificationModel.findOneAndUpdate(
+        {
+          _id: id,
+          targetRoles: mongoose.trusted({
+            $in: normalizeRoles(user.role),
+          }),
+        },
+        { $addToSet: { seenBy: userId } },
+        { returnDocument: "after" }
+      );
 
     if (!notification) {
       return res.status(404).json({
         success: false,
         message: "Notification not found",
       });
-    }
-
-    /*
-      Check whether user is already inside seenBy
-    */
-    const alreadySeen = notification.seenBy.some(
-      (seenUserId) =>
-        seenUserId.toString() === userId.toString()
-    );
-
-    /*
-      Only add if not already present
-    */
-    if (!alreadySeen) {
-      notification.seenBy.push(userId);
-
-      await notification.save();
     }
 
     return res.status(200).json({
@@ -450,7 +452,7 @@ export const markNotificationAsSeen = async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to mark notification as seen",
     });
   }
 };

@@ -120,7 +120,7 @@ const stubDatabase = (t) => {
     else process.env.JWT_SECRET = previousSecret;
   });
   // Forged staff claims in a valid token and request body must not grant permission.
-  state.token = jwt.sign({ id: userId, role: ["admin"] }, jwtSecret, { expiresIn: "1h" });
+  state.token = jwt.sign({ id: userId, tokenVersion: 0, role: ["admin"] }, jwtSecret, { expiresIn: "1h" });
   return state;
 };
 

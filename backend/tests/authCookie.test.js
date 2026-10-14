@@ -38,8 +38,9 @@ for (const { name, environment, override, secure, sameSite } of [
     process.env.JWT_SECRET = "test-only-cookie-secret";
 
     const credentials = { name: "Test User", email: "test@example.com", password: "test-password", role: "parent" };
-    const user = { _id: "test-user", password: await bcrypt.hash(credentials.password, 4) };
+    const user = { _id: "6ab26b08171afea3091f04b3", tokenVersion: 0, password: await bcrypt.hash(credentials.password, 4) };
     const find = t.mock.method(userModel, "findOne", async () => null);
+    t.mock.method(userModel, "findById", () => ({ select: async () => user }));
     t.mock.method(userModel.prototype, "save", async function () { return this; });
 
     for (const controller of [register, login]) {
@@ -58,6 +59,7 @@ for (const { name, environment, override, secure, sameSite } of [
 
       const token = cookie.split(";")[0].slice("token=".length);
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      assert.equal(decoded.tokenVersion, 0);
       assert.equal(decoded.exp - decoded.iat, 172800);
       const req = { cookies: { token } };
       let authenticated = false;

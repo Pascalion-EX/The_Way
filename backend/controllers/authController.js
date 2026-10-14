@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import { createEmailJob } from "../services/emailQueue.js";
 import { randomInt, randomUUID } from "node:crypto";
@@ -7,6 +7,7 @@ import { queueOtpRequest } from "../services/otpRequests.js";
 import { OTP_TTL_MS } from "../services/otpPolicy.js";
 import { reserveOtpAttempt, consumeOtpAttempt, otpMatches } from "../services/otpAttempts.js";
 import { AUTH_TOKEN_TTL_SECONDS, getAuthCookieOptions } from "../config/authCookie.js";
+import { issueAuthToken, verifyAuthToken } from "../services/authTokens.js";
 
 
 export const checkAuth = async (req, res) => {
@@ -61,9 +62,7 @@ export const register = async (req, res) => {
     });
     await user.save();
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: AUTH_TOKEN_TTL_SECONDS,
-    });
+    const token = issueAuthToken(user);
 
     res.cookie("token", token, {
       ...getAuthCookieOptions(),
@@ -147,15 +146,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: AUTH_TOKEN_TTL_SECONDS,
-      }
-    );
+    const token = issueAuthToken(user);
 
     res.cookie("token", token, {
       ...getAuthCookieOptions(),
@@ -178,10 +169,32 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    let claims;
+    if (req.cookies?.token) {
+      try {
+        claims = verifyAuthToken(req.cookies.token);
+      } catch (error) {
+        // Invalid or expired tokens cannot authenticate; clearing them is enough.
+        if (!["TokenExpiredError", "JsonWebTokenError", "NotBeforeError"].includes(error.name)) throw error;
+      }
+    }
+    if (claims) {
+      // A stale logout must not revoke sessions issued after a previous logout/reset.
+      await userModel.updateOne(
+        {
+          _id: claims.id,
+          // Existing accounts without the field have version zero until revoked.
+          tokenVersion: claims.tokenVersion === 0
+            ? mongoose.trusted({ $in: [0, null] })
+            : claims.tokenVersion,
+        },
+        { $inc: { tokenVersion: 1 } }
+      );
+    }
     res.clearCookie("token", getAuthCookieOptions());
     return res.json({ success: true, message: "Logged Out" });
   } catch (error) {
-    return res.json({ success: false, message: error.message });
+    return res.status(503).json({ success: false, message: "Unable to log out. Please try again." });
   }
 };
 export const sendVerifyotp = async (req, res) => {

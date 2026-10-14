@@ -3,7 +3,10 @@ import { test } from "node:test";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import userModel from "../models/userModel.js";
-import { register, verifyEmail, resetPassword, sendResetOtp } from "../controllers/authController.js";
+import { register, login, verifyEmail, resetPassword, sendResetOtp } from "../controllers/authController.js";
+import { authenticateUser } from "../middleware/userAuth.js";
+import { issueAuthToken } from "../services/authTokens.js";
+import { updateProfile } from "../controllers/userController.js";
 import { queueOtpRequest, OTP_COOLDOWN_MS } from "../services/otpRequests.js";
 import { reserveOtpAttempt, consumeOtpAttempt } from "../services/otpAttempts.js";
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "../services/otpPolicy.js";
@@ -368,4 +371,89 @@ test("OTP controllers reject absent bodies before account lookup or mutation", a
     assert.equal(res.statusCode, 400);
     assert.equal(res.body.success, false);
   }
+});
+
+test("changing email clears both OTP generations and queued mail, then requires a fresh verification code", async (t) => {
+  t.mock.method(Date, "now", () => timestamp + 1);
+  const user = {
+    ...activeUser("verification"), ...activeUser("passwordReset"),
+    isAccountVerified: true, password: await bcrypt.hash("current-password", 4),
+    emailJobs: { welcome: { id: "old-welcome" }, verification: { id: "old-verify" }, passwordReset: { id: "old-reset" } },
+  };
+  const { record } = installDatabase(t, user);
+  const reservedReset = await reserveOtpAttempt({ _id: id }, "passwordReset");
+  assert.equal(reservedReset.success, true);
+  const changed = createResponse();
+  await updateProfile({ userId: id, body: { email: "new@example.com", currentPassword: "current-password" } }, changed);
+  assert.equal(changed.body.success, true);
+  assert.equal(record.email, "new@example.com");
+  assert.equal(record.isAccountVerified, false);
+  assert.equal(record.emailJobs, undefined);
+  for (const prefix of ["verifyOtp", "resetOtp"]) {
+    assert.equal(record[prefix], "");
+    assert.equal(record[`${prefix}ExpireAt`], 0);
+    assert.equal(record[`${prefix}RequestedAt`], 0);
+    assert.equal(record[`${prefix}Attempts`], 0);
+    assert.equal(record[`${prefix}Generation`], "");
+  }
+  const staleReset = await consumeOtpAttempt(reservedReset.user, "passwordReset", { password: "attacker-password-hash" });
+  assert.equal(staleReset.success, false);
+  assert.equal(record.password, user.password);
+  const staleVerification = createResponse();
+  await verifyEmail({ userId: id, body: { otp: "123456" } }, staleVerification);
+  assert.equal(staleVerification.statusCode, 400);
+  const staleResetSubmission = createResponse();
+  await resetPassword({ body: { email: "new@example.com", otp: "123456", newPassword: "attacker-password" } }, staleResetSubmission);
+  assert.equal(staleResetSubmission.statusCode, 400);
+  const queued = await queueOtpRequest(record, "verification");
+  assert.equal(queued.success, true);
+  assert.equal(record.emailJobs.verification.to, "new@example.com");
+  const verified = createResponse();
+  await verifyEmail({ userId: id, body: { otp: record.verifyOtp } }, verified);
+  assert.equal(verified.body.success, true);
+  assert.equal(record.isAccountVerified, true);
+});
+
+test("password reset atomically revokes copied JWTs; failed resets preserve sessions and a fresh login succeeds", async (t) => {
+  const previousSecret = process.env.JWT_SECRET;
+  process.env.JWT_SECRET = "test-only-password-reset-revocation-secret";
+  t.after(() => {
+    if (previousSecret === undefined) delete process.env.JWT_SECRET;
+    else process.env.JWT_SECRET = previousSecret;
+  });
+  t.mock.method(Date, "now", () => timestamp + 1);
+  const { record, writes } = installDatabase(t, activeUser("passwordReset", {
+    password: await bcrypt.hash("old-password", 4), tokenVersion: 4, isAccountVerified: true,
+  }));
+  const oldToken = issueAuthToken(record);
+  const authenticated = async (token) => {
+    const res = createResponse();
+    let admitted = false;
+    await authenticateUser({ cookies: { token } }, res, () => { admitted = true; });
+    return { admitted, res };
+  };
+  assert.equal((await authenticated(oldToken)).admitted, true);
+  const invalid = createResponse();
+  await resetPassword(submission("passwordReset", "654321"), invalid);
+  assert.equal(invalid.statusCode, 400);
+  assert.equal(record.tokenVersion, 4);
+  assert.equal((await authenticated(oldToken)).admitted, true);
+  const unchanged = createResponse();
+  await resetPassword({ body: { email: record.email, otp: "123456", newPassword: "old-password" } }, unchanged);
+  assert.equal(unchanged.body.success, false);
+  assert.equal(record.tokenVersion, 4);
+  const reset = createResponse();
+  await resetPassword(submission("passwordReset"), reset);
+  assert.equal(reset.body.success, true);
+  assert.equal(record.tokenVersion, 5);
+  const commitment = writes.find(({ update }) => update.$set?.password);
+  assert.equal(commitment.update.$inc.tokenVersion, 1);
+  assert.equal(commitment.update.$set.resetOtp, "");
+  const revoked = await authenticated(oldToken);
+  assert.equal(revoked.admitted, false);
+  assert.equal(revoked.res.statusCode, 401);
+  const loggedIn = { ...createResponse(), cookie(name, token) { this.token = token; } };
+  await login({ body: { email: record.email, password: "a-new-test-password" } }, loggedIn);
+  assert.equal(loggedIn.body.success, true);
+  assert.equal((await authenticated(loggedIn.token)).admitted, true);
 });

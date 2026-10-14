@@ -27,6 +27,8 @@ const Profile = () => {
   const [loading, setLoading] =
     useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
+
   const [editData, setEditData] =
     useState({
       name: "",
@@ -34,6 +36,9 @@ const Profile = () => {
       phone: "",
       class: 0,
     });
+
+  const emailChanged = editData.email.trim().toLowerCase() !==
+    (userData?.email || "").trim().toLowerCase();
 
   // ======================================================
   // AVAILABLE NOTIFICATION ROLES
@@ -217,6 +222,7 @@ const Profile = () => {
   // ======================================================
 
   const handleCancel = () => {
+    setCurrentPassword("");
     setEditData({
       name: userData?.name || "",
       email: userData?.email || "",
@@ -232,6 +238,11 @@ const Profile = () => {
   // ======================================================
 
   const handleSave = async () => {
+    if (loading) return;
+    if (emailChanged && !currentPassword) {
+      toast.error("Enter your current password to change your email address.");
+      return;
+    }
     const userClass = Number(editData.class);
     if (!Number.isInteger(userClass) || userClass < 0 || userClass > 12) {
       toast.error("Class must be a whole number from 0 to 12. Use 0 for no class.");
@@ -243,13 +254,14 @@ const Profile = () => {
       const { data } =
         await axios.put(
           `${backendUrl}/api/user/update-profile`,
-          { ...editData, class: userClass },
+          { ...editData, class: userClass, ...(emailChanged ? { currentPassword } : {}) },
           {
             withCredentials: true,
           }
         );
 
       if (data.success) {
+        setCurrentPassword("");
         toast.success(
           data.message ||
             "Profile updated successfully"
@@ -718,6 +730,26 @@ const Profile = () => {
                       </p>
                     )}
                   </div>
+
+                  {isEditing && emailChanged && (
+                    <div className="md:col-span-2">
+                      <label htmlFor="current-password" className="text-sm text-gray-500">
+                        Current password
+                      </label>
+                      <input
+                        id="current-password"
+                        type="password"
+                        autoComplete="current-password"
+                        value={currentPassword}
+                        onChange={(event) => setCurrentPassword(event.target.value)}
+                        disabled={loading}
+                        className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <p className="mt-2 text-sm text-gray-600">
+                        Confirm your password to change your email. You’ll need to verify the new address before continuing.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Role */}
 

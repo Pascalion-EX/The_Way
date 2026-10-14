@@ -152,12 +152,15 @@ test("all four OTP endpoints share the IP cap and cannot evade it with forwarded
     ids.push(filter._id);
     return { _id: filter._id, count: 101, expiresAt: new Date() };
   });
-  t.mock.method(User.collection, "findOne", () => assert.fail("Throttled route reached account I/O"));
+  t.mock.method(User.collection, "findOne", (filter, options) => {
+    assert.equal(options?.projection?.tokenVersion, 1, "Only session validation may read the account before throttling");
+    return { _id: filter._id, tokenVersion: 0 };
+  });
   t.mock.method(User.collection, "findOneAndUpdate", () => assert.fail("Throttled route reached account mutation"));
   const app = express();
   app.use(cookieParser());
   app.use("/api/auth", authRouter);
-  const token = jwt.sign({ id: "6ab26b08171afea3091f04b3" }, process.env.JWT_SECRET);
+  const token = jwt.sign({ id: "6ab26b08171afea3091f04b3", tokenVersion: 0 }, process.env.JWT_SECRET);
   for (const [index, route] of ["send-verify-otp", "verify-account", "send-reset-otp", "reset-password"].entries()) {
     const result = await request(app, `/api/auth/${route}`, token, `198.51.100.${index + 1}`);
     assert.equal(result.status, 429);
