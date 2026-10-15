@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
+import { normalizeAuthEmail, newPasswordError, PASSWORD_HINT, PASSWORD_MIN_CHARACTERS } from "../../../shared/authValidation.mjs";
 
   const DesktopVisual = () => (
     <div className="relative hidden overflow-hidden lg:block">
@@ -40,7 +41,7 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [cooldown, setCooldown] = useState({ email: "", until: 0 });
   const [currentTime, setCurrentTime] = useState(Date.now);
-  const resendSeconds = email.trim() === cooldown.email ? Math.max(0, Math.ceil((cooldown.until - currentTime) / 1000)) : 0;
+  const resendSeconds = normalizeAuthEmail(email) === cooldown.email ? Math.max(0, Math.ceil((cooldown.until - currentTime) / 1000)) : 0;
 
   useEffect(() => {
     if (cooldown.until <= Date.now()) return;
@@ -55,11 +56,11 @@ const ResetPassword = () => {
   const sendOtpHandler = async (e) => {
     e.preventDefault();
 
-    const trimmedEmail = email.trim();
-    if (isSendingOtp || (trimmedEmail === cooldown.email && cooldown.until > Date.now())) return;
+    const normalizedEmail = normalizeAuthEmail(email);
+    if (isSendingOtp || (normalizedEmail === cooldown.email && cooldown.until > Date.now())) return;
 
-    if (!trimmedEmail) {
-      toast.error("Email is required");
+    if (!normalizedEmail) {
+      toast.error("Enter one valid email address");
       return;
     }
 
@@ -69,15 +70,14 @@ const ResetPassword = () => {
       const { data } = await axios.post(
         `${backendUrl}/api/auth/send-reset-otp`,
         {
-          email: trimmedEmail,
+          email,
         }
       );
 
       if (data.success) {
         setCurrentTime(Date.now());
-        setCooldown({ email: trimmedEmail, until: data.otpResendAvailableAt || Date.now() + 60_000 });
+        setCooldown({ email: normalizedEmail, until: data.otpResendAvailableAt || Date.now() + 60_000 });
         toast.success(data.message || "OTP sent to your email");
-        setEmail(trimmedEmail);
         setStep(2);
       } else {
         toast.error(data.message || "Failed to send OTP");
@@ -85,7 +85,7 @@ const ResetPassword = () => {
     } catch (error) {
       if (error.response?.status === 429) {
         setCurrentTime(Date.now());
-        setCooldown({ email: trimmedEmail, until: error.response.data.otpResendAvailableAt || Date.now() + error.response.data.retryAfter * 1000 });
+        setCooldown({ email: normalizedEmail, until: error.response.data.otpResendAvailableAt || Date.now() + error.response.data.retryAfter * 1000 });
       }
       toast.error(error.response?.data?.message || error.message);
     } finally {
@@ -114,11 +114,21 @@ const ResetPassword = () => {
       return;
     }
 
+    if (!normalizeAuthEmail(email)) {
+      toast.error("Enter one valid email address");
+      return;
+    }
+    const passwordError = newPasswordError(newPassword);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
+
     try {
       setIsResettingPassword(true);
 
       const { data } = await axios.post(`${backendUrl}/api/auth/reset-password`, {
-        email: trimmedEmail,
+        email,
         otp: trimmedOtp,
         newPassword,
       });
@@ -210,6 +220,9 @@ const ResetPassword = () => {
                   <input
                     type="password"
                     placeholder="New password"
+                    autoComplete="new-password"
+                    minLength={PASSWORD_MIN_CHARACTERS}
+                    aria-describedby="password-guidance"
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -219,11 +232,14 @@ const ResetPassword = () => {
                   <input
                     type="password"
                     placeholder="Confirm new password"
+                    autoComplete="new-password"
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                   />
+
+                  <p id="password-guidance" className="text-xs text-gray-600">{PASSWORD_HINT}</p>
 
                   <button
                     type="submit"

@@ -312,6 +312,7 @@ A user can hold multiple roles because `role` is stored as an array.
 | Read own notifications and mark them seen | Any verified account |
 | Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |
 | Apply to trips | `parent`, `admin`, `leader`, `pascal` |
+| View private trip applicant rosters | `admin`, `leader`, `pascal`, `pamela` |
 | Notify trip applicants | `admin`, `leader`, `pascal` |
 
 > See [Current Implementation Notes](#current-implementation-notes) for permission inconsistencies currently present between some frontend and backend checks.
@@ -498,11 +499,19 @@ Base path: `/api/camps`
 | POST | `/` | Yes + role check | Create trip/camp |
 | GET | `/` | Yes | List trips/camps |
 | GET | `/:id` | Yes | Get trip/camp by ID |
+| GET | `/:id/applicants` | Verified staff | Read private applicant roster |
 | PUT | `/:id` | Yes + role check | Update trip/camp |
 | DELETE | `/:id` | Yes + role check | Delete trip/camp |
 | POST | `/:id/apply` | Yes + role check | Apply to trip/camp |
 | DELETE | `/:id/apply` | Yes | Withdraw application |
 | POST | `/:id/notify` | Yes + role check | Email applicants |
+
+List, detail, create, update, apply, and withdraw responses return a camp summary
+with `applicantCount` and viewer-specific `hasApplied`. They omit applicant
+records and creator contact details. The separate applicants endpoint requires
+current database-backed staff permissions and returns only applicant IDs,
+application timestamps, and user name/email/role. Camp responses use
+`Cache-Control: private, no-store`.
 
 Typical trip/camp data:
 
@@ -563,6 +572,17 @@ Applicant notification payload:
   "message": "Message sent to applicants"
 }
 ```
+
+### Event Updates API
+
+`PUT /api/events/:id` requires a verified `admin`, `leader`, `pascal`, or `pamela`
+account. It accepts partial edits to `title`, `description`, `eventType`,
+`startDate`, `endDate`, `allDay`, `location`, and `years`. Author/calendar metadata,
+MongoDB operators, dotted/prototype keys, unknown fields, and invalid values are
+rejected in full with HTTP 400. Server-owned timestamps remain automatic.
+Concurrent date changes return HTTP 409 for the client to reload and retry.
+See [the event update remediation](security-review/EVENT_UPDATE_REMEDIATION.md)
+for field limits, date formats, and regression coverage.
 
 ### Games API
 
@@ -1025,6 +1045,9 @@ The_Way/
 ├── package.json
 ├── package-lock.json
 │
+├── shared/
+│   └── authValidation.mjs
+│
 ├── backend/
 │   ├── config/
 │   │   ├── mongodb.js
@@ -1130,11 +1153,22 @@ The current project already includes several useful security practices:
 - Authentication middleware
 - Server-side role checks for major protected operations
 - Staff-only child profiles, attendance, and shared notification management
+- Camp summaries omit rosters; applicant contact details require the separate staff-only endpoint
+- Event updates enforce typed editable fields and preserve server-owned author/calendar metadata
 - Ten-minute OTP expiry, five-attempt budgets, and atomic one-time consumption
-- Shared database-backed account/IP rate limits for OTP operations
+- Shared database-backed IP, account, and global limits for login, registration, and OTP operations
+- Shared recipient/IP/global email quotas and single-mailbox validation
+- Shared registration/reset password policy: at least 15 characters, common-password screening, and an explicit bcrypt byte limit
 - Generic invalid-login response to reduce account enumeration during login
 - Mongoose `sanitizeFilter` / `strictQuery` usage in parts of the backend
 - Sensitive user fields excluded from admin dashboard queries
+
+Authentication thresholds, response behavior, and trusted-proxy deployment notes
+are documented in [the authentication abuse remediation](security-review/AUTH_ABUSE_REMEDIATION.md).
+Password/mailbox rules and legacy-account behavior are documented in
+[the validation remediation](security-review/AUTH_VALIDATION_REMEDIATION.md).
+Camp response fields and roster permissions are documented in
+[the camp privacy remediation](security-review/CAMP_PRIVACY_REMEDIATION.md).
 
 ### Important Repository Security Issue
 
@@ -1169,7 +1203,7 @@ If any real database password, JWT secret, SMTP password, API key, or other cred
 
 ### Additional Production Security Recommendations
 
-- Add rate limiting to login, registration, OTP, and password-reset endpoints.
+- Configure trusted proxy addresses for deployed IP limits and monitor authentication/email quota usage.
 - Add request validation with a schema validator such as Zod, Joi, or express-validator.
 - Add request body size limits.
 - Add Helmet security headers.
@@ -1324,7 +1358,7 @@ The controller currently matches the lowercase form for updates, so it can work,
 - Add a centralized error middleware.
 - Add validation schemas for all request bodies.
 - Add pagination for lessons, games, chants, activities, camps, and admin users.
-- Add rate limiting.
+- Monitor and tune the authentication/email limits against legitimate traffic.
 - Add Helmet.
 - Add API tests.
 - Add authorization middleware such as `requireRole(...)` instead of repeating role checks in controllers.

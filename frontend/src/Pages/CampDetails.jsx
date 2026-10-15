@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
-import { assets } from "../assets/assets.js";
 
 import Navbar from "@/Components/Navbar.jsx";
 
@@ -157,7 +156,7 @@ const CampDetails = () => {
               </p>
 
               <p className="mt-4 text-2xl font-semibold text-gray-900">
-                {Array.isArray(camp.applicants) ? camp.applicants.length : 0}
+                {camp.applicantCount ?? 0}
               </p>
 
               <p className="mt-1 text-sm text-gray-500">

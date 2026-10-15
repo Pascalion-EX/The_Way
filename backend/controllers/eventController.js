@@ -1,4 +1,6 @@
 import Event from "../models/EventModel.js";
+import mongoose from "mongoose";
+import { validateEventUpdate, validEventDateRange } from "../services/eventValidation.js";
 
 export const getEvents = async (req, res) => {
   try {
@@ -92,8 +94,17 @@ export const createEvent = async (req, res) => {
 };
 
 export const updateEvent = async (req, res) => {
+  const id = req.params?.id;
+  if (!mongoose.isObjectIdOrHexString(id)) {
+    return res.status(400).json({ success: false, message: "Invalid event ID" });
+  }
+  const validation = validateEventUpdate(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ success: false, message: validation.message });
+  }
+
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(id).select("startDate endDate");
 
     if (!event) {
       return res.status(404).json({
@@ -102,14 +113,26 @@ export const updateEvent = async (req, res) => {
       });
     }
 
-    const updatedEvent = await Event.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+    if (!validEventDateRange(validation.changes, event)) {
+      return res.status(400).json({ success: false, message: "End date cannot be before start date" });
+    }
+
+    const updatedEvent = await Event.findOneAndUpdate(
+      // Bind date validation to the values read above. Concurrent date edits
+      // must not combine two individually valid changes into an invalid range.
+      { _id: id, startDate: event.startDate, endDate: event.endDate ?? null },
+      { $set: validation.changes },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
+        strict: "throw",
+        upsert: false,
       }
     );
+
+    if (!updatedEvent) {
+      return res.status(409).json({ success: false, message: "Event changed or was deleted. Reload and try again." });
+    }
 
     return res.status(200).json({
       success: true,
@@ -117,9 +140,12 @@ export const updateEvent = async (req, res) => {
       event: updatedEvent,
     });
   } catch (error) {
+    if (["ValidationError", "CastError", "StrictModeError"].includes(error.name)) {
+      return res.status(400).json({ success: false, message: "Invalid event update" });
+    }
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Unable to update event",
     });
   }
 };

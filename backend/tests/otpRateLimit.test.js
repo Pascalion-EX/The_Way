@@ -164,7 +164,7 @@ test("all four OTP endpoints share the IP cap and cannot evade it with forwarded
   for (const [index, route] of ["send-verify-otp", "verify-account", "send-reset-otp", "reset-password"].entries()) {
     const result = await request(app, `/api/auth/${route}`, token, `198.51.100.${index + 1}`);
     assert.equal(result.status, 429);
-    assert.equal(result.body.code, "OTP_RATE_LIMITED");
+    assert.equal(result.body.code, "AUTH_RATE_LIMITED");
   }
-  assert.equal(new Set(ids).size, 1);
+  assert.equal(new Set(ids).size, 1, "Each route shares the same IP budget");
 });

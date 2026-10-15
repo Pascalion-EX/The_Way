@@ -37,7 +37,7 @@ for (const { name, environment, override, secure, sameSite } of [
     else delete process.env.AUTH_COOKIE_SECURE;
     process.env.JWT_SECRET = "test-only-cookie-secret";
 
-    const credentials = { name: "Test User", email: "test@example.com", password: "test-password", role: "parent" };
+    const credentials = { name: "Test User", email: "test@example.com", password: "test-only-cookie-password", role: "parent" };
     const user = { _id: "6ab26b08171afea3091f04b3", tokenVersion: 0, password: await bcrypt.hash(credentials.password, 4) };
     const find = t.mock.method(userModel, "findOne", async () => null);
     t.mock.method(userModel, "findById", () => ({ select: async () => user }));
@@ -45,7 +45,7 @@ for (const { name, environment, override, secure, sameSite } of [
 
     for (const controller of [register, login]) {
       if (controller === login) {
-        find.mock.mockImplementation(() => ({ setOptions: async () => user }));
+        find.mock.mockImplementation(async () => user);
       }
       const res = createResponse();
       await controller({ body: credentials }, res);

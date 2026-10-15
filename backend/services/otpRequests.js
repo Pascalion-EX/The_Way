@@ -3,10 +3,14 @@ import { randomInt, randomUUID } from "node:crypto";
 import userModel from "../models/userModel.js";
 import { createEmailJob } from "./emailQueue.js";
 import { OTP_TTL_MS, otpPrefix } from "./otpPolicy.js";
+import { normalizeAuthEmail } from "./authEmail.js";
 
 export const OTP_COOLDOWN_MS = 60_000;
 
 export async function queueOtpRequest(user, kind, { users = userModel, now = Date.now } = {}) {
+  if (!normalizeAuthEmail(user.email)) {
+    return { success: false, status: 400, message: "A valid email address is required" };
+  }
   const verification = kind === "verification";
   const prefix = otpPrefix(kind);
   const requestedAt = `${prefix}RequestedAt`;

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { EVENT_TYPES } from "../services/eventValidation.js";
 
 const eventSchema = new mongoose.Schema(
   {
@@ -15,15 +16,7 @@ const eventSchema = new mongoose.Schema(
 
     eventType: {
       type: String,
-      enum: [
-        "Trip",
-        "Visit",
-        "Fasting",
-        "Feast",
-        "Mass",
-        "Meeting",
-        "Other",
-      ],
+      enum: EVENT_TYPES,
       required: true,
     },
 

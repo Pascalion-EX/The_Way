@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import userModel from "../models/userModel.js";
+import { normalizeAuthEmail, passwordInputError } from "../../shared/authValidation.mjs";
 
 export const getUserData = async (req, res) => {
   try {
@@ -55,10 +56,10 @@ export const updateProfile = async (req, res) => {
 
     let normalizedEmail;
     if (email !== undefined) {
-      if (typeof email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      normalizedEmail = normalizeAuthEmail(email);
+      if (!normalizedEmail) {
         return res.status(400).json({ success: false, message: "A valid email address is required" });
       }
-      normalizedEmail = email.trim().toLowerCase();
     }
 
     const currentUser = await userModel.findById(userId).select("email password");
@@ -67,7 +68,7 @@ export const updateProfile = async (req, res) => {
     }
 
     const emailChanged = normalizedEmail !== undefined &&
-      normalizedEmail !== currentUser.email.trim().toLowerCase();
+      normalizedEmail !== normalizeAuthEmail(currentUser.email);
     const filter = { _id: userId };
     const update = { $set: updateData };
 
@@ -79,6 +80,8 @@ export const updateProfile = async (req, res) => {
           message: "Enter your current password to change your email address",
         });
       }
+      const passwordError = passwordInputError(currentPassword);
+      if (passwordError) return res.status(400).json({ success: false, code: "INVALID_PASSWORD", message: passwordError });
       if (!await bcrypt.compare(currentPassword, currentUser.password)) {
         return res.status(403).json({ success: false, message: "Current password is incorrect" });
       }

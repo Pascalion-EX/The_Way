@@ -11,19 +11,20 @@ import {
   checkAuth,
 } from "../controllers/authController.js";
 import { authenticateUser } from "../middleware/userAuth.js";
-import { otpIpRateLimit, verificationAccountRateLimit, recoveryAccountRateLimit } from "../middleware/otpRateLimit.js";
+import { verificationAccountRateLimit, recoveryAccountRateLimit } from "../middleware/otpRateLimit.js";
+import { authRequestRateLimits, loginRateLimits, registrationRateLimits, emailDeliveryRateLimits } from "../middleware/authRateLimit.js";
 
 const authRouter = express.Router();
 
-authRouter.post("/register", register);
-authRouter.post("/login", login);
+authRouter.post("/register", ...authRequestRateLimits, ...registrationRateLimits, ...emailDeliveryRateLimits, register);
+authRouter.post("/login", ...authRequestRateLimits, ...loginRateLimits, login);
 authRouter.get("/check-auth", authenticateUser, checkAuth);
 authRouter.post("/logout", logout);
-authRouter.post("/send-verify-otp", authenticateUser, otpIpRateLimit, verificationAccountRateLimit, sendVerifyotp);
-authRouter.post("/verify-account", authenticateUser, otpIpRateLimit, verificationAccountRateLimit, verifyEmail);
+authRouter.post("/send-verify-otp", ...authRequestRateLimits, authenticateUser, verificationAccountRateLimit, ...emailDeliveryRateLimits, sendVerifyotp);
+authRouter.post("/verify-account", ...authRequestRateLimits, authenticateUser, verificationAccountRateLimit, verifyEmail);
 authRouter.get("/is-auth", authenticateUser, isAuthenticated);
-authRouter.post("/send-reset-otp", otpIpRateLimit, recoveryAccountRateLimit, sendResetOtp);
-authRouter.post("/reset-password", otpIpRateLimit, recoveryAccountRateLimit, resetPassword);
+authRouter.post("/send-reset-otp", ...authRequestRateLimits, recoveryAccountRateLimit, ...emailDeliveryRateLimits, sendResetOtp);
+authRouter.post("/reset-password", ...authRequestRateLimits, recoveryAccountRateLimit, resetPassword);
 
 export default authRouter;
 

@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 
 import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
+import { normalizeAuthEmail, passwordInputError } from "../../../shared/authValidation.mjs";
 
 const Profile = () => {
   const {
@@ -37,8 +38,7 @@ const Profile = () => {
       class: 0,
     });
 
-  const emailChanged = editData.email.trim().toLowerCase() !==
-    (userData?.email || "").trim().toLowerCase();
+  const emailChanged = normalizeAuthEmail(editData.email) !== normalizeAuthEmail(userData?.email);
 
   // ======================================================
   // AVAILABLE NOTIFICATION ROLES
@@ -239,9 +239,20 @@ const Profile = () => {
 
   const handleSave = async () => {
     if (loading) return;
+    if (!normalizeAuthEmail(editData.email)) {
+      toast.error("Enter one valid email address");
+      return;
+    }
     if (emailChanged && !currentPassword) {
       toast.error("Enter your current password to change your email address.");
       return;
+    }
+    if (emailChanged) {
+      const passwordError = passwordInputError(currentPassword);
+      if (passwordError) {
+        toast.error(passwordError);
+        return;
+      }
     }
     const userClass = Number(editData.class);
     if (!Number.isInteger(userClass) || userClass < 0 || userClass > 12) {

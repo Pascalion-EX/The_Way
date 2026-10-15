@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
-import { assets } from "../assets/assets.js";
 
 import Navbar from "@/Components/Navbar.jsx";
 
@@ -65,29 +64,7 @@ const Camp = () => {
 
   const yearOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 
-  const getUserId = () => {
-    return userData?._id || userData?.id || userData?.userId;
-  };
-
-  const hasApplied = (camp) => {
-    const userId = getUserId();
-
-    if (!userId || !Array.isArray(camp.applicants)) {
-      return false;
-    }
-
-    return camp.applicants.some((applicant) => {
-      const applicantUser = applicant.user;
-
-      if (!applicantUser) return false;
-
-      if (typeof applicantUser === "string") {
-        return applicantUser === userId;
-      }
-
-      return applicantUser._id === userId || applicantUser.id === userId;
-    });
-  };
+  const hasApplied = (camp) => camp.hasApplied === true;
 
   const getApplicationType = () => {
     if (isLeaderFormUser) return "leader";

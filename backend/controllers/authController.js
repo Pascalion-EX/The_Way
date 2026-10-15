@@ -8,6 +8,9 @@ import { OTP_TTL_MS } from "../services/otpPolicy.js";
 import { reserveOtpAttempt, consumeOtpAttempt, otpMatches } from "../services/otpAttempts.js";
 import { AUTH_TOKEN_TTL_SECONDS, getAuthCookieOptions } from "../config/authCookie.js";
 import { issueAuthToken, verifyAuthToken } from "../services/authTokens.js";
+import { normalizeAuthEmail } from "../services/authEmail.js";
+import { findUserByAuthEmail } from "../services/authIdentity.js";
+import { newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
 
 
 export const checkAuth = async (req, res) => {
@@ -19,21 +22,23 @@ export const checkAuth = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email, password, phone, role } = req.body;
-  if (!name) {
-    return res.json({ success: false, message: "Missing name" });
+  const { name, email: suppliedEmail, password, phone, role } = req.body || {};
+  const email = normalizeAuthEmail(suppliedEmail);
+  if (typeof name !== "string" || !name.trim() || name.length > 200) {
+    return res.status(400).json({ success: false, message: "A valid name is required" });
   }
   if (!email) {
-    return res.json({ success: false, message: "Missing email" });
+    return res.status(400).json({ success: false, message: "A valid email address is required" });
   }
-  if (!password) {
-    return res.json({ success: false, message: "Missing password" });
+  const passwordError = newPasswordError(password);
+  if (passwordError) {
+    return res.status(400).json({ success: false, code: "INVALID_PASSWORD", message: passwordError });
   }
   if (role != "parent" && role != "unAssigned"){
     return res.json({success: false, message: "Welcome to the honeypot"});
   }
   try {
-    const existinguser = await userModel.findOne({ email });
+    const existinguser = await findUserByAuthEmail(suppliedEmail);
     if (existinguser) {
       return res.json({ success: false, message: "User already exists" });
     }
@@ -77,7 +82,7 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     // Reject arrays, objects, numbers, null, etc.
     if (
@@ -90,7 +95,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeAuthEmail(email);
 
     if (!normalizedEmail || !password) {
       return res.status(400).json({
@@ -99,23 +104,10 @@ export const login = async (req, res) => {
       });
     }
 
-    // Basic email-format validation
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordError = passwordInputError(password);
+    if (passwordError) return res.status(400).json({ success: false, code: "INVALID_PASSWORD", message: passwordError });
 
-    if (!emailPattern.test(normalizedEmail)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    const user = await userModel
-      .findOne({
-        email: normalizedEmail,
-      })
-      .setOptions({
-        sanitizeFilter: true,
-      });
+    const user = await findUserByAuthEmail(email);
 
     // Use the same response for both cases to reduce account enumeration
     if (!user) {
@@ -211,6 +203,12 @@ export const sendVerifyotp = async (req, res) => {
       return res.json({ success: false, message: "User not found" });
     }
 
+    // Bind the queued job to the mailbox whose quota the middleware reserved.
+    // queueOtpRequest also compares this email atomically during its write.
+    if (req.abuseEmailRecipient && normalizeAuthEmail(user.email) !== req.abuseEmailRecipient) {
+      return res.status(409).json({ success: false, message: "Account changed. Please reload and try again." });
+    }
+
     if (user.isAccountVerified) {
       return res.json({
         success: false,
@@ -267,13 +265,12 @@ export const isAuthenticated = async (req, res) => {
 
 export const sendResetOtp = async (req, res) => {
   const { email } = req.body || {};
-  if (typeof email !== "string" || !email.trim()) {
-    return res.status(400).json({ success: false, message: "Email is required" });
+  if (!normalizeAuthEmail(email)) {
+    return res.status(400).json({ success: false, message: "A valid email address is required" });
   }
 
   try {
-    // Existing accounts store the supplied address verbatim; preserve that identity.
-    const user = await userModel.findOne({ email });
+    const user = await findUserByAuthEmail(email);
     if (!user) {
       return res.json({ success: false, message: "User not found" });
     }
@@ -290,17 +287,24 @@ export const sendResetOtp = async (req, res) => {
 };
 export const resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body || {};
-  if (typeof email !== "string" || !email.trim() ||
-      typeof otp !== "string" || !/^\d{6}$/.test(otp) ||
-      typeof newPassword !== "string" || !newPassword) {
+  if (!normalizeAuthEmail(email) ||
+      typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
     return res.status(400).json({
       success: false,
       message: "Email, a valid 6-digit OTP, and new password are required",
     });
   }
 
+  const passwordError = newPasswordError(newPassword);
+  if (passwordError) {
+    return res.status(400).json({ success: false, code: "INVALID_PASSWORD", message: passwordError });
+  }
+
   try {
-    const attempt = await reserveOtpAttempt({ email }, "passwordReset");
+    const account = await findUserByAuthEmail(email);
+    if (!account) return res.status(400).json({ success: false, message: "Invalid or expired OTP. Request a new code." });
+    // Pin the reset to the mailbox resolved above as well as the account ID.
+    const attempt = await reserveOtpAttempt({ _id: account._id, email: account.email }, "passwordReset");
     if (!attempt.success) return res.status(attempt.status).json(attempt);
     const user = attempt.user;
     if (!otpMatches(user.resetOtp, otp)) {

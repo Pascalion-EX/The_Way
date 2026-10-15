@@ -110,13 +110,18 @@ three package directories. The MongoDB user needs access to the new
 before relying on forwarded IP addresses; with default proxy trust, a reverse
 proxy's clients share its socket-IP budget.
 
-F06–F17 remain separate findings except for incidental reset input/error handling
-and dependency-related portions of F12. In particular, this change does not add
-session revocation, an email-change verification flow, role scoping to notification
-seen updates, camp response projections, an event editable-field whitelist, or
-strict media URL validation. It also does not deploy the application or change
-production HTTPS/CORS/CSRF/header policy. Those items remain in the original
-report for subsequent work.
+This document records the initial F01–F05 remediation. Subsequent changes are
+documented separately:
+
+- F09: [authentication and email abuse limits](AUTH_ABUSE_REMEDIATION.md).
+- F10: [password/mailbox validation](AUTH_VALIDATION_REMEDIATION.md).
+- F11: [camp response privacy](CAMP_PRIVACY_REMEDIATION.md).
+- F12: [event update validation and protected metadata](EVENT_UPDATE_REMEDIATION.md).
+
+These code changes do not deploy the application or configure production
+HTTPS/CORS/CSRF/header policy. The original report describes the reviewed
+snapshot; current regression tests and the subsequent remediation notes describe
+the repaired behavior.
 
 The original `proof-*.mjs` files are historical demonstrations of unsafe behavior
 at the reviewed commit. They intentionally assert that vulnerabilities exist and

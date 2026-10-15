@@ -3,15 +3,20 @@ import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "./otpPolicy.js";
+import { normalizeAuthEmail } from "./authEmail.js";
 
 export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset"];
 const LEASE_MS = 5 * 60 * 1000;
 
-export const createEmailJob = ({ to, subject, text, expiresAt }) => ({
-  id: randomUUID(), to, subject, text,
-  status: "queued", attempts: 0,
-  nextAttemptAt: new Date(), expiresAt: new Date(expiresAt),
-});
+export const createEmailJob = ({ to, subject, text, expiresAt }) => {
+  const recipient = normalizeAuthEmail(to);
+  if (!recipient) throw new Error("A valid email address is required");
+  return {
+    id: randomUUID(), to: recipient, subject, text,
+    status: "queued", attempts: 0,
+    nextAttemptAt: new Date(), expiresAt: new Date(expiresAt),
+  };
+};
 
 export const retryDelayMs = (attempts) => Math.min(5000 * 2 ** Math.min(attempts - 1, 6), 5 * 60 * 1000);
 
@@ -54,7 +59,8 @@ export async function processNextEmailJob(kind, {
     user[`${prefix}ExpireAt`] <= checkedAt ||
     user[`${prefix}Attempts`] >= OTP_MAX_ATTEMPTS
   );
-  if (new Date(job.expiresAt).getTime() <= checkedAt || user.email !== job.to || inactiveCode ||
+  const recipient = normalizeAuthEmail(job.to);
+  if (!recipient || new Date(job.expiresAt).getTime() <= checkedAt || normalizeAuthEmail(user.email) !== recipient || inactiveCode ||
       (kind === "verification" && (user.isAccountVerified || !user.verifyOtp)) ||
       (kind === "passwordReset" && !user.resetOtp)) {
     await discard();
@@ -63,7 +69,7 @@ export async function processNextEmailJob(kind, {
 
   try {
     await mailer.sendMail({
-      from: process.env.SENDER_EMAIL, to: job.to, subject: job.subject, text: job.text,
+      from: process.env.SENDER_EMAIL, to: recipient, subject: job.subject, text: job.text,
       messageId: `<${job.id}@the-way.invalid>`,
     });
   } catch (error) {

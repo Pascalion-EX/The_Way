@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
-import { assets } from "../assets/assets.js";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
+import { normalizeAuthEmail, newPasswordError, passwordInputError, PASSWORD_HINT, PASSWORD_MIN_CHARACTERS } from "../../../shared/authValidation.mjs";
 
 import Navbar from "@/Components/Navbar.jsx";
 import { Phone } from "lucide-react";
@@ -53,6 +53,16 @@ const roleOptions = [
     e.preventDefault();
 
     if (loading) return;
+
+    if (!normalizeAuthEmail(email)) {
+      toast.error("Enter one valid email address");
+      return;
+    }
+    const passwordError = state === "Sign Up" ? newPasswordError(password) : passwordInputError(password);
+    if (passwordError) {
+      toast.error(passwordError);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -337,6 +347,9 @@ const roleOptions = [
                   <input
                     type="password"
                     id="password-input"
+                    autoComplete={state === "Sign Up" ? "new-password" : "current-password"}
+                    minLength={state === "Sign Up" ? PASSWORD_MIN_CHARACTERS : undefined}
+                    aria-describedby={state === "Sign Up" ? "password-guidance" : undefined}
                     placeholder=" "
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -388,6 +401,7 @@ const roleOptions = [
                     Password
                   </label>
                 </div>
+{state === "Sign Up" && <p id="password-guidance" className="text-xs text-gray-600">{PASSWORD_HINT}</p>}
 {state === "Sign Up" && (
   <div className="relative w-full">
     {/* Dropdown button */}

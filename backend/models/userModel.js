@@ -1,9 +1,13 @@
 import mongoose, { mongo } from "mongoose";
 import emailJobSchema from "./emailJobSchema.js";
+import { normalizeAuthEmail } from "../services/authEmail.js";
 
 const userSchema = new mongoose.Schema({
     name: {type:String, required: true},
-    email: {type:String, required: true, unique:true},
+    email: {type:String, required: true, unique:true, validate: {
+        validator: (value) => normalizeAuthEmail(value) !== null,
+        message: 'A valid single email address is required',
+    }},
     password: {type:String, required: true},
     tokenVersion: {type:Number, default: 0, min: 0, validate: Number.isSafeInteger},
     verifyOtp: {type:String, default: ''},

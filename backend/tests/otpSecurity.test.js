@@ -289,7 +289,7 @@ test("registration codes and their delivery jobs both use the ten-minute policy"
   let saved;
   t.mock.method(userModel.prototype, "save", async function () { saved = this; return this; });
   const res = { ...createResponse(), cookie() {} };
-  await register({ body: { name: "Test", email: "test@example.com", password: "test-password", role: "parent" } }, res);
+  await register({ body: { name: "Test", email: "test@example.com", password: "test-only-signup-password", role: "parent" } }, res);
   assert.equal(res.body.success, true);
   assert.equal(saved.verifyOtpExpireAt, timestamp + OTP_TTL_MS);
   assert.equal(saved.verifyOtpAttempts, 0);
@@ -353,7 +353,7 @@ for (const email of ["Legacy.MixedCase@example.com", " legacy@example.com "]) {
     const requested = { ...createResponse(), set() { return this; } };
     await sendResetOtp({ body: { email } }, requested);
     assert.equal(requested.body.success, true);
-    assert.equal(record.emailJobs.passwordReset.to, email);
+    assert.equal(record.emailJobs.passwordReset.to, email.trim().toLowerCase());
     const reset = createResponse();
     await resetPassword({ body: { email, otp: record.resetOtp, newPassword: "synthetic-new-password" } }, reset);
     assert.equal(reset.body.success, true);
@@ -423,7 +423,7 @@ test("password reset atomically revokes copied JWTs; failed resets preserve sess
   });
   t.mock.method(Date, "now", () => timestamp + 1);
   const { record, writes } = installDatabase(t, activeUser("passwordReset", {
-    password: await bcrypt.hash("old-password", 4), tokenVersion: 4, isAccountVerified: true,
+    password: await bcrypt.hash("old-test-password", 4), tokenVersion: 4, isAccountVerified: true,
   }));
   const oldToken = issueAuthToken(record);
   const authenticated = async (token) => {
@@ -439,7 +439,7 @@ test("password reset atomically revokes copied JWTs; failed resets preserve sess
   assert.equal(record.tokenVersion, 4);
   assert.equal((await authenticated(oldToken)).admitted, true);
   const unchanged = createResponse();
-  await resetPassword({ body: { email: record.email, otp: "123456", newPassword: "old-password" } }, unchanged);
+  await resetPassword({ body: { email: record.email, otp: "123456", newPassword: "old-test-password" } }, unchanged);
   assert.equal(unchanged.body.success, false);
   assert.equal(record.tokenVersion, 4);
   const reset = createResponse();
