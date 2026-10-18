@@ -171,24 +171,24 @@ export const getAllActivities = async (
 
       filter.$or = [
         {
-          name: {
+          name: mongoose.trusted({
             $regex: escapedSearch,
             $options: "i",
-          },
+          }),
         },
 
         {
-          materials: {
+          materials: mongoose.trusted({
             $regex: escapedSearch,
             $options: "i",
-          },
+          }),
         },
 
         {
-          explanation: {
+          explanation: mongoose.trusted({
             $regex: escapedSearch,
             $options: "i",
-          },
+          }),
         },
       ];
     }
