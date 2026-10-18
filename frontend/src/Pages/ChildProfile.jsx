@@ -54,7 +54,7 @@ const ChildProfiles = () => {
   const [deletingId, setDeletingId] = useState(null);
 
   const [search, setSearch] = useState("");
-  const [gradeFilter, setGradeFilter] = useState("all");
+  const [gradeFilter, setGradeFilter] = useState("0");
 
   const [formOpen, setFormOpen] = useState(false);
 
@@ -367,7 +367,7 @@ const ChildProfiles = () => {
           );
 
       const matchesGrade =
-        gradeFilter === "all" ||
+        gradeFilter === "0" ||
         String(child.grade) ===
           gradeFilter;
 
@@ -621,6 +621,7 @@ const ChildProfiles = () => {
             {/* GRADE FILTER */}
 
             <select
+              aria-label="Filter by grade"
               value={gradeFilter}
               onChange={(event) =>
                 setGradeFilter(
@@ -639,11 +640,11 @@ const ChildProfiles = () => {
                 sm:min-w-48
               "
             >
-              <option value="all">
-                All Grades
+              <option value="0">
+                0 — All Grades
               </option>
 
-              {grades.map(
+              {Array.from({ length: 12 }, (_, index) => index + 1).map(
                 (grade) => (
                   <option
                     key={grade}

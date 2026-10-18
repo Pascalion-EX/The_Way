@@ -248,7 +248,7 @@ export const updateChant = async (req, res) => {
 
     const updatedChant = await chantModel
       .findByIdAndUpdate(id, updateData, {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       })
       .populate("createdBy", "name email role");
@@ -346,13 +346,13 @@ export const toggleFavoriteChant = async (req, res) => {
       updatedChant = await chantModel.findByIdAndUpdate(
         id,
         { $pull: { favorites: userId } },
-        { new: true }
+        { returnDocument: "after" }
       );
     } else {
       updatedChant = await chantModel.findByIdAndUpdate(
         id,
         { $addToSet: { favorites: userId } },
-        { new: true }
+        { returnDocument: "after" }
       );
     }
 

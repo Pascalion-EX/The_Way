@@ -194,6 +194,13 @@ export const getLessons = async (req, res) => {
       year = "",
     } = req.query;
 
+    if (typeof year !== "string" || (year && !/^(?:0|[1-9]|1[0-2])$/.test(year))) {
+      return res.status(400).json({
+        success: false,
+        message: "Year must be a whole number from 1 to 12, or 0 for no filter",
+      });
+    }
+
     const filter = {};
 
     /*
@@ -202,7 +209,7 @@ export const getLessons = async (req, res) => {
     |--------------------------------------------------------------------------
     */
 
-    if (year) {
+    if (Number(year) > 0) {
       filter.year = Number(year);
     }
 
@@ -528,7 +535,7 @@ export const updateLesson = async (req, res) => {
           year: Number(year),
         },
         {
-          new: true,
+          returnDocument: "after",
           runValidators: true,
         }
       ).populate(

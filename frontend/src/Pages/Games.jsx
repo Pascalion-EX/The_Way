@@ -15,7 +15,7 @@ const Games = () => {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("0");
 
   const allowedRoles = ["pascal", "admin", "leader"];
 
@@ -36,7 +36,7 @@ const Games = () => {
       const params = new URLSearchParams();
 
       if (currentSearch.trim()) params.append("search", currentSearch.trim());
-      if (currentYear) params.append("year", currentYear);
+      if (Number(currentYear) > 0) params.append("year", currentYear);
 
       const url = `${backendUrl}/api/games${
         params.toString() ? `?${params.toString()}` : ""
@@ -67,7 +67,7 @@ const Games = () => {
 
   const clearFilters = () => {
     setSearch("");
-    setYearFilter("");
+    setYearFilter("0");
     fetchGames("", "");
   };
 
@@ -159,7 +159,12 @@ const handleViewGame = (game) => {
 
               <input
                 type="number"
-                placeholder="Filter by year"
+                min="0"
+                max="12"
+                step="1"
+                aria-label="Filter by year (1–12; 0 for all years)"
+                title="Year 1–12; 0 shows all years"
+                placeholder="Year 1–12 (0 = all)"
                 className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}

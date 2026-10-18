@@ -28,14 +28,14 @@ const getEmbedUrl = (url = "") => {
 
         return videoId
           ? `https://www.youtube.com/embed/${videoId}`
-          : url;
+          : "";
       }
 
       const videoId = parsedUrl.searchParams.get("v");
 
       return videoId
         ? `https://www.youtube.com/embed/${videoId}`
-        : url;
+        : "";
     }
 
     if (hostname === "youtu.be") {
@@ -45,12 +45,12 @@ const getEmbedUrl = (url = "") => {
 
       return videoId
         ? `https://www.youtube.com/embed/${videoId}`
-        : url;
+        : "";
     }
 
-    return url;
+    return "";
   } catch {
-    return url;
+    return "";
   }
 };
 
@@ -184,9 +184,7 @@ const ActivitiesViewer = () => {
 
   const embedUrl = getEmbedUrl(activity.video);
 
-  const isYouTubeVideo = embedUrl.includes(
-    "youtube.com/embed"
-  );
+  const isYouTubeVideo = Boolean(embedUrl);
 
   return (
     <div className="relative isolate min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
@@ -269,13 +267,24 @@ const ActivitiesViewer = () => {
                         allowFullScreen
                       />
                     ) : (
-                      <video
-                        src={activity.video}
-                        controls
-                        className="aspect-video w-full bg-black"
+                      <a
+                        href={activity.video}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
                       >
-                        Your browser does not support the video element.
-                      </video>
+                        {activity.image ? (
+                          <img
+                            src={activity.image}
+                            alt={`Open ${activity.name || "activity"} video`}
+                            className="aspect-video w-full object-cover"
+                          />
+                        ) : (
+                          <span className="block p-6 text-center text-white">
+                            Open video link
+                          </span>
+                        )}
+                      </a>
                     )}
                   </div>
 

@@ -36,7 +36,7 @@ export const updateUserClassByAdmin = async (req, res) => {
     const user = await userModel.findByIdAndUpdate(
       id,
       { class: userClass },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     ).select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
 
     if (!user) {
@@ -183,7 +183,7 @@ export const updateUserRolesByAdmin = async (req, res) => {
     const user = await userModel.findByIdAndUpdate(
       id,
       { role: [...new Set(role)] },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     ).select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
 
     if (!user) {

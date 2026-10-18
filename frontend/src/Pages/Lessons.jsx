@@ -29,7 +29,7 @@ const Lessons = () => {
     useState("");
 
   const [yearFilter, setYearFilter] =
-    useState("");
+    useState("0");
 
   /*
   |--------------------------------------------------------------------------
@@ -90,7 +90,7 @@ const Lessons = () => {
         );
       }
 
-      if (currentYear) {
+      if (Number(currentYear) > 0) {
         params.append(
           "year",
           currentYear
@@ -147,7 +147,7 @@ const Lessons = () => {
 
   const clearFilters = () => {
     setSearch("");
-    setYearFilter("");
+    setYearFilter("0");
 
     fetchLessons("", "");
   };
@@ -372,7 +372,12 @@ const Lessons = () => {
 
               <input
                 type="number"
-                placeholder="Filter by year"
+                min="0"
+                max="12"
+                step="1"
+                aria-label="Filter by year (1–12; 0 for all years)"
+                title="Year 1–12; 0 shows all years"
+                placeholder="Year 1–12 (0 = all)"
                 className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                 value={yearFilter}
                 onChange={(e) =>

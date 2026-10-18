@@ -413,7 +413,7 @@ export const updateActivity = async (
                 : "",
           },
           {
-            new: true,
+            returnDocument: "after",
             runValidators: true,
           }
         )

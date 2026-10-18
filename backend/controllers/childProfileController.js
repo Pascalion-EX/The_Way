@@ -185,7 +185,7 @@ export const updateChildProfile = async (req, res) => {
         address,
       },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       }
     );

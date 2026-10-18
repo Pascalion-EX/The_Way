@@ -100,7 +100,7 @@ const Attendance = () => {
   const [saving, setSaving] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [gradeFilter, setGradeFilter] = useState("all");
+  const [gradeFilter, setGradeFilter] = useState("0");
 
   // ======================================================
   // PERMISSIONS
@@ -316,26 +316,6 @@ const Attendance = () => {
   };
 
   // ======================================================
-  // FILTER GRADES
-  // ======================================================
-
-  const grades = useMemo(() => {
-    const uniqueGrades = [
-      ...new Set(
-        children
-          .map((child) => getChildGrade(child))
-          .filter(Boolean)
-      ),
-    ];
-
-    return uniqueGrades.sort((a, b) =>
-      String(a).localeCompare(String(b), undefined, {
-        numeric: true,
-      })
-    );
-  }, [children]);
-
-  // ======================================================
   // FILTER CHILDREN
   // ======================================================
 
@@ -353,7 +333,7 @@ const Attendance = () => {
       const childGrade = String(getChildGrade(child));
 
       const matchesGrade =
-        gradeFilter === "all" ||
+        gradeFilter === "0" ||
         childGrade === gradeFilter;
 
       return matchesSearch && matchesGrade;
@@ -513,6 +493,7 @@ const Attendance = () => {
               </label>
 
               <select
+                aria-label="Filter by grade"
                 value={gradeFilter}
                 onChange={(event) =>
                   setGradeFilter(event.target.value)
@@ -532,9 +513,9 @@ const Attendance = () => {
                   focus:ring-[#D4AF37]/20
                 "
               >
-                <option value="all">All Grades</option>
+                <option value="0">0 — All Grades</option>
 
-                {grades.map((grade) => (
+                {Array.from({ length: 12 }, (_, index) => index + 1).map((grade) => (
                   <option key={grade} value={String(grade)}>
                     {grade}
                   </option>

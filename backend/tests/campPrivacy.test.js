@@ -268,8 +268,11 @@ test("missing camps, invalid IDs, and safe list filters retain useful responses"
   assert.equal((await state.request("GET", "/invalid/applicants")).status, 400);
   assert.equal((await state.request("GET", `/${missingId}/applicants`)).status, 404);
   assert.equal((await state.request("GET", "?search=Trip&year=1&tripType=Trip")).body.camps.length, 1);
+  assert.equal((await state.request("GET", "?year=12")).body.camps.length, 0);
+  assert.equal((await state.request("GET", "?year=0")).body.camps.length, 1);
+  assert.equal(Object.hasOwn(state.pipelines.at(-1)[0].$match, "years"), false);
   assert.equal((await state.request("GET", "?search=.*")).body.camps.length, 0, "Search metacharacters are literal");
-  for (const query of ["?year=13", "?year=1&year=2", "?tripType=invalid", `?search=${"x".repeat(201)}`]) {
+  for (const query of ["?year=13", "?year=-1", "?year=1.5", "?year=invalid", "?year=1&year=2", "?tripType=invalid", `?search=${"x".repeat(201)}`]) {
     assert.equal((await state.request("GET", query)).status, 400);
   }
 });

@@ -109,7 +109,7 @@ export const takeAttendance = async (req, res) => {
         notes: notes || "",
       },
       {
-        new: true,
+        returnDocument: "after",
         upsert: true,
         runValidators: true,
       }
@@ -390,7 +390,7 @@ export const updateAttendance = async (req, res) => {
         recordedBy: req.userId,
       },
       {
-        new: true,
+        returnDocument: "after",
         runValidators: true,
       }
     )

@@ -14,7 +14,7 @@ const Camp = () => {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [yearFilter, setYearFilter] = useState("");
+  const [yearFilter, setYearFilter] = useState("0");
   const [sortOrder, setSortOrder] = useState("asc");
   const [notifyCamp, setNotifyCamp] = useState(null);
   const [notifySubject, setNotifySubject] = useState("");
@@ -126,7 +126,7 @@ const Camp = () => {
       });
     }
 
-    if (yearFilter) {
+    if (Number(yearFilter) > 0) {
       result = result.filter(
         (camp) =>
           Array.isArray(camp.years) &&
@@ -149,7 +149,7 @@ const Camp = () => {
 
   const clearFilters = () => {
     setSearch("");
-    setYearFilter("");
+    setYearFilter("0");
     setSortOrder("asc");
   };
 
@@ -423,10 +423,11 @@ const handleNotifySubmit = async (e) => {
 
               <select
                 className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                aria-label="Filter by year"
                 value={yearFilter}
                 onChange={(e) => setYearFilter(e.target.value)}
               >
-                <option value="">All years</option>
+                <option value="0">0 — All years</option>
                 {yearOptions.map((year) => (
                   <option key={year} value={year}>
                     Year {year}

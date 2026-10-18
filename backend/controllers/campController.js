@@ -115,7 +115,7 @@ export const getAllCamps = async (req, res) => {
     const { search = "", year = "", tripType = "" } = req.query;
 
     if (typeof search !== "string" || search.length > 200 ||
-        typeof year !== "string" || (year && !/^(?:[1-9]|1[0-2])$/.test(year)) ||
+        typeof year !== "string" || (year && !/^(?:0|[1-9]|1[0-2])$/.test(year)) ||
         typeof tripType !== "string" || (tripType && !tripTypeOptions.includes(tripType))) {
       return res.status(400).json({ success: false, message: "Invalid camp filters" });
     }
@@ -132,7 +132,7 @@ export const getAllCamps = async (req, res) => {
       ];
     }
 
-    if (year) {
+    if (Number(year) > 0) {
       filter.years = Number(year);
     }
 

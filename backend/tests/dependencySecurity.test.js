@@ -18,7 +18,7 @@ test("event update casting cannot modify shared prototype metadata", () => {
     JSON.parse('{"$set":{"__proto__.auditMarker":"synthetic"}}'),
     JSON.parse('{"__proto__.auditMarker":"synthetic"}'),
   ]) {
-    const query = Event.findByIdAndUpdate("6ab26b08171afea3091f04b3", update, { new: true, runValidators: true });
+    const query = Event.findByIdAndUpdate("6ab26b08171afea3091f04b3", update, { returnDocument: "after", runValidators: true });
     try { query._castUpdate(query.getUpdate()); } catch { /* Invalid keys may be rejected. */ }
     for (const [index, name] of fields.entries()) {
       assert.deepEqual(Object.getOwnPropertyDescriptor(Object.prototype, name), before[index]);
