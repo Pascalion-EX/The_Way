@@ -205,7 +205,7 @@ const getYouTubeEmbedUrl = (url) => {
 
   if (projectorMode) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col">
+      <div data-projector-mode className="min-h-screen bg-black text-white flex flex-col">
         <div className="flex justify-between items-center px-5 py-4 border-b border-white/10">
           <button
             onClick={() => setProjectorMode(false)}
