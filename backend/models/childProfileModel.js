@@ -40,9 +40,13 @@ const childProfileschema = new mongoose.Schema(
             default: 0,
         },
         allergies: {
-            type: [String],
-            enum: ["Milk","Eggs","Peanuts","Tree nuts","Wheat","Soybeans","Fish","Crustacean shellfish","Sesame","Legume (beans)"],
-            default: [],
+            type: String,
+            trim: true,
+            default: "",
+            // Keep allergy lists from existing profiles readable as text.
+            cast: (value) => mongoose.Schema.Types.String.cast()(
+                Array.isArray(value) ? value.join(", ") : value
+            ),
             required:false,
         },
         address:{

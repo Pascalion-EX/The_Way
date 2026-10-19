@@ -171,7 +171,7 @@ const ChildProfiles = () => {
         String(child.firstParentNumber || ""),
       secondParentNumber:
         String(child.secondParentNumber || ""),
-      allergies: child.allergies || [],
+      allergies: child.allergies || "",
       address: child.address || "",
     });
 
@@ -235,9 +235,7 @@ const ChildProfiles = () => {
       secondParentNumber:
         form.secondParentNumber.trim(),
 
-    allergies: Array.isArray(form.allergies)
-        ? form.allergies.filter(Boolean)
-        : [],
+      allergies: form.allergies.trim(),
 
       address:
         form.address.trim(),
