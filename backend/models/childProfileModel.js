@@ -21,6 +21,16 @@ const childProfileschema = new mongoose.Schema(
             trim: true,
             default: "",
         },
+        firstParentJob: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        secondParentJob: {
+            type: String,
+            trim: true,
+            default: "",
+        },
         firstParentNumber: {
             type: Number,
             default: 0,

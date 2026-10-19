@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
+  BriefcaseBusiness,
   Loader2,
   MapPin,
   Pencil,
@@ -28,6 +29,8 @@ const emptyForm = {
   grade: "",
   firstParent: "",
   secondParent: "",
+  firstParentJob: "",
+  secondParentJob: "",
   firstParentNumber: "",
   secondParentNumber: "",
   allergies: "",
@@ -162,10 +165,12 @@ const ChildProfiles = () => {
       grade: child.grade || "",
       firstParent: child.firstParent || "",
       secondParent: child.secondParent || "",
+      firstParentJob: child.firstParentJob || "",
+      secondParentJob: child.secondParentJob || "",
       firstParentNumber:
-        child.firstParentNumber || "",
+        String(child.firstParentNumber || ""),
       secondParentNumber:
-        child.secondParentNumber || "",
+        String(child.secondParentNumber || ""),
       allergies: child.allergies || [],
       address: child.address || "",
     });
@@ -219,6 +224,10 @@ const ChildProfiles = () => {
 
       secondParent:
         form.secondParent.trim(),
+
+      firstParentJob: form.firstParentJob.trim(),
+
+      secondParentJob: form.secondParentJob.trim(),
 
       firstParentNumber:
         form.firstParentNumber.trim(),
@@ -898,6 +907,14 @@ const ChildCard = ({
           }
         />
 
+        {child.firstParentJob && (
+          <ProfileItem
+            icon={<BriefcaseBusiness />}
+            label="First Parent Job"
+            value={child.firstParentJob}
+          />
+        )}
+
         {child.secondParent && (
           <ProfileItem
             icon={<UserRound />}
@@ -915,6 +932,14 @@ const ChildCard = ({
             value={
               child.secondParentNumber
             }
+          />
+        )}
+
+        {child.secondParentJob && (
+          <ProfileItem
+            icon={<BriefcaseBusiness />}
+            label="Second Parent Job"
+            value={child.secondParentJob}
           />
         )}
 
@@ -1269,6 +1294,16 @@ const ChildFormModal = ({
               placeholder="Phone number"
             />
 
+            <div className="md:col-span-2">
+              <FormInput
+                label="First Parent Job"
+                name="firstParentJob"
+                value={form.firstParentJob}
+                onChange={handleChange}
+                placeholder="Job or occupation"
+              />
+            </div>
+
             {/* PARENT 2 */}
 
             <FormInput
@@ -1295,6 +1330,16 @@ const ChildFormModal = ({
               }
               placeholder="Phone number"
             />
+
+            <div className="md:col-span-2">
+              <FormInput
+                label="Second Parent Job"
+                name="secondParentJob"
+                value={form.secondParentJob}
+                onChange={handleChange}
+                placeholder="Job or occupation"
+              />
+            </div>
 
             {/* ADDRESS */}
 
