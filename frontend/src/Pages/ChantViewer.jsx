@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import Navbar from "../Components/Navbar";
+import ChantYouTubePlayer from "../Components/ChantYouTubePlayer.jsx";
+import { getYouTubeEmbedUrl } from "../utils/youtubePlayer.js";
 
 import { AppContent } from "../Context/AppContext.jsx";
 import { useNavigate, useParams } from "react-router-dom";
@@ -26,55 +28,6 @@ const ChantViewer = () => {
       ? userData.role.includes(role)
       : userData?.role === role
   );
-const getYouTubeEmbedUrl = (url) => {
-  if (!url) return "";
-
-  try {
-    const parsedUrl = new URL(url);
-
-    // Normal YouTube URL:
-    // https://www.youtube.com/watch?v=VIDEO_ID
-    if (
-      parsedUrl.hostname === "www.youtube.com" ||
-      parsedUrl.hostname === "youtube.com"
-    ) {
-      // Already an embed URL
-      if (parsedUrl.pathname.startsWith("/embed/")) {
-        return url;
-      }
-
-      const videoId = parsedUrl.searchParams.get("v");
-
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-
-      // YouTube Shorts
-      if (parsedUrl.pathname.startsWith("/shorts/")) {
-        const videoId = parsedUrl.pathname.split("/")[2];
-
-        if (videoId) {
-          return `https://www.youtube.com/embed/${videoId}`;
-        }
-      }
-    }
-
-    // Short YouTube URL:
-    // https://youtu.be/VIDEO_ID
-    if (parsedUrl.hostname === "youtu.be") {
-      const videoId = parsedUrl.pathname.slice(1).split("/")[0];
-
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
-    }
-
-    return "";
-  } catch (error) {
-    console.error("Invalid video URL:", url);
-    return "";
-  }
-};
   const fetchChant = async () => {
     try {
       setLoading(true);
@@ -177,9 +130,20 @@ const getYouTubeEmbedUrl = (url) => {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "ArrowRight") nextSlide();
-      if (e.key === "ArrowLeft") prevSlide();
-      if (e.key === "Escape") setProjectorMode(false);
+      if (e.key === "Escape") {
+        setProjectorMode(false);
+        return;
+      }
+      // Let the seek and volume sliders use their own arrow-key controls.
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setCurrentSlide((previous) => Math.min(previous + 1, Math.max(0, slides.length - 1)));
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setCurrentSlide((previous) => Math.max(0, previous - 1));
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -202,69 +166,41 @@ const getYouTubeEmbedUrl = (url) => {
   if (!chant) return null;
 
   const hasLanguage = (lang) => chant.lyrics?.[lang]?.trim();
-
-  if (projectorMode) {
-    return (
-      <div data-projector-mode className="min-h-screen bg-black text-white flex flex-col">
-        <div className="flex justify-between items-center px-5 py-4 border-b border-white/10">
-          <button
-            onClick={() => setProjectorMode(false)}
-            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
-          >
-            Exit Projector
-          </button>
-
-          <span className="text-sm text-white/70">
-            Slide {slides.length ? currentSlide + 1 : 0} / {slides.length}
-          </span>
-
-          <button
-            onClick={handleFullScreen}
-            className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
-          >
-            Full Screen
-          </button>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-
-          <p
-            dir={language === "arabic" ? "rtl" : "ltr"}
-            className="text-4xl md:text-6xl leading-relaxed whitespace-pre-line max-w-6xl font-semibold"
-          >
-            {slides[currentSlide] || "No lyrics available"}
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-4 px-5 py-6">
-          <button
-            onClick={prevSlide}
-            disabled={currentSlide === 0}
-            className="px-6 py-3 rounded-xl bg-white/10 disabled:opacity-40 hover:bg-white/20 transition"
-          >
-            Previous
-          </button>
-
-          <button
-            onClick={nextSlide}
-            disabled={currentSlide === slides.length - 1}
-            className="px-6 py-3 rounded-xl bg-white/10 disabled:opacity-40 hover:bg-white/20 transition"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const embedUrl = getYouTubeEmbedUrl(chant.video);
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-transparent">
-              
-      <Navbar />
+    <div
+      data-projector-mode={projectorMode ? "" : undefined}
+      className={projectorMode
+        ? "min-h-screen bg-black text-white flex flex-col"
+        : "min-h-screen relative overflow-hidden bg-transparent"}
+    >
+      {!projectorMode && <Navbar />}
 
-      <main className="px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28">
-        <div className="bg-white/90 backdrop-blur-md border border-gray-200 rounded-3xl shadow-lg p-6 sm:p-8">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-8">
+      <main className={projectorMode ? "flex flex-1 flex-col" : "px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-38 lg:pb-28"}>
+        <div className={projectorMode ? "flex flex-1 flex-col" : "bg-white/90 backdrop-blur-md border border-gray-200 rounded-3xl shadow-lg p-6 sm:p-8"}>
+          {projectorMode && (
+            <div className="flex flex-wrap justify-between items-center gap-3 px-5 py-4 border-b border-white/10">
+              <button
+                onClick={() => setProjectorMode(false)}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+              >
+                Exit Projector
+              </button>
+
+              <span className="text-sm text-white/70">
+                Slide {slides.length ? currentSlide + 1 : 0} / {slides.length}
+              </span>
+
+              <button
+                onClick={handleFullScreen}
+                className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition"
+              >
+                Full Screen
+              </button>
+            </div>
+          )}
+          <div className={projectorMode ? "hidden" : "flex flex-col md:flex-row md:items-start md:justify-between gap-5 mb-8"}>
             <div>
               <button
                 onClick={() => navigate("/chants")}
@@ -304,29 +240,26 @@ const getYouTubeEmbedUrl = (url) => {
             )}
           </div>
 
-          {(chant.audio || chant.video) && (
-            <div className="mb-8 space-y-4">
+          {(chant.audio || embedUrl) && (
+            <div className={projectorMode ? "order-last mx-auto w-full max-w-5xl space-y-4 px-5 pb-5" : "mb-8 space-y-4"}>
               {chant.audio && (
-                <audio controls className="w-full">
+                <audio controls aria-label="Chant audio recording" className="w-full">
                   <source src={chant.audio} />
                 </audio>
               )}
 
-{chant.video && getYouTubeEmbedUrl(chant.video) && (
-  <div className="aspect-video w-full overflow-hidden rounded-2xl border border-gray-200">
-    <iframe
-      src={getYouTubeEmbedUrl(chant.video)}
-      title={chant.title}
-      className="w-full h-full"
-allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"      referrerPolicy="strict-origin-when-cross-origin"
-      allowFullScreen
-    />
-  </div>
-)}
+              {embedUrl && (
+                <ChantYouTubePlayer
+                  key={embedUrl}
+                  embedUrl={embedUrl}
+                  title={chant.title}
+                  projectorMode={projectorMode}
+                />
+              )}
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3 mb-6">
+          <div className={projectorMode ? "hidden" : "flex flex-wrap gap-3 mb-6"}>
             <button
               disabled={!hasLanguage("arabic")}
               onClick={() => setLanguage("arabic")}
@@ -364,59 +297,65 @@ allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; pic
             </button>
           </div>
 
-          <div className="bg-gray-900 text-white rounded-3xl min-h-[420px] flex flex-col items-center justify-center text-center px-6 py-12">
-            <p className="text-sm text-white/60 mb-6">
+          <div className={projectorMode
+            ? "flex-1 flex flex-col items-center justify-center px-6 py-12 text-center"
+            : "bg-gray-900 text-white rounded-3xl min-h-[420px] flex flex-col items-center justify-center text-center px-6 py-12"}>
+            <p className={projectorMode ? "hidden" : "text-sm text-white/60 mb-6"}>
               Slide {slides.length ? currentSlide + 1 : 0} / {slides.length}
             </p>
 
             <p
               dir={language === "arabic" ? "rtl" : "ltr"}
-              className="text-2xl md:text-4xl leading-relaxed whitespace-pre-line max-w-5xl font-semibold"
+              className={`${projectorMode ? "text-4xl md:text-6xl max-w-6xl" : "text-2xl md:text-4xl max-w-5xl"} leading-relaxed whitespace-pre-line font-semibold`}
             >
               {slides[currentSlide] || "No lyrics available"}
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-3 mt-8">
+          <div className={projectorMode ? "flex justify-center gap-4 px-5 py-6" : "flex flex-wrap justify-center gap-3 mt-8"}>
             <button
               onClick={prevSlide}
               disabled={currentSlide === 0}
-              className="px-5 py-3 rounded-xl bg-gray-200 text-gray-800 disabled:opacity-40 hover:bg-gray-300 transition"
+              className={`px-5 py-3 rounded-xl disabled:opacity-40 transition ${projectorMode ? "bg-white/10 hover:bg-white/20" : "bg-gray-200 text-gray-800 hover:bg-gray-300"}`}
             >
               Previous
             </button>
 
             <button
               onClick={nextSlide}
-              disabled={currentSlide === slides.length - 1}
-              className="px-5 py-3 rounded-xl bg-gray-900 text-white disabled:opacity-40 hover:bg-gray-800 transition"
+              disabled={currentSlide >= slides.length - 1}
+              className={`px-5 py-3 rounded-xl disabled:opacity-40 transition ${projectorMode ? "bg-white/10 hover:bg-white/20" : "bg-gray-900 text-white hover:bg-gray-800"}`}
             >
               Next
             </button>
 
-            <button
-              onClick={downloadPDF}
-              className="px-5 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
-            >
-              Download PDF
-            </button>
+            {!projectorMode && (
+              <>
+                <button
+                  onClick={downloadPDF}
+                  className="px-5 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
+                >
+                  Download PDF
+                </button>
 
-            <button
-              onClick={handleFullScreen}
-              className="px-5 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
-            >
-              Full Screen
-            </button>
+                <button
+                  onClick={handleFullScreen}
+                  className="px-5 py-3 rounded-xl bg-white border border-gray-300 text-gray-800 hover:bg-gray-100 transition"
+                >
+                  Full Screen
+                </button>
 
-            <button
-              onClick={() => setProjectorMode(true)}
-              className="px-5 py-3 rounded-xl bg-black text-white hover:bg-gray-800 transition"
-            >
-              Projector Mode
-            </button>
+                <button
+                  onClick={() => setProjectorMode(true)}
+                  className="px-5 py-3 rounded-xl bg-black text-white hover:bg-gray-800 transition"
+                >
+                  Projector Mode
+                </button>
+              </>
+            )}
           </div>
 
-          <p className="text-center text-gray-500 text-sm mt-5">
+          <p className={projectorMode ? "hidden" : "text-center text-gray-500 text-sm mt-5"}>
             Use keyboard arrows to move between slides.
           </p>
         </div>
