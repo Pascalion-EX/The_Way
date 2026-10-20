@@ -1,4 +1,5 @@
 import { denyAccess } from "../services/accessDenials.js";
+import mongoose from "mongoose";
 import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 
@@ -195,6 +196,13 @@ export const getLessons = async (req, res) => {
       year = "",
     } = req.query;
 
+    if (typeof search !== "string" || search.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: "Search must be a string of at most 200 characters",
+      });
+    }
+
     if (typeof year !== "string" || (year && !/^(?:0|[1-9]|1[0-2])$/.test(year))) {
       return res.status(400).json({
         success: false,
@@ -230,42 +238,12 @@ export const getLessons = async (req, res) => {
     */
 
     if (search.trim()) {
-      filter.$or = [
-        {
-          title: {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-
-        {
-          name: {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-
-        {
-          body: {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-
-        {
-          "partitions.title": {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-
-        {
-          "partitions.body": {
-            $regex: search.trim(),
-            $options: "i",
-          },
-        },
-      ];
+      const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      // Trust only these server-built operators; keep global sanitization on.
+      filter.$or = ["title", "name", "body", "partitions.title", "partitions.body"]
+        .map((field) => ({
+          [field]: mongoose.trusted({ $regex: escapedSearch, $options: "i" }),
+        }));
     }
 
     const lessons = await lessonModel
