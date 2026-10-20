@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 import lessonModel from "../models/lessonModel.js";
 import mongoose from "mongoose";
@@ -19,7 +20,7 @@ export const updateUserClassByAdmin = async (req, res) => {
     }
 
     if (!hasAdminAccess(currentUser.role)) {
-      return res.status(403).json({ success: false, message: "Access denied. Admins only." });
+      return await denyAccess(req, res, { success: false, message: "Access denied. Admins only." });
     }
 
     const { id } = req.params;
@@ -63,7 +64,7 @@ export const getAdminDashboard = async (req, res) => {
     }
 
     if (!hasAdminAccess(currentUser.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Access denied. Admins only.",
       });
@@ -119,7 +120,7 @@ export const deleteUserByAdmin = async (req, res) => {
     }
 
     if (!hasAdminAccess(currentUser.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Access denied. Admins only.",
       });
@@ -162,7 +163,7 @@ export const updateUserRolesByAdmin = async (req, res) => {
     }
 
     if (!hasAdminAccess(currentUser.role)) {
-      return res.status(403).json({ success: false, message: "Access denied. Admins only." });
+      return await denyAccess(req, res, { success: false, message: "Access denied. Admins only." });
     }
 
     const { id } = req.params;

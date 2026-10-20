@@ -89,6 +89,11 @@ export const AppContextProvider = ({ children }) => {
 
   useEffect(() => {
     const handleError = (error) => {
+      if (error.response?.data?.code === "ACCOUNT_BANNED") {
+        setIsLoggedin(false);
+        setUserData(null);
+        toast.error(error.response.data.message, { toastId: "account-banned" });
+      }
       if (error.response?.data?.code === "EMAIL_VERIFICATION_REQUIRED") {
         setUserData((prev) => prev ? { ...prev, isAccountVerified: false } : prev);
       }

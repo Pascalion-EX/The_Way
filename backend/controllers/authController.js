@@ -11,6 +11,7 @@ import { issueAuthToken, verifyAuthToken } from "../services/authTokens.js";
 import { normalizeAuthEmail } from "../services/authEmail.js";
 import { findUserByAuthEmail } from "../services/authIdentity.js";
 import { newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
+import { sendBannedResponse } from "../services/accessDenials.js";
 
 
 export const checkAuth = async (req, res) => {
@@ -128,6 +129,8 @@ export const login = async (req, res) => {
         message: "Invalid email or password",
       });
     }
+
+    if (user.isBanned) return sendBannedResponse(res);
 
     if (!process.env.JWT_SECRET) {
       console.error("JWT_SECRET is not configured");
@@ -274,6 +277,7 @@ export const sendResetOtp = async (req, res) => {
     if (!user) {
       return res.json({ success: false, message: "User not found" });
     }
+    if (user.isBanned) return sendBannedResponse(res);
 
     const result = await queueOtpRequest(user, "passwordReset");
     if (!result.success) {
@@ -303,6 +307,7 @@ export const resetPassword = async (req, res) => {
   try {
     const account = await findUserByAuthEmail(email);
     if (!account) return res.status(400).json({ success: false, message: "Invalid or expired OTP. Request a new code." });
+    if (account.isBanned) return sendBannedResponse(res);
     // Pin the reset to the mailbox resolved above as well as the account ID.
     const attempt = await reserveOtpAttempt({ _id: account._id, email: account.email }, "passwordReset");
     if (!attempt.success) return res.status(attempt.status).json(attempt);

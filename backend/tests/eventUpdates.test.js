@@ -22,6 +22,8 @@ const metadata = (event) => clone(Object.fromEntries(protectedFields.map((key) =
 const sameDate = (left, right) => left == null && right == null || Number(new Date(left)) === Number(new Date(right));
 
 function setup(t) {
+  // Treat permission-matrix cases as independent first denials.
+  t.mock.method(User, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
   const oldSecret = process.env.JWT_SECRET;
   const oldSanitizer = mongoose.get("sanitizeFilter");
   process.env.JWT_SECRET = secret;

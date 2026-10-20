@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import gamesModel from "../models/gamesModel.js";
 import userModel from "../models/userModel.js";
@@ -41,7 +42,7 @@ export const createGame = async (req, res) => {
     }
 
     if (!hasGamePermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. Admins, leaders, pascals, and pamela only.",
@@ -159,7 +160,7 @@ export const updateGame = async (req, res) => {
     }
 
     if (!hasGamePermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. Admins, leaders, pascals, and pamela only.",
@@ -262,7 +263,7 @@ export const deleteGame = async (req, res) => {
     }
 
     if (!hasGamePermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. Admins, leaders, pascals, and pamela only.",

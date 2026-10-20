@@ -5,7 +5,7 @@ import transporter from "../config/nodemailer.js";
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "./otpPolicy.js";
 import { normalizeAuthEmail } from "./authEmail.js";
 
-export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset"];
+export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset", "ban"];
 const LEASE_MS = 5 * 60 * 1000;
 
 export const createEmailJob = ({ to, subject, text, expiresAt }) => {
@@ -41,7 +41,7 @@ export async function processNextEmailJob(kind, {
       [`${path}.lockedUntil`]: new Date(startedAt.getTime() + LEASE_MS),
     },
     $inc: { [`${path}.attempts`]: 1 },
-  }, { returnDocument: "after" }).select(`emailJobs.${kind} isAccountVerified email
+  }, { returnDocument: "after" }).select(`emailJobs.${kind} isAccountVerified email isBanned flaggedEmail
     verifyOtp verifyOtpRequestedAt verifyOtpExpireAt verifyOtpAttempts
     resetOtp resetOtpRequestedAt resetOtpExpireAt resetOtpAttempts`);
 
@@ -51,7 +51,7 @@ export async function processNextEmailJob(kind, {
   const discard = () => users.updateOne(lease, { $unset: { [path]: "" } });
 
   const checkedAt = now().getTime();
-  const prefix = kind === "welcome" ? null : otpPrefix(kind);
+  const prefix = ["verification", "passwordReset"].includes(kind) ? otpPrefix(kind) : null;
   const inactiveCode = prefix && (
     !user[prefix] || !user[`${prefix}RequestedAt`] ||
     user[`${prefix}RequestedAt`] > checkedAt ||
@@ -61,6 +61,7 @@ export async function processNextEmailJob(kind, {
   );
   const recipient = normalizeAuthEmail(job.to);
   if (!recipient || new Date(job.expiresAt).getTime() <= checkedAt || normalizeAuthEmail(user.email) !== recipient || inactiveCode ||
+      (kind === "ban" ? (!user.isBanned || user.flaggedEmail !== recipient) : user.isBanned) ||
       (kind === "verification" && (user.isAccountVerified || !user.verifyOtp)) ||
       (kind === "passwordReset" && !user.resetOtp)) {
     await discard();

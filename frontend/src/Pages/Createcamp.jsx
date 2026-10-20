@@ -36,7 +36,7 @@ const CreateCamp = () => {
   const [selectedYears, setSelectedYears] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allowedRoles = ["pascal", "admin", "leader"];
+  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
   const yearOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const tripTypeOptions = ["Camp", "Trip", "Outing", "Other"];
 
@@ -122,7 +122,7 @@ const CreateCamp = () => {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
-                Only users with pascal, admin, or leader roles can create
+                Only users with pascal, admin, leader, or pamela roles can create
                 Trips.
               </p>
 

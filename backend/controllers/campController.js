@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import Camp from "../models/campsModel.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
@@ -45,7 +46,7 @@ export const createCamp = async (req, res) => {
     const isAuthorized = userRoles.some((role) => createRoles.includes(role));
 
     if (!isAuthorized) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: `Unauthorized to create camps. Your role is: ${
           userRoles.length > 0 ? userRoles.join(", ") : "no role found"
@@ -220,7 +221,7 @@ export const updateCamp = async (req, res) => {
     const isAuthorized = userRoles.some((role) => createRoles.includes(role));
 
     if (!isAuthorized) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Unauthorized to update camps",
       });
@@ -319,7 +320,7 @@ export const deleteCamp = async (req, res) => {
     const isAuthorized = userRoles.some((role) => createRoles.includes(role));
 
     if (!isAuthorized) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Unauthorized to delete camps",
       });
@@ -372,7 +373,7 @@ export const applyToCamp = async (req, res) => {
     const isAuthorized = userRoles.some((role) => applyRoles.includes(role));
 
     if (!isAuthorized) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Unauthorized to apply for trips",
       });
@@ -555,7 +556,7 @@ export const notifyCampApplicants = async (req, res) => {
     );
 
     if (!isAuthorized) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Unauthorized to notify applicants",
       });

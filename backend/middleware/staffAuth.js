@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 
 const STAFF_ROLES = new Set(["admin", "leader", "pascal", "pamela"]);
@@ -33,7 +34,7 @@ export const requireStaff = async (req, res, next) => {
     const roles = Array.isArray(user.role) ? user.role : [user.role];
 
     if (!roles.some((role) => STAFF_ROLES.has(role))) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         code: "STAFF_ACCESS_REQUIRED",
         message: "Staff access required.",

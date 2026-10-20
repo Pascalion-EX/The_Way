@@ -339,10 +339,16 @@ const Admin = () => {
                         >
                           <td className="px-4 py-4 font-medium text-gray-900">
                             {user.name || "No Name"}
+                            {user.isBanned && (
+                              <span title={user.banReason} className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Banned</span>
+                            )}
                           </td>
 
                           <td className="px-4 py-4 text-gray-600">
                             {user.email || "No Email"}
+                            {user.emailFlagged && (
+                              <div className="mt-1 text-xs font-semibold text-red-700">Flagged email: {user.flaggedEmail}</div>
+                            )}
                           </td>
 
                           <td className="px-4 py-4">

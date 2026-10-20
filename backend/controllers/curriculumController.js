@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import curriculumModel from "../models/curriculumModel.js";
 import lessonModel from "../models/lessonModel.js";
@@ -16,7 +17,7 @@ const canEdit = async (req, res) => {
   }
   const roles = Array.isArray(user.role) ? user.role : [user.role];
   if (!roles.some((role) => allowedRoles.includes(role))) {
-    fail(res, 403, "You are not allowed to manage curriculum");
+    await denyAccess(req, res, { message: "You are not allowed to manage curriculum" });
     return false;
   }
   return true;

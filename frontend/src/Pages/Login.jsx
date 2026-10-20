@@ -101,7 +101,10 @@ const roleOptions = [
         }
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
+      // The shared response handler already displays the ban notification.
+      if (error.response?.data?.code !== "ACCOUNT_BANNED") {
+        toast.error(error.response?.data?.message || error.message);
+      }
     } finally {
       setLoading(false);
     }

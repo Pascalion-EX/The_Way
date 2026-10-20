@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import chantModel from "../models/chantModel.js";
 import userModel from "../models/userModel.js";
@@ -78,7 +79,7 @@ export const createChant = async (req, res) => {
     }
 
     if (!hasChantPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Access denied. Admins, leaders, and pascal only.",
       });
@@ -220,7 +221,7 @@ export const updateChant = async (req, res) => {
     const user = await userModel.findById(userId);
 
     if (!user || !hasChantPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Access denied.",
       });
@@ -288,7 +289,7 @@ export const deleteChant = async (req, res) => {
     const user = await userModel.findById(userId);
 
     if (!user || !hasChantPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "Access denied.",
       });

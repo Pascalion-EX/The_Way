@@ -25,8 +25,12 @@ const curriculumRecord = () => ({
   _id: new mongoose.Types.ObjectId(curriculumId),
   name: "Faith", nodes, createdBy: new mongoose.Types.ObjectId(userId), __v: 0,
 });
-const allowEditor = (t, role = ["leader"]) =>
-  t.mock.method(userModel, "findById", async () => ({ role }));
+const allowEditor = (t, role = ["leader"]) => {
+  t.mock.method(userModel.collection, "findOne", async () => ({ role, email: "reader@example.com" }));
+  // Each permission case represents an independent first denial. Persistent
+  // counters and concurrent bans are exercised in accessDenials.test.js.
+  t.mock.method(userModel, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
+};
 const populateLessons = (t) => t.mock.method(lessonModel.collection, "find", () => ({
   toArray: async () => [{ _id: new mongoose.Types.ObjectId(lessonId), title: "Introduction" }],
 }));

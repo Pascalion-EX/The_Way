@@ -54,6 +54,26 @@ Pending delivery can be inspected in `users.emailJobs`: job `status`, `attempts`
 `nextAttemptAt`, `expiresAt`, and `lastError`. These fields and email bodies are
 excluded from admin/profile responses. The client receives only a queued flag.
 
+Three cumulative authorization denials ban an account. Restricted page visits
+are checked through `POST /api/auth/page-access` before the page renders, and
+API permission denials use the same counter. Verification prompts, incorrect
+passwords, failed logins, and validation errors do not count. Navigation checks
+are deduplicated during React StrictMode effects; denied pages do not mount
+their children and therefore do not generate additional API denials.
+
+The third denial atomically stores `isBanned`, `bannedAt`, `banReason`,
+`emailFlagged`, the normalized `flaggedEmail`, and a durable `emailJobs.ban`
+notification. It also increments `tokenVersion`, clears pending OTPs and normal
+authentication emails, and caps `accessDeniedCount` at three. Concurrent denials
+cannot queue additional ban notifications. Login, existing sessions, and
+password recovery reject banned accounts. Counts have no automatic reset or
+expiry; flags remain on the user record and are visible on the admin dashboard.
+Deleting that user record also deletes its flag and pending notification.
+
+Ban notifications use the existing SMTP worker and retry for up to seven days.
+They require neither an active OTP nor email verification. As with other queued
+emails, delivery is at least once, and production SMTP must be configured.
+
 Tests (no real accounts or email delivery):
 
 ```sh

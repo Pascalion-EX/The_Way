@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 
 export const eventAdminOnly = async (req, res, next) => {
@@ -29,7 +30,7 @@ export const eventAdminOnly = async (req, res, next) => {
     );
 
     if (!hasPermission) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "You do not have permission to manage events",
       });

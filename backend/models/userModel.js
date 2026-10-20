@@ -10,6 +10,12 @@ const userSchema = new mongoose.Schema({
     }},
     password: {type:String, required: true},
     tokenVersion: {type:Number, default: 0, min: 0, validate: Number.isSafeInteger},
+    accessDeniedCount: {type:Number, default: 0, min: 0, max: 3, validate: Number.isInteger},
+    isBanned: {type:Boolean, default: false},
+    bannedAt: {type:Date, default: null},
+    banReason: {type:String, default: ''},
+    emailFlagged: {type:Boolean, default: false},
+    flaggedEmail: {type:String, default: ''},
     verifyOtp: {type:String, default: ''},
     verifyOtpExpireAt: {type:Number, default: 0},
     verifyOtpRequestedAt: {type:Number, default: 0},
@@ -28,11 +34,12 @@ const userSchema = new mongoose.Schema({
         welcome: emailJobSchema,
         verification: emailJobSchema,
         passwordReset: emailJobSchema,
+        ban: emailJobSchema,
     },
 
     
 })
-for (const kind of ["welcome", "verification", "passwordReset"]) {
+for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
     userSchema.index({ [`emailJobs.${kind}.status`]: 1, [`emailJobs.${kind}.nextAttemptAt`]: 1 });
 }
 const userModel = mongoose.models.user || mongoose.model('user',

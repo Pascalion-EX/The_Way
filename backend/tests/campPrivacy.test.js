@@ -52,6 +52,8 @@ function setup(t) {
     }
     return state.user ? projection(state.user, options?.projection) : null;
   });
+  // Treat permission-matrix cases as independent first denials.
+  t.mock.method(User, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
   // Mongoose still constructs the population query and limits user fields.
   t.mock.method(User.collection, "find", (filter, options) => {
     state.populations++;

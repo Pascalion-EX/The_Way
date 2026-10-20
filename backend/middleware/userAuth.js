@@ -1,5 +1,6 @@
 import userModel from "../models/userModel.js";
 import { verifyAuthToken } from "../services/authTokens.js";
+import { sendBannedResponse } from "../services/accessDenials.js";
 
 export const authenticateUser = async (req, res, next) => {
   try {
@@ -21,7 +22,8 @@ export const authenticateUser = async (req, res, next) => {
       });
     }
 
-    const user = await userModel.findById(decodedToken.id).select("tokenVersion");
+    const user = await userModel.findById(decodedToken.id).select("tokenVersion isBanned");
+    if (user?.isBanned) return sendBannedResponse(res);
     if (!user || user.tokenVersion !== decodedToken.tokenVersion) {
       return res.status(401).json({
         success: false,

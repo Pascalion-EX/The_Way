@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 
@@ -93,7 +94,7 @@ export const createLesson = async (req, res) => {
     */
 
     if (!hasLessonPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "You are not allowed to create lessons",
       });
@@ -400,7 +401,7 @@ export const updateLesson = async (req, res) => {
     */
 
     if (!hasLessonPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "You are not allowed to update lessons",
       });
@@ -591,7 +592,7 @@ export const deleteLesson = async (req, res) => {
     */
 
     if (!hasLessonPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message: "You are not allowed to delete lessons",
       });

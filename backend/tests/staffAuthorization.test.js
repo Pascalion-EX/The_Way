@@ -75,6 +75,8 @@ const request = (app, route, token) => new Promise((resolve, reject) => {
 });
 
 const stubDatabase = (t) => {
+  // Treat permission-matrix cases as independent first denials.
+  t.mock.method(User, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
   const state = {
     user: { _id: objectId(userId), name: "Synthetic staff", role: ["admin"], isAccountVerified: true },
     authorizationError: false,

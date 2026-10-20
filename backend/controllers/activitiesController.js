@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import activitiesModel from "../models/activitiesModel.js";
 import userModel from "../models/userModel.js";
 import mongoose from "mongoose";
@@ -73,7 +74,7 @@ export const createActivity = async (req, res) => {
     */
 
     if (!hasActivityPermission(user.role)) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. You are not allowed to create activities.",
@@ -343,7 +344,7 @@ export const updateActivity = async (
     if (
       !hasActivityPermission(user.role)
     ) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. You are not allowed to update activities.",
@@ -491,7 +492,7 @@ export const deleteActivity = async (
     if (
       !hasActivityPermission(user.role)
     ) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Access denied. You are not allowed to delete activities.",

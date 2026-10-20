@@ -1,3 +1,4 @@
+import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 
 const VIDEO_REQUEST_ROLES = [
@@ -77,7 +78,7 @@ export const videoRequestUserOnly = async (
 
 
     if (!hasAccess) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "You do not have permission to access video editing requests.",
@@ -153,7 +154,7 @@ export const pascalOnly = async (
 
 
     if (!haspascalRole) {
-      return res.status(403).json({
+      return await denyAccess(req, res, {
         success: false,
         message:
           "Only pascal users can manage video editing requests.",
