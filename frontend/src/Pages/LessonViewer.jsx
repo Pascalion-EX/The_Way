@@ -1,3 +1,4 @@
+import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -5,51 +6,6 @@ import Navbar from "@/Components/Navbar.jsx";
 import LessonVariants from "@/Components/LessonVariants.jsx";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
-
-const getEmbedUrl = (url = "") => {
-  if (!url) return "";
-
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname.replace("www.", "");
-
-    if (hostname === "youtube.com") {
-      if (parsedUrl.pathname.startsWith("/embed/")) {
-        return url;
-      }
-
-      if (parsedUrl.pathname.startsWith("/shorts/")) {
-        const videoId = parsedUrl.pathname
-          .replace("/shorts/", "")
-          .split("/")[0];
-
-        return videoId
-          ? `https://www.youtube.com/embed/${videoId}`
-          : url;
-      }
-
-      const videoId = parsedUrl.searchParams.get("v");
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : url;
-    }
-
-    if (hostname === "youtu.be") {
-      const videoId = parsedUrl.pathname
-        .replace("/", "")
-        .split("/")[0];
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : url;
-    }
-
-    return url;
-  } catch {
-    return url;
-  }
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -476,13 +432,6 @@ const LessonViewer = () => {
     );
   }
 
-  const embedUrl =
-    getEmbedUrl(lesson.video);
-
-  const isYouTubeVideo =
-    embedUrl.includes(
-      "youtube.com/embed"
-    );
 
   /*
   |--------------------------------------------------------------------------
@@ -647,43 +596,7 @@ const LessonViewer = () => {
                     Lesson Video
                   </h2>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-black">
-                    {isYouTubeVideo ? (
-                      <iframe
-                        src={
-                          embedUrl
-                        }
-                        title={`${
-                          lesson.title ||
-                          "Lesson"
-                        } video`}
-                        className="aspect-video w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <video
-                        src={
-                          lesson.video
-                        }
-                        controls
-                        className="aspect-video w-full bg-black"
-                      >
-                        Your browser
-                        does not support
-                        the video element.
-                      </video>
-                    )}
-                  </div>
-
-                  <a
-                    href={lesson.video}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="relative z-20 mt-3 inline-block break-all text-sm font-medium text-indigo-600 hover:underline"
-                  >
-                    Open video link
-                  </a>
+                  <ContentVideo video={lesson.video} title={`${lesson.title || "Lesson"} video`} />
                 </section>
               )}
             </div>

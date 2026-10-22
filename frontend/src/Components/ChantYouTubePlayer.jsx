@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { formatMediaTime, loadYouTubePlayerApi } from "../utils/youtubePlayer.js";
+import { getYouTubeEmbedUrl, VIDEO_IFRAME_ALLOW, VIDEO_IFRAME_SANDBOX } from "../../../shared/videoUrls.mjs";
 
 const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
   const hostRef = useRef(null);
@@ -13,18 +14,21 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
 
   useEffect(() => {
     const host = hostRef.current;
+    const safeEmbedUrl = getYouTubeEmbedUrl(embedUrl);
+    if (!host || !safeEmbedUrl) return;
     let disposed = false;
     let timer;
     let player;
     const iframe = document.createElement("iframe");
-    const url = new URL(embedUrl);
+    const url = new URL(safeEmbedUrl);
     url.searchParams.set("enablejsapi", "1");
     url.searchParams.set("origin", window.location.origin);
     url.searchParams.set("playsinline", "1");
     iframe.src = url.toString();
     iframe.title = title;
     iframe.className = "h-full w-full";
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allow = VIDEO_IFRAME_ALLOW;
+    iframe.setAttribute("sandbox", VIDEO_IFRAME_SANDBOX);
     iframe.referrerPolicy = "strict-origin-when-cross-origin";
     iframe.allowFullscreen = true;
     host.append(iframe);

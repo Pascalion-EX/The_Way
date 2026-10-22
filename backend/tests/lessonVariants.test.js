@@ -28,7 +28,7 @@ function setup(t) {
   const source = {
     _id: objectId(lessonId), title: "The secrets of the church", name: "Gifts of the church",
     body: "", partitions: [{ _id: new mongoose.Types.ObjectId(), title: "Introduction", body: "Lesson content" }],
-    image: "https://example.com/image.jpg", video: "https://youtu.be/example", activity: "Discuss together",
+    image: "https://example.com/image.jpg", video: "https://www.youtube.com/embed/M7lc1UVf-VE", activity: "Discuss together",
     year: 3, createdBy: objectId(userId), createdAt: new Date("2026-01-01"), updatedAt: new Date("2026-01-01"),
   };
   const state = {
@@ -140,6 +140,18 @@ test("legacy lessons copy their body and empty optional fields without requiring
   assert.deepEqual(result.body.lesson.partitions, []);
   assert.equal(result.body.lesson.video, "");
   assert.equal(result.body.lesson.activity, "");
+});
+
+test("variants cannot copy unsafe legacy video URLs and normalize supported source videos", async (t) => {
+  const state = setup(t);
+  const source = state.lessons.get(lessonId);
+  source.video = "https://attacker.example/watch?next=youtube.com/embed";
+  assert.equal((await state.create("Unsafe copy")).status, 400);
+  assert.equal(state.writes, 0);
+  source.video = "https://youtu.be/M7lc1UVf-VE?si=tracking";
+  const result = await state.create("Safe copy");
+  assert.equal(result.status, 201);
+  assert.equal(result.body.lesson.video, "https://www.youtube.com/embed/M7lc1UVf-VE");
 });
 
 test("lesson lists hide variants, including during searches and year filtering, while the dropdown retains them", async (t) => {

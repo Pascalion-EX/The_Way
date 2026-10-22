@@ -8,3 +8,4 @@ node_modules/
 shared/*
 !shared/pageAccess.mjs
 !shared/avatarPresets.mjs
+!shared/videoUrls.mjs

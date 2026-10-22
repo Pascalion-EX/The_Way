@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { isValidVideoUrl, VIDEO_URL_ERROR } from "../../shared/videoUrls.mjs";
 
 const chantSchema = new mongoose.Schema(
   {
@@ -30,6 +31,7 @@ const chantSchema = new mongoose.Schema(
 
     video: {
       type: String,
+      validate: { validator: isValidVideoUrl, message: VIDEO_URL_ERROR },
       default: "",
       trim: true,
     },

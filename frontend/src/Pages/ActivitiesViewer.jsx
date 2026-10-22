@@ -1,3 +1,4 @@
+import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import {
   useLocation,
@@ -8,51 +9,6 @@ import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import Navbar from "@/Components/Navbar.jsx";
-
-const getEmbedUrl = (url = "") => {
-  if (!url) return "";
-
-  try {
-    const parsedUrl = new URL(url);
-    const hostname = parsedUrl.hostname.replace("www.", "");
-
-    if (hostname === "youtube.com") {
-      if (parsedUrl.pathname.startsWith("/embed/")) {
-        return url;
-      }
-
-      if (parsedUrl.pathname.startsWith("/shorts/")) {
-        const videoId = parsedUrl.pathname
-          .replace("/shorts/", "")
-          .split("/")[0];
-
-        return videoId
-          ? `https://www.youtube.com/embed/${videoId}`
-          : "";
-      }
-
-      const videoId = parsedUrl.searchParams.get("v");
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : "";
-    }
-
-    if (hostname === "youtu.be") {
-      const videoId = parsedUrl.pathname
-        .replace("/", "")
-        .split("/")[0];
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : "";
-    }
-
-    return "";
-  } catch {
-    return "";
-  }
-};
 
 const ActivitiesViewer = () => {
   const navigate = useNavigate();
@@ -182,9 +138,6 @@ const ActivitiesViewer = () => {
     );
   }
 
-  const embedUrl = getEmbedUrl(activity.video);
-
-  const isYouTubeVideo = Boolean(embedUrl);
 
   return (
     <div className="relative isolate min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
@@ -257,45 +210,7 @@ const ActivitiesViewer = () => {
                     Activity Video
                   </h2>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-black">
-                    {isYouTubeVideo ? (
-                      <iframe
-                        src={embedUrl}
-                        title={`${activity.name || "Activity"} video`}
-                        className="aspect-video w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <a
-                        href={activity.video}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
-                      >
-                        {activity.image ? (
-                          <img
-                            src={activity.image}
-                            alt={`Open ${activity.name || "activity"} video`}
-                            className="aspect-video w-full object-cover"
-                          />
-                        ) : (
-                          <span className="block p-6 text-center text-white">
-                            Open video link
-                          </span>
-                        )}
-                      </a>
-                    )}
-                  </div>
-
-                  <a
-                    href={activity.video}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-block break-all text-sm font-medium text-indigo-600 hover:underline"
-                  >
-                    Open video link
-                  </a>
+                  <ContentVideo video={activity.video} title={`${activity.name || "Activity"} video`} />
                 </section>
               )}
 

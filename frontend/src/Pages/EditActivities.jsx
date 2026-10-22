@@ -1,3 +1,4 @@
+import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
   useEffect,
@@ -139,6 +140,11 @@ const EditActivities = () => {
 
   const updateActivityHandler = async (e) => {
     e.preventDefault();
+
+    if (normalizeVideoUrl(video) === null) {
+      toast.error(VIDEO_URL_ERROR);
+      return;
+    }
 
     if (
       !name.trim() ||
@@ -330,7 +336,7 @@ const EditActivities = () => {
                       onChange={(e) =>
                         setVideo(e.target.value)
                       }
-                      placeholder="Optional video URL"
+                      placeholder="Optional HTTPS YouTube or direct video URL"
                       className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>

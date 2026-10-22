@@ -2,6 +2,7 @@ import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
+import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../shared/videoUrls.mjs";
 
 const allowedRoles = ["pascal", "admin", "leader", "pamela"];
 
@@ -348,6 +349,9 @@ export const createLessonVariant = async (req, res) => {
       return res.status(404).json({ success: false, message: "Lesson not found" });
     }
 
+    const video = normalizeVideoUrl(source.video);
+    if (video === null) return res.status(400).json({ success: false, message: VIDEO_URL_ERROR });
+
     const lesson = await lessonModel.create({
       title: source.title,
       name: name.trim(),
@@ -355,7 +359,7 @@ export const createLessonVariant = async (req, res) => {
       body: source.body,
       partitions: source.partitions.map(({ title, body }) => ({ title, body })),
       image: source.image,
-      video: source.video,
+      video,
       activity: source.activity,
       year: source.year,
       createdBy: req.userId,

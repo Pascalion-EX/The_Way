@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import Navbar from "../Components/Navbar";
 import ChantYouTubePlayer from "../Components/ChantYouTubePlayer.jsx";
+import ContentVideo from "../Components/ContentVideo.jsx";
 import { getYouTubeEmbedUrl } from "../utils/youtubePlayer.js";
 
 import { AppContent } from "../Context/AppContext.jsx";
@@ -240,7 +241,7 @@ const ChantViewer = () => {
             )}
           </div>
 
-          {(chant.audio || embedUrl) && (
+          {(chant.audio || chant.video) && (
             <div className={projectorMode ? "order-last mx-auto w-full max-w-5xl space-y-4 px-5 pb-5" : "mb-8 space-y-4"}>
               {chant.audio && (
                 <audio controls aria-label="Chant audio recording" className="w-full">
@@ -255,6 +256,9 @@ const ChantViewer = () => {
                   title={chant.title}
                   projectorMode={projectorMode}
                 />
+              )}
+              {chant.video && !embedUrl && (
+                <ContentVideo video={chant.video} title={`${chant.title} video`} />
               )}
             </div>
           )}

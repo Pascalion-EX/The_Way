@@ -1,3 +1,4 @@
+import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContext.jsx";
@@ -66,6 +67,11 @@ const CreateGame = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (normalizeVideoUrl(video) === null) {
+      toast.error(VIDEO_URL_ERROR);
+      return;
+    }
 
     if (!canCreate) {
       toast.error("You are not allowed to create games.");

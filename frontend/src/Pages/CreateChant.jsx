@@ -1,3 +1,4 @@
+import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useState } from "react";
 import Navbar from "../Components/Navbar";
 
@@ -47,6 +48,11 @@ const CreateChant = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+
+    if (normalizeVideoUrl(formData.video) === null) {
+      toast.error(VIDEO_URL_ERROR);
+      return;
+    }
 
     if (!formData.title.trim()) {
       toast.error("Title is required");
@@ -166,13 +172,13 @@ const CreateChant = () => {
 
               <div>
                 <label className="block text-gray-700 font-semibold mb-2">
-                  Video Embed URL
+                  Video URL
                 </label>
                 <input
                   name="video"
                   value={formData.video}
                   onChange={handleChange}
-                  placeholder="Optional video embed URL"
+                  placeholder="Optional HTTPS YouTube or direct video URL"
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
                 />
               </div>

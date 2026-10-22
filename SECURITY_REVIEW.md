@@ -196,6 +196,8 @@ A separate disposable offline casting check against the actual Event model obser
 
 ### F13 — Video URL classification embeds arbitrary content
 
+**Resolved (2026-10-23):** A shared HTTPS/hostname/video-ID validator now constructs canonical YouTube URLs and permits direct video files only in native players. All four content APIs validate video writes, models enforce the URL policy, and viewers reject unsafe legacy records. YouTube frames use limited permissions and a sandbox without forms, popups, downloads, or parent navigation. Regression coverage: `backend/tests/videoSecurity.test.js`, `frontend/tests/videoSecurity.test.js`, and the legacy variant-copy checks in `backend/tests/lessonVariants.test.js`. `node security-review/proof-media.mjs` now checks the repaired behavior offline. The evidence and proof below describe the original finding.
+
 **Evidence:** [GamesViewer.jsx:197](/home/kfam/Service/The_Way/frontend/src/Pages/GamesViewer.jsx:197), [GamesViewer.jsx:277](/home/kfam/Service/The_Way/frontend/src/Pages/GamesViewer.jsx:277), [LessonViewer.jsx:451](/home/kfam/Service/The_Way/frontend/src/Pages/LessonViewer.jsx:451), [LessonViewer.jsx:603](/home/kfam/Service/The_Way/frontend/src/Pages/LessonViewer.jsx:603), [ActivitiesViewer.jsx:187](/home/kfam/Service/The_Way/frontend/src/Pages/ActivitiesViewer.jsx:187), [ActivitiesViewer.jsx:264](/home/kfam/Service/The_Way/frontend/src/Pages/ActivitiesViewer.jsx:264).
 
 The helpers preserve unrecognized URLs, then select the iframe branch when the full URL contains `youtube.com/embed`. A query parameter on an unrelated HTTPS host or a `data:` URL can contain that string. The iframe uses the supplied URL without a sandbox; backend content controllers only trim the stored video string.

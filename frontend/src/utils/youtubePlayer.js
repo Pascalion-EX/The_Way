@@ -1,28 +1,4 @@
-export const getYouTubeEmbedUrl = (url) => {
-  if (!url) return "";
-
-  try {
-    const parsed = new URL(url);
-    if (!["https:", "http:"].includes(parsed.protocol)) return "";
-    const hostname = parsed.hostname.replace(/^www\./, "");
-    let videoId;
-
-    if (hostname === "youtu.be") {
-      videoId = parsed.pathname.split("/")[1];
-    } else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(hostname)) {
-      videoId = /^\/(embed|shorts|live)\//.test(parsed.pathname)
-        ? parsed.pathname.split("/")[2]
-        : parsed.searchParams.get("v");
-    }
-
-    if (!/^[\w-]{11}$/.test(videoId || "")) return "";
-    const embed = new URL(`https://www.youtube.com/embed/${videoId}`);
-    if (parsed.pathname.startsWith("/embed/")) embed.search = parsed.search;
-    return embed.toString();
-  } catch {
-    return "";
-  }
-};
+export { getYouTubeEmbedUrl } from "../../../shared/videoUrls.mjs";
 
 let apiPromise;
 

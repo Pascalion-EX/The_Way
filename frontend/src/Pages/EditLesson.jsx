@@ -1,3 +1,4 @@
+import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
   useEffect,
@@ -261,6 +262,11 @@ const EditLesson = () => {
 
   const updateLessonHandler = async (e) => {
     e?.preventDefault();
+
+    if (normalizeVideoUrl(video) === null) {
+      toast.error(VIDEO_URL_ERROR);
+      return;
+    }
 
     if (
       !title.trim() ||

@@ -1,47 +1,8 @@
+import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import Navbar from "../Components/Navbar.jsx";
-
-const getEmbedUrl = (url = "") => {
-  if (!url) return "";
-
-  try {
-    const parsedUrl = new URL(url);
-
-    if (parsedUrl.hostname.includes("youtube.com")) {
-      if (parsedUrl.pathname.includes("/embed/")) {
-        return url;
-      }
-
-      if (parsedUrl.pathname.includes("/shorts/")) {
-        const videoId = parsedUrl.pathname.split("/shorts/")[1]?.split("/")[0];
-
-        return videoId
-          ? `https://www.youtube.com/embed/${videoId}`
-          : url;
-      }
-
-      const videoId = parsedUrl.searchParams.get("v");
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : url;
-    }
-
-    if (parsedUrl.hostname.includes("youtu.be")) {
-      const videoId = parsedUrl.pathname.replace("/", "").split("?")[0];
-
-      return videoId
-        ? `https://www.youtube.com/embed/${videoId}`
-        : url;
-    }
-
-    return url;
-  } catch {
-    return url;
-  }
-};
 
 const GameViewer = () => {
   const navigate = useNavigate();
@@ -193,8 +154,6 @@ const GameViewer = () => {
     );
   }
 
-  const embedUrl = getEmbedUrl(game.video);
-  const isYouTubeVideo = embedUrl.includes("youtube.com/embed");
 
   return (
     <div className="relative min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
@@ -272,34 +231,7 @@ const GameViewer = () => {
                     Game Video
                   </h2>
 
-                  <div className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-black">
-                    {isYouTubeVideo ? (
-                      <iframe
-                        src={embedUrl}
-                        title={`${game.name || "Game"} video`}
-                        className="aspect-video w-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                      />
-                    ) : (
-                      <video
-                        src={game.video}
-                        controls
-                        className="aspect-video w-full bg-black"
-                      >
-                        Your browser does not support the video element.
-                      </video>
-                    )}
-                  </div>
-
-                  <a
-                    href={game.video}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="relative z-20 mt-3 inline-block break-all text-sm font-medium text-indigo-600 hover:underline"
-                  >
-                    Open video link
-                  </a>
+                  <ContentVideo video={game.video} title={`${game.name || "Game"} video`} />
                 </section>
               )}
             </div>
