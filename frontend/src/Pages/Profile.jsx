@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 
 import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
+import AvatarPicker from "../Components/AvatarPicker.jsx";
 import { normalizeAuthEmail, passwordInputError } from "../../../shared/authValidation.mjs";
 
 const Profile = () => {
@@ -130,16 +131,19 @@ const Profile = () => {
   // LOAD USER DATA
   // ======================================================
 
+  const profileName = userData?.name || "";
+  const profileEmail = userData?.email || "";
+  const profilePhone = userData?.phone || "";
+  const profileClass = userData?.class ?? 0;
+
   useEffect(() => {
-    if (userData) {
-      setEditData({
-        name: userData.name || "",
-        email: userData.email || "",
-        phone: userData.phone || "",
-        class: userData.class ?? 0,
-      });
-    }
-  }, [userData]);
+    setEditData({
+      name: profileName,
+      email: profileEmail,
+      phone: profilePhone,
+      class: profileClass,
+    });
+  }, [profileName, profileEmail, profilePhone, profileClass]);
 
   // ======================================================
   // ROLE BADGE STYLE
@@ -628,20 +632,7 @@ const Profile = () => {
 
                 {/* Profile Picture */}
 
-                <div className="mx-auto flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-blue-100 bg-blue-50">
-                  {userData?.profilePicture ? (
-                    <img
-                      src={`${backendUrl}${userData.profilePicture}`}
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-24 w-24 items-center justify-center rounded-full bg-black text-4xl font-bold text-white transition hover:bg-gray-800">
-                      {userData?.name?.[0]?.toUpperCase() ||
-                        "U"}
-                    </span>
-                  )}
-                </div>
+                <AvatarPicker disabled={loading} />
 
                 {/* Name */}
 

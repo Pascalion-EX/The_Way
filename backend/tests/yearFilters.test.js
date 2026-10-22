@@ -33,6 +33,7 @@ test("lesson searches treat zero, empty, and missing years as no filter while re
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.success, true);
     const filter = filters.at(-1);
+    assert.equal(filter.variantGroup, null);
     assert.equal(Object.hasOwn(filter, "year"), false);
     assert.ok(filter.$or.some((part) => part.title?.$regex === "love"));
   }
@@ -43,7 +44,7 @@ test("lesson searches filter by whole years 1 through 12", async (t) => {
   for (let year = 1; year <= 12; year++) {
     const res = await request({ year: String(year) });
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(filters.at(-1), { year });
+    assert.deepEqual(filters.at(-1), { variantGroup: null, year });
   }
 });
 
@@ -63,6 +64,7 @@ test("lesson search supports every content field with sanitization enabled", asy
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.success, true);
   const filter = filters.at(-1);
+  assert.equal(filter.variantGroup, null);
   assert.equal(filter.year, 3);
   assert.deepEqual(filter.$or.map((part) => Object.keys(part)[0]), [
     "title", "name", "body", "partitions.title", "partitions.body",
@@ -93,7 +95,7 @@ test("lesson listing accepts missing, empty and whitespace-only search terms", a
   const { filters, request } = setup(t);
   for (const query of [{}, { search: "" }, { search: "   " }]) {
     assert.equal((await request(query)).statusCode, 200);
-    assert.deepEqual(filters.at(-1), {});
+    assert.deepEqual(filters.at(-1), { variantGroup: null });
   }
 });
 

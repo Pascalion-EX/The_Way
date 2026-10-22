@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import userRouter from "../routes/userRoutes.js";
 import User from "../models/userModel.js";
+import { AVATAR_IDS } from "../../shared/avatarPresets.mjs";
 
 const userId = "6ab26b08171afea3091f04b3";
 const password = "test-only-current-password";
@@ -51,10 +52,10 @@ const setup = async (t) => {
   app.use(cookieParser());
   app.use("/api/user", userRouter);
   const token = jwt.sign({ id: userId, tokenVersion: 0 }, jwtSecret, { expiresIn: "1h" });
-  state.request = (body, requestToken = token) => new Promise((resolve, reject) => {
+  state.request = (body, requestToken = token, method = "PUT") => new Promise((resolve, reject) => {
     const req = Readable.from([]);
-    req.method = "PUT";
-    req.url = "/api/user/update-profile";
+    req.method = method;
+    req.url = method === "GET" ? "/api/user/data" : "/api/user/update-profile";
     req.headers = requestToken ? { cookie: `token=${requestToken}` } : {};
     req.body = body;
     req.socket = {};
@@ -150,4 +151,45 @@ test("duplicate email and database errors leave the verified address intact with
     assert.equal(result.body.message, message);
     assert.deepEqual(state.user, initial);
   }
+});
+
+test("every preset is saved to the authenticated account and returned on later profile loads", async (t) => {
+  const state = await setup(t);
+  const original = clone(state.user);
+  for (const avatarId of AVATAR_IDS) {
+    const saved = await state.request({ avatarId, userId: "6ac82222376fb9c75f5b3961", role: ["admin"] });
+    assert.equal(saved.status, 200);
+    assert.equal(saved.body.user.avatarId, avatarId);
+    assert.deepEqual(state.user, { ...original, avatarId });
+    const loaded = await state.request(undefined, undefined, "GET");
+    assert.equal(loaded.status, 200);
+    assert.equal(loaded.body.userData.avatarId, avatarId);
+    assert.equal(Object.hasOwn(loaded.body.userData, "password"), false);
+  }
+});
+
+test("legacy accounts use initials, ordinary edits preserve the preset, and an empty ID resets it", async (t) => {
+  const state = await setup(t);
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.avatarId, "");
+  await state.request({ avatarId: "fox" });
+  await state.request({ name: "New name", phone: "456" });
+  assert.equal(state.user.avatarId, "fox");
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.avatarId, "fox");
+  const reset = await state.request({ avatarId: "" });
+  assert.equal(reset.status, 200);
+  assert.equal(reset.body.user.avatarId, "");
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.avatarId, "");
+});
+
+test("invalid picture choices reject the entire edit before writing", async (t) => {
+  const state = await setup(t);
+  const original = clone(state.user);
+  for (const avatarId of [null, 0, false, [], ["fox"], { $ne: null }, "Fox", "unknown", "https://example.com/picture.png", "../../etc/passwd"]) {
+    const result = await state.request({ avatarId, name: "Partial edit" });
+    assert.equal(result.status, 400);
+    assert.equal(result.body.success, false);
+    assert.deepEqual(state.user, original);
+  }
+  assert.equal((await state.request({ avatarId: "fox" }, null)).status, 401);
+  assert.equal(state.writes, 0);
 });

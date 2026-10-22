@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
+import UserAvatar from "../Components/UserAvatar.jsx";
 
 import { toast } from "react-toastify";
 import { CalendarPlus } from "lucide-react";
@@ -338,7 +339,10 @@ const Admin = () => {
                           className="border-b border-gray-100 text-sm text-gray-700 transition hover:bg-gray-50"
                         >
                           <td className="px-4 py-4 font-medium text-gray-900">
-                            {user.name || "No Name"}
+                            <span className="inline-flex items-center gap-3">
+                              <UserAvatar user={user} decorative className="h-9 w-9 text-sm" />
+                              {user.name || "No Name"}
+                            </span>
                             {user.isBanned && (
                               <span title={user.banReason} className="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">Banned</span>
                             )}

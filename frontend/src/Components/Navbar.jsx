@@ -5,6 +5,7 @@ import { assets } from "../assets/assets.js";
 import { AppContent } from "../Context/AppContext.jsx";
 import axios from "../utils/axios";
 import NotificationBell from "./NotificationBell.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -161,7 +162,7 @@ const hasVideoRequestAccess = userData
                   }
                   aria-expanded={userMenuOpen}
                 >
-                  {userData.name?.[0]?.toUpperCase() || "U"}
+                  <UserAvatar user={userData} decorative className="h-full w-full text-sm" />
                 </button>
 
                 {userMenuOpen && (

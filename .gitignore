@@ -7,3 +7,4 @@ node_modules/
 ./tests
 shared/*
 !shared/pageAccess.mjs
+!shared/avatarPresets.mjs

@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import userModel from "../models/userModel.js";
 import { normalizeAuthEmail, passwordInputError } from "../../shared/authValidation.mjs";
+import { isValidAvatarId } from "../../shared/avatarPresets.mjs";
 
 export const getUserData = async (req, res) => {
   try {
@@ -14,6 +15,7 @@ export const getUserData = async (req, res) => {
       success: true,
       userData: {
         name: user.name,
+        avatarId: user.avatarId || "",
         isAccountVerified: user.isAccountVerified,
         role: user.role,
         email: user.email,
@@ -40,6 +42,13 @@ export const updateProfile = async (req, res) => {
     const userClass = req.body.class;
 
     const updateData = {};
+
+    if (Object.hasOwn(req.body, "avatarId")) {
+      if (!isValidAvatarId(req.body.avatarId)) {
+        return res.status(400).json({ success: false, message: "Choose an available profile picture" });
+      }
+      updateData.avatarId = req.body.avatarId;
+    }
 
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
@@ -105,7 +114,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await userModel
       .findOneAndUpdate(filter, update, { returnDocument: "after", runValidators: true })
-      .select("name email phone class role isAccountVerified");
+      .select("name email phone class role isAccountVerified avatarId");
 
     if (!user) {
       return res.status(emailChanged ? 409 : 404).json({

@@ -35,6 +35,14 @@ const lessonSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Originals use their own ID as the group key. Keeping that key on each
+    // copy preserves the group even if the original lesson is deleted.
+    variantGroup: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+      index: true,
+    },
+
 
 
     body: {

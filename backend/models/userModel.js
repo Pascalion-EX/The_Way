@@ -1,9 +1,11 @@
 import mongoose, { mongo } from "mongoose";
 import emailJobSchema from "./emailJobSchema.js";
 import { normalizeAuthEmail } from "../services/authEmail.js";
+import { AVATAR_IDS } from "../../shared/avatarPresets.mjs";
 
 const userSchema = new mongoose.Schema({
     name: {type:String, required: true},
+    avatarId: {type: String, enum: ["", ...AVATAR_IDS], default: ""},
     email: {type:String, required: true, unique:true, validate: {
         validator: (value) => normalizeAuthEmail(value) !== null,
         message: 'A valid single email address is required',

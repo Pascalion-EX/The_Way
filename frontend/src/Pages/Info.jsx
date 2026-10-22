@@ -5,15 +5,15 @@ const Info = () => {
   const informationCards = [
     {
       number: "01",
-      title: "Your Mission",
+      title: "Our Mission",
       description:
-        "To bring the kids to Church, and to help them grow into Christ, for death is terrifying and life is only available through Christ.",
+        "To bring the kids to Church, and to help them grow into Christ, for death is terrifying and life is only available through Christ, and once you received grace, you shall share it to everyone you can.",
     },
     {
       number: "02",
-      title: "Your Vision",
+      title: "Our Vision",
       description:
-        "To reach theosis is your only goal in life, helping the kids reach it, is the greatest honor a human can hold ",
+        "I am the shield, the servant, and the apostle of christ. I shall serve with everything to bring the kids closer to christ, I shall never teach false commandments.",
     },
     {
       number: "03",
@@ -48,11 +48,6 @@ const Info = () => {
       title: "Trips and Camps",
       description:
         "Explore upcoming trips, camps, outings, and events and submit applications directly through the website.",
-    },
-    {
-      title: "Service Planning",
-      description:
-        "Help leaders organize lessons, events, responsibilities, and the overall service calendar.",
     },
   ];
   return (
@@ -97,16 +92,8 @@ const Info = () => {
             <div className="mb-10 text-center">
 
               <h2 className="mt-3 text-3xl font-black text-gray-950 sm:text-4xl">
-                Servants of theosis 
+                “If anyone causes one of these little ones—those who believe in me—to stumble, it would be better for them to have a large millstone hung around their neck and to be drowned in the depths of the sea" Matthew 18:6
               </h2>
-
-              <p className="mx-auto mt-4 max-w-xl leading-7 text-gray-800">
-                  The platform was developed as a humble token of gratitude to the people I love in the Service of The Way.
-
-                  Thank you for your unconditional love, acceptance, patience, and forgiveness.
-
-                  It has been a wonderful journey and a great story, I will always be grateful for everything you have done for me.
-              </p>
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -170,35 +157,6 @@ const Info = () => {
           </section>
 
           {/* Final callout */}
-          <section className="pb-10 pt-16">
-            <div className="rounded-[2rem] border border-gray-200 bg-white text-center p-8 shadow-xl sm:p-12">              
-              <div className="absolute left-0 top-0 h-52 w-52 rounded-full bg-amber-500/20 blur-3xl" />
-              <div className="absolute bottom-0 right-0 h-52 w-52 rounded-full bg-indigo-500/20 blur-3xl" />
-
-              <div className="relative">
-                <p className="text-sm font-bold uppercase tracking-[0.25em] text-amber-400">
-                  The Way Service
-                </p>
-
-                <h2 className="mx-auto mt-4 max-w-3xl text-3xl font-black sm:text-4xl">
-                  Supporting the service through faith, organization, and
-                  technology
-                </h2>
-
-                <p className="mx-auto mt-5 max-w-2xl leading-7 text-black-300">
-                  Our goal is to make service resources easier to create,
-                  organize, share, and access.
-                </p>
-
-                <a
-                  href="/"
-                  className="mt-8 inline-flex rounded-xl bg-amber-500 px-7 py-3.5 text-sm font-black text-gray-950 transition duration-300 hover:-translate-y-0.5 hover:bg-amber-400"
-                >
-                  Return to home
-                </a>
-              </div>
-            </div>
-          </section>
         </main>
 
       </div>

@@ -4,6 +4,7 @@ import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import mongoose from "mongoose";
 import { campSummaryProjection, toCampSummary, toStaffApplicant } from "../services/campResponses.js";
+import { buildBrandedEmail } from "../services/emailTemplate.js";
 
 const createRoles = ['admin', 'leader', 'pascal','pamela'];
 const applyRoles = ['parent', 'admin', 'leader', 'pascal'];
@@ -593,12 +594,8 @@ export const notifyCampApplicants = async (req, res) => {
       from: process.env.SENDER_EMAIL,
       bcc: emails,
       subject,
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-          <h2>${camp.title}</h2>
-          <p>${message.replace(/\n/g, "<br />")}</p>
-        </div>
-      `,
+      text: `${camp.title}\n\n${message}`,
+      ...buildBrandedEmail({ kind: "camp", title: camp.title, text: message }),
     });
 
     return res.status(200).json({

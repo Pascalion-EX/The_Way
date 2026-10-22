@@ -210,7 +210,9 @@ export const getLessons = async (req, res) => {
       });
     }
 
-    const filter = {};
+    // A null match includes older originals where variantGroup is absent.
+    // Copies are available through their lesson's variant dropdown only.
+    const filter = { variantGroup: null };
 
     /*
     |--------------------------------------------------------------------------
@@ -280,6 +282,10 @@ export const getLessonById = async (req, res) => {
   try {
     const { lessonId } = req.params;
 
+    if (!mongoose.isObjectIdOrHexString(lessonId)) {
+      return res.status(400).json({ success: false, message: "Invalid lesson ID" });
+    }
+
     const lesson = await lessonModel
       .findById(lessonId)
       .populate(
@@ -294,10 +300,12 @@ export const getLessonById = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      lesson,
-    });
+    const groupId = lesson.variantGroup || lesson._id;
+    const variants = await lessonModel.find({
+      $or: [{ _id: groupId }, { variantGroup: groupId }],
+    }).select("name variantGroup").sort({ createdAt: 1, _id: 1 });
+
+    return res.status(200).json({ success: true, lesson, variants });
   } catch (error) {
     console.log("getLessonById error:", error);
 
@@ -305,6 +313,62 @@ export const getLessonById = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+export const createLessonVariant = async (req, res) => {
+  try {
+    const { lessonId } = req.params;
+    const name = req.body?.name;
+
+    if (!mongoose.isObjectIdOrHexString(lessonId)) {
+      return res.status(400).json({ success: false, message: "Invalid lesson ID" });
+    }
+
+    if (typeof name !== "string" || !name.trim() || name.trim().length > 120) {
+      return res.status(400).json({
+        success: false,
+        message: "Variant name must be between 1 and 120 characters",
+      });
+    }
+
+    const user = await userModel.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    if (!hasLessonPermission(user.role)) {
+      return await denyAccess(req, res, {
+        success: false,
+        message: "You are not allowed to create lesson variants",
+      });
+    }
+
+    const source = await lessonModel.findById(lessonId);
+    if (!source) {
+      return res.status(404).json({ success: false, message: "Lesson not found" });
+    }
+
+    const lesson = await lessonModel.create({
+      title: source.title,
+      name: name.trim(),
+      variantGroup: source.variantGroup || source._id,
+      body: source.body,
+      partitions: source.partitions.map(({ title, body }) => ({ title, body })),
+      image: source.image,
+      video: source.video,
+      activity: source.activity,
+      year: source.year,
+      createdBy: req.userId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Lesson variant created successfully",
+      lesson,
+    });
+  } catch (error) {
+    console.error("createLessonVariant error:", error);
+    return res.status(500).json({ success: false, message: "Unable to create lesson variant" });
   }
 };
 

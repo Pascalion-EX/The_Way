@@ -1,7 +1,10 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import Navbar from "@/Components/Navbar.jsx";
+import LessonVariants from "@/Components/LessonVariants.jsx";
+import { AppContent } from "../Context/AppContext.jsx";
+import axios from "../utils/axios";
 
 const getEmbedUrl = (url = "") => {
   if (!url) return "";
@@ -80,9 +83,38 @@ const getLessonPartitions = (lesson) => {
 
 const LessonViewer = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const { id } = useParams();
+  const { backendUrl, userData } = useContext(AppContent);
+  const [result, setResult] = useState(null);
+  const loading = result?.id !== id;
+  const lesson = loading ? null : result.lesson;
+  const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
+  const canManageLessons = roles.some((role) =>
+    ["pascal", "admin", "leader", "pamela"].includes(role)
+  );
 
-  const lesson = location.state?.lesson;
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadLesson = async () => {
+      try {
+        const { data } = await axios.get(`${backendUrl}/api/lessons/${id}`, {
+          signal: controller.signal,
+        });
+        if (!data.success || !data.lesson) {
+          throw new Error(data.message || "Lesson not found");
+        }
+        if (!controller.signal.aborted) {
+          setResult({ id, lesson: data.lesson, variants: data.variants || [data.lesson] });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setResult({ id, lesson: null, error: error.response?.data?.message || error.message });
+        }
+      }
+    };
+    loadLesson();
+    return () => controller.abort();
+  }, [id, backendUrl]);
 
   const [downloading, setDownloading] =
     useState(false);
@@ -431,12 +463,11 @@ const LessonViewer = () => {
               </p>
 
               <h1 className="mt-4 text-3xl font-semibold leading-tight text-gray-900 sm:text-4xl">
-                Lesson not found
+                {loading ? "Loading lesson..." : "Unable to load lesson"}
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-600 sm:text-base">
-                Open the lesson again
-                from the lessons page.
+                {loading ? "Please wait while the lesson loads." : result.error}
               </p>
             </div>
           </div>
@@ -468,7 +499,7 @@ const LessonViewer = () => {
         <div className="mx-auto w-full max-w-[900px]">
           {/* Controls */}
 
-          <div className="relative z-20 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative z-20 mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <button
               type="button"
               onClick={() =>
@@ -479,13 +510,31 @@ const LessonViewer = () => {
               ← Back to lessons
             </button>
 
+            <LessonVariants
+              key={lesson._id}
+              lesson={lesson}
+              variants={result.variants}
+              canManageLessons={canManageLessons}
+              backendUrl={backendUrl}
+            />
+
+            {canManageLessons && (
+              <button
+                type="button"
+                onClick={() => navigate(`/lessons/${lesson._id}/edit`, { state: { lesson } })}
+                className="w-full cursor-pointer rounded-full border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 sm:ml-auto sm:w-auto"
+              >
+                Edit lesson
+              </button>
+            )}
+
             <button
               type="button"
               onClick={
                 handleDownloadPdf
               }
               disabled={downloading}
-              className="pointer-events-auto w-full cursor-pointer rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto"
+              className={`pointer-events-auto w-full cursor-pointer rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto ${canManageLessons ? "" : "sm:ml-auto"}`}
             >
               {downloading
                 ? "Preparing PDF..."

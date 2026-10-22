@@ -1,5 +1,18 @@
 # Background authentication emails
 
+All outgoing emails share the navy header, white card, and soft blue panels in
+`emailTemplate.js`. The Way logo is bundled in `backend/assets/the-way-logo.png`
+and attached inline using a content ID, so it needs no public image URL. OTP
+emails show the current six-digit code and ten-minute expiry. All user content
+is escaped before insertion into HTML; video links are clickable only for HTTP
+and HTTPS URLs. Every email retains a plain-text alternative.
+
+The queue renders HTML when delivering a job, so existing pending jobs receive
+the design without a database migration. Generate local previews with sample
+content (no delivery): `node backend/scripts/previewEmails.js`. This writes the
+six examples and an index to `/tmp/the-way-email-previews` by default; an optional
+directory argument overrides the output path.
+
 Registration, verification-code requests, and password-reset requests save email
 jobs inside the user document, in the same database write as the account or OTP.
 The HTTP response confirms persistence, not delivery. No SMTP operation runs in

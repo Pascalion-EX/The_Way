@@ -1,23 +1,10 @@
 import VideoRequest from "../models/VideoRequestModel.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
+import { buildBrandedEmail } from "../services/emailTemplate.js";
 
 const VIDEO_REQUEST_EMAIL =
   process.env.VIDEO_REQUEST_EMAIL || "kerolos.a.fam@gmail.com";
-
-
-// ============================================================
-// Helper - escape user supplied text before inserting into email
-// ============================================================
-
-const escapeHtml = (value = "") => {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-};
 
 
 // ============================================================
@@ -134,91 +121,21 @@ Pending
     `;
 
 
-    const htmlMessage = `
-      <div
-        style="
-          font-family: Arial, sans-serif;
-          max-width: 650px;
-          margin: auto;
-          color: #222;
-        "
-      >
-
-        <h2 style="margin-bottom: 5px;">
-          New Video Editing Request
-        </h2>
-
-        <p style="color: #666;">
-          A new video editing request was submitted through The Way.
-        </p>
-
-        <hr />
-
-        <p>
-          <strong>Requested By:</strong><br />
-          ${escapeHtml(user.name)}
-        </p>
-
-        <p>
-          <strong>Email:</strong><br />
-          ${escapeHtml(user.email)}
-        </p>
-
-        <p>
-          <strong>Title:</strong><br />
-          ${escapeHtml(title)}
-        </p>
-
-        <p>
-          <strong>Description:</strong><br />
-          ${escapeHtml(description).replaceAll("\n", "<br />")}
-        </p>
-
-        <p>
-          <strong>Video Link:</strong><br />
-          <a href="${escapeHtml(videoLink)}">
-            ${escapeHtml(videoLink)}
-          </a>
-        </p>
-
-        <p>
-          <strong>Reference Link:</strong><br />
-
-          ${
-            referenceLink
-              ? `
-                <a href="${escapeHtml(referenceLink)}">
-                  ${escapeHtml(referenceLink)}
-                </a>
-              `
-              : "None"
-          }
-        </p>
-
-        <p>
-          <strong>Priority:</strong><br />
-          ${escapeHtml(priority || "Normal")}
-        </p>
-
-        <p>
-          <strong>Deadline:</strong><br />
-          ${escapeHtml(formattedDeadline)}
-        </p>
-
-        <p>
-          <strong>Status:</strong><br />
-          Pending
-        </p>
-
-        <hr />
-
-        <p style="font-size: 13px; color: #777;">
-          Request ID:
-          ${videoRequest._id}
-        </p>
-
-      </div>
-    `;
+    const brandedEmail = buildBrandedEmail({
+      kind: "videoRequest",
+      details: [
+        { label: "Requested by", value: user.name },
+        { label: "Email", value: user.email },
+        { label: "Title", value: title },
+        { label: "Description", value: description },
+        { label: "Video link", value: videoLink, link: true },
+        { label: "Reference link", value: referenceLink || "None", link: true },
+        { label: "Priority", value: priority || "Normal" },
+        { label: "Deadline", value: formattedDeadline },
+        { label: "Status", value: "Pending" },
+        { label: "Request ID", value: String(videoRequest._id) },
+      ],
+    });
 
 
     // -----------------------------
@@ -232,8 +149,8 @@ Pending
         from: process.env.SMTP_USER,
         to: VIDEO_REQUEST_EMAIL,
         subject,
-        text: textMessage,
-        html: htmlMessage,
+        text: `${textMessage.trim()}\n\nRequest ID: ${videoRequest._id}`,
+        ...brandedEmail,
       });
     } catch (emailError) {
       emailSent = false;
