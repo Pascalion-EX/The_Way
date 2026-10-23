@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { OTP_TTL_MS } from "./otpPolicy.js";
 
 export const EMAIL_LOGO_CID = "the-way-logo@the-way.invalid";
-const logo = readFileSync(new URL("../assets/the-way-logo.png", import.meta.url));
+const logo = readFileSync(new URL("../assets/thewaylogo.svg", import.meta.url));
 const styles = {
   welcome: { category: "WELCOME", title: "Welcome to The Way", note: "Thank you for joining our community. Please verify your email to get started." },
   verification: { category: "ACCOUNT VERIFICATION", title: "Verify your email address", introduction: "Thanks for signing up! Enter the verification code below to activate your account.", codeLabel: "YOUR VERIFICATION CODE", note: "If you didn't create an account, you can safely ignore this email." },
@@ -95,6 +95,6 @@ export function buildBrandedEmail({ kind, title, text = "", code, details = [], 
 </html>`;
   return {
     html,
-    attachments: [{ filename: "the-way-logo.png", content: logo, contentType: "image/png", contentDisposition: "inline", cid: EMAIL_LOGO_CID }],
+    attachments: [{ filename: "thewaylogo.svg", content: logo, contentType: "image/svg+xml", contentDisposition: "inline", cid: EMAIL_LOGO_CID }],
   };
 }

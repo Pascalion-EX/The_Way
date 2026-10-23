@@ -6,6 +6,7 @@ frontend/.env
 node_modules/
 ./tests
 shared/*
+!shared/attendanceAccess.mjs
 !shared/pageAccess.mjs
 !shared/avatarPresets.mjs
 !shared/videoUrls.mjs

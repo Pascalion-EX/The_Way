@@ -12,14 +12,15 @@ test("every outgoing email type uses the branded card and embeds the actual logo
     assert.match(html, /2026 The Way/);
     assert.match(html, /This is an automated email/);
     assert.match(html, /max-width:640px/);
-    assert.match(html, /background:#111d38/);
+    assert.match(html, /background:#ffffff/);
     assert.match(html, /role="presentation"/);
     assert.ok(html.includes(`src="cid:${EMAIL_LOGO_CID}"`));
     assert.equal(attachments.length, 1);
     assert.equal(attachments[0].cid, EMAIL_LOGO_CID);
     assert.equal(attachments[0].contentDisposition, "inline");
-    assert.equal(attachments[0].contentType, "image/png");
-    assert.equal(attachments[0].content.subarray(1, 4).toString(), "PNG");
+    assert.equal(attachments[0].filename, "thewaylogo.svg");
+    assert.equal(attachments[0].contentType, "image/svg+xml");
+    assert.match(attachments[0].content.toString(), /<svg\b/);
   }
 });
 
@@ -34,7 +35,7 @@ test("verification and reset emails have distinct instructions, a copyable code 
     assert.match(html, />012345<\/p>/);
     assert.ok(html.includes(`Expires in ${OTP_TTL_MS / 60_000} minutes`));
     assert.match(html, /safely ignore this email/);
-    assert.match(html, /background:#eef2ff/);
+    assert.match(html, /background:#e5b44d/);
   }
 });
 
@@ -81,7 +82,7 @@ for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
     assert.equal(sent.subject, job.subject);
     assert.equal(sent.messageId, `<${job.id}@the-way.invalid>`);
     assert.ok(sent.html.includes(`cid:${EMAIL_LOGO_CID}`));
-    assert.equal(sent.attachments[0].contentType, "image/png");
+    assert.equal(sent.attachments[0].contentType, "image/svg+xml");
     if (kind === "verification") assert.match(sent.html, />012345<\/p>/);
     if (kind === "passwordReset") assert.match(sent.html, />654321<\/p>/);
     if (kind === "ban") assert.match(sent.html, /ACCOUNT STATUS/);
@@ -89,7 +90,7 @@ for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
   });
 }
 
-test("Nodemailer produces an offline multipart email with text, HTML and a related inline PNG", async () => {
+test("Nodemailer produces an offline multipart email with text, HTML and a related inline SVG", async () => {
   const transport = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: "unix" });
   try {
     const info = await transport.sendMail({
@@ -102,7 +103,8 @@ test("Nodemailer produces an offline multipart email with text, HTML and a relat
     assert.match(mime, /Content-Type: multipart\/related/);
     assert.match(mime, /Content-Type: text\/plain/);
     assert.match(mime, /Content-Type: text\/html/);
-    assert.match(mime, /Content-Type: image\/png/);
+    assert.match(mime, /Content-Type: image\/svg\+xml/);
+    assert.match(mime, /filename=thewaylogo\.svg/);
     assert.ok(mime.includes(`Content-ID: <${EMAIL_LOGO_CID}>`));
     assert.match(mime, /Content-Disposition: inline/);
     assert.deepEqual(info.envelope.to, ["recipient@example.invalid"]);

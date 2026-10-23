@@ -33,6 +33,7 @@ const protectedRoutes = [
   ...["/api/children", "/api/childProfile"].flatMap((prefix) =>
     childRoutes.map(([method, path, body, status]) => ({ method, path: prefix + path, body, status }))
   ),
+  { method: "GET", path: "/api/attendance/children", status: 200 },
   { method: "POST", path: "/api/attendance/", body: { child: childId, serviceDate: "2026-10-14" }, status: 200 },
   { method: "POST", path: "/api/attendance/weekly", body: { serviceDate: "2026-10-14", attendance: [{ child: childId, status: "present" }] }, status: 200 },
   { method: "GET", path: "/api/attendance/date/2026-10-14", status: 200 },
@@ -78,7 +79,7 @@ const stubDatabase = (t) => {
   // Treat permission-matrix cases as independent first denials.
   t.mock.method(User, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
   const state = {
-    user: { _id: objectId(userId), name: "Synthetic staff", role: ["admin"], isAccountVerified: true },
+    user: { _id: objectId(userId), name: "Synthetic staff", role: ["admin"], class: 1, isAccountVerified: true },
     authorizationError: false,
     reads: 0,
     businessCalls: 0,

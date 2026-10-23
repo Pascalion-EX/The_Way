@@ -1,8 +1,9 @@
 # Background authentication emails
 
-All outgoing emails share the navy header, white card, and soft blue panels in
-`emailTemplate.js`. The Way logo is bundled in `backend/assets/the-way-logo.png`
-and attached inline using a content ID, so it needs no public image URL. OTP
+All outgoing emails share the white card and gold panels in
+`emailTemplate.js`. The existing `frontend/src/assets/Thewaylogo.svg` is also
+bundled in `backend/assets/thewaylogo.svg` and attached inline as `image/svg+xml`
+using a content ID, so it needs no public image URL or frontend runtime files. OTP
 emails show the current six-digit code and ten-minute expiry. All user content
 is escaped before insertion into HTML; video links are clickable only for HTTP
 and HTTPS URLs. Every email retains a plain-text alternative.
@@ -62,6 +63,31 @@ acknowledgement can cause a duplicate. Retries keep the same message ID and OTP.
 No email is sent while the backend is stopped; persisted jobs resume when it
 starts. Replacing a pending OTP prevents its future retries, although an email
 already being sent cannot be recalled.
+
+## Troubleshooting SMTP timeouts
+
+Run `npm run email:check --prefix backend` from the repository root. This loads
+`backend/.env` and checks the SMTP connection, TLS, and login without sending
+email. A successful check does not confirm sender permissions or inbox delivery.
+No credentials, recipient addresses, or email contents are printed.
+
+An `ETIMEDOUT` retry means the job remains queued; it is not a delivery success.
+The worker logs the timeout type and SMTP stage when supplied by Nodemailer:
+`CONNECT_TIMEOUT` concerns connection setup, `GREETING_TIMEOUT` the server greeting,
+`UPGRADE_TIMEOUT` the STARTTLS handshake, and `SOCKET_TIMEOUT` an inactive connection.
+Connection setup includes DNS, TCP, TLS, greeting, and STARTTLS in Nodemailer 10.
+
+For recurring local timeouts, check firewall/VPN rules and try another network.
+The default is Gmail on port 465 with TLS. To try Gmail's STARTTLS port, add
+`SMTP_PORT=587` to `backend/.env`, then rerun the check and restart the backend.
+TLS remains required on port 587. Other providers can set `SMTP_HOST` as well.
+If the connection is reachable but login fails with `EAUTH`, check the account
+credentials; Gmail requires an App Password for password authentication.
+
+Slow networks can override `SMTP_CONNECTION_TIMEOUT_MS` (default `15000`),
+`SMTP_GREETING_TIMEOUT_MS` (default `15000`), and `SMTP_SOCKET_TIMEOUT_MS` (default
+`30000`). Increasing timeouts does not fix blocked ports. After restoring email
+connectivity, request a fresh OTP if the previous ten-minute code has expired.
 
 Pending delivery can be inspected in `users.emailJobs`: job `status`, `attempts`,
 `nextAttemptAt`, `expiresAt`, and `lastError`. These fields and email bodies are

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import {
   CalendarDays,
@@ -101,6 +101,8 @@ const Attendance = () => {
 
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState("0");
+  const [attendanceAccess, setAttendanceAccess] = useState(null);
+  const [loadError, setLoadError] = useState("");
 
   // ======================================================
   // PERMISSIONS
@@ -117,12 +119,13 @@ const Attendance = () => {
   const canTakeAttendance = userRoles.some((role) =>
     allowedRoles.includes(role)
   );
+  const userRoleKey = userRoles.join(",");
 
   // ======================================================
   // FETCH CHILDREN + SAVED ATTENDANCE
   // ======================================================
 
-  const fetchAttendancePage = async (date = serviceDate) => {
+  const fetchAttendancePage = useCallback(async (date, isActive = () => true) => {
     if (!isWednesday(date)) {
       setLoading(false);
       return;
@@ -130,9 +133,13 @@ const Attendance = () => {
 
     try {
       setLoading(true);
+      setLoadError("");
+      setChildren([]);
+      setAttendanceRecords({});
+      setAttendanceAccess(null);
 
       const [childrenResponse, attendanceResponse] = await Promise.all([
-        axios.get(`${backendUrl}/api/children`, {
+        axios.get(`${backendUrl}/api/attendance/children`, {
           withCredentials: true,
         }),
 
@@ -140,6 +147,8 @@ const Attendance = () => {
           withCredentials: true,
         }),
       ]);
+
+      if (!isActive()) return;
 
       // Support a few common response names
       const childrenData =
@@ -152,7 +161,13 @@ const Attendance = () => {
       const existingAttendance =
         attendanceResponse.data.attendance || [];
 
-      setChildren(childrenData);
+      setChildren(childrenData.map((child) => ({
+        ...child,
+        consecutiveAbsences: attendanceResponse.data.consecutiveAbsences?.[child._id] ?? 0,
+      })));
+      const access = childrenResponse.data.access;
+      setAttendanceAccess(access);
+      if (!access.allClasses) setGradeFilter(String(access.grade));
 
       /*
         Default every child to absent.
@@ -179,7 +194,7 @@ const Attendance = () => {
             ? record.child?._id
             : record.child;
 
-        if (!childId) return;
+        if (!childId || !initialRecords[childId]) return;
 
         initialRecords[childId] = {
           child: childId,
@@ -190,28 +205,32 @@ const Attendance = () => {
 
       setAttendanceRecords(initialRecords);
     } catch (error) {
+      if (!isActive()) return;
       console.error("Attendance loading error:", error);
-
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to load attendance information."
-      );
+      const message = error.response?.data?.message || "Failed to load attendance information.";
+      setLoadError(message);
+      toast.error(message);
     } finally {
-      setLoading(false);
+      if (isActive()) setLoading(false);
     }
-  };
+  }, [backendUrl]);
 
   // ======================================================
   // LOAD WHEN DATE CHANGES
   // ======================================================
 
   useEffect(() => {
-    if (isWednesday(serviceDate)) {
-      fetchAttendancePage(serviceDate);
+    let active = true;
+    if (canTakeAttendance && isWednesday(serviceDate)) {
+      fetchAttendancePage(serviceDate, () => active);
     } else {
       setLoading(false);
+      setChildren([]);
+      setAttendanceRecords({});
+      setAttendanceAccess(null);
     }
-  }, [serviceDate]);
+    return () => { active = false; };
+  }, [serviceDate, canTakeAttendance, userData?.email, userData?.class, userRoleKey, fetchAttendancePage]);
 
   // ======================================================
   // UPDATE ONE CHILD
@@ -254,6 +273,7 @@ const Attendance = () => {
   // ======================================================
 
   const saveAttendance = async () => {
+    if (loading || !attendanceAccess || !canTakeAttendance) return;
     if (!serviceDate) {
       toast.error("Please select a service date.");
       return;
@@ -494,7 +514,8 @@ const Attendance = () => {
 
               <select
                 aria-label="Filter by grade"
-                value={gradeFilter}
+                value={attendanceAccess?.allClasses ? gradeFilter : String(attendanceAccess?.grade ?? "")}
+                disabled={!attendanceAccess?.allClasses}
                 onChange={(event) =>
                   setGradeFilter(event.target.value)
                 }
@@ -513,14 +534,19 @@ const Attendance = () => {
                   focus:ring-[#D4AF37]/20
                 "
               >
-                <option value="0">0 — All Grades</option>
+                {attendanceAccess?.allClasses && <option value="0">0 — All Grades</option>}
 
-                {Array.from({ length: 12 }, (_, index) => index + 1).map((grade) => (
+                {(attendanceAccess?.allClasses
+                  ? Array.from({ length: 12 }, (_, index) => index + 1)
+                  : attendanceAccess ? [attendanceAccess.grade] : []).map((grade) => (
                   <option key={grade} value={String(grade)}>
                     {grade}
                   </option>
                 ))}
               </select>
+              {attendanceAccess && !attendanceAccess.allClasses && (
+                <p className="mt-2 text-sm text-gray-500">Attendance is limited to your assigned class.</p>
+              )}
             </div>
 
           </div>
@@ -569,6 +595,11 @@ const Attendance = () => {
         {/* ================================================= */}
 
         <section className="rounded-3xl border border-gray-200 bg-white p-4 shadow-xl sm:p-6">
+
+          <p className="mb-5 text-sm text-gray-500">
+            Consecutive absences use saved attendance through the selected date. Present, Late,
+            or Excused resets the count. Unrecorded weeks are not counted. Save changes to update the counts.
+          </p>
 
           {/* Toolbar */}
 
@@ -637,7 +668,9 @@ const Attendance = () => {
           {/* LOADING */}
           {/* ================================================= */}
 
-          {loading ? (
+          {loadError ? (
+            <p role="alert" className="py-12 text-center text-red-600">{loadError}</p>
+          ) : loading ? (
             <div className="flex min-h-72 items-center justify-center">
 
               <div className="text-center">
@@ -706,6 +739,10 @@ const Attendance = () => {
 
                           <p className="text-sm text-gray-500">
                             {getChildGrade(child)}
+                          </p>
+
+                          <p className={`mt-1 text-sm font-medium ${child.consecutiveAbsences > 0 ? "text-red-600" : "text-gray-500"}`}>
+                            Consecutive absences: {child.consecutiveAbsences}
                           </p>
                         </div>
 
@@ -816,7 +853,7 @@ const Attendance = () => {
 
                 <button
                   onClick={saveAttendance}
-                  disabled={saving}
+                  disabled={saving || loading || !attendanceAccess || !canTakeAttendance}
                   className="
                     flex
                     items-center

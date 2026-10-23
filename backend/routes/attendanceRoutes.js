@@ -1,6 +1,7 @@
 import express from "express";
 
 import {
+  getAttendanceChildren,
   takeAttendance,
   takeWeeklyAttendance,
   getAttendanceByDate,
@@ -12,10 +13,13 @@ import {
 
 import userAuth from "../middleware/userAuth.js";
 import { requireStaff } from "../middleware/staffAuth.js";
+import { requireAttendanceAccess } from "../middleware/attendanceAuth.js";
 
 const attendanceRouter = express.Router();
 
-attendanceRouter.use(userAuth, requireStaff);
+attendanceRouter.use(userAuth, requireStaff, requireAttendanceAccess);
+
+attendanceRouter.get("/children", getAttendanceChildren);
 
 attendanceRouter.post("/", takeAttendance);
 attendanceRouter.post("/weekly", takeWeeklyAttendance);

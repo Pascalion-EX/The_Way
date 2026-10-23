@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import userModel from "../models/userModel.js";
 import { normalizeAuthEmail, passwordInputError } from "../../shared/authValidation.mjs";
 import { isValidAvatarId } from "../../shared/avatarPresets.mjs";
+import { canAccessAllAttendanceClasses } from "../../shared/attendanceAccess.mjs";
 
 export const getUserData = async (req, res) => {
   try {
@@ -71,9 +72,20 @@ export const updateProfile = async (req, res) => {
       }
     }
 
-    const currentUser = await userModel.findById(userId).select("email password");
+    const currentUser = await userModel.findById(userId).select("email password role class");
     if (!currentUser) {
       return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (currentUser.role.includes("leader") && !canAccessAllAttendanceClasses(currentUser.role) &&
+        updateData.class !== undefined) {
+      if (updateData.class !== currentUser.class) {
+        return res.status(403).json({
+          success: false,
+          message: "Only an administrator can change your assigned class.",
+        });
+      }
+      delete updateData.class;
     }
 
     const emailChanged = normalizedEmail !== undefined &&

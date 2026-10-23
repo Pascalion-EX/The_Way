@@ -13,7 +13,7 @@ export const requireStaff = async (req, res, next) => {
       });
     }
 
-    const user = await userModel.findById(req.userId).select("role isAccountVerified");
+    const user = await userModel.findById(req.userId).select("role class isAccountVerified");
 
     if (!user) {
       return res.status(401).json({
@@ -41,6 +41,7 @@ export const requireStaff = async (req, res, next) => {
       });
     }
 
+    req.staffUser = user;
     return next();
   } catch {
     return res.status(500).json({

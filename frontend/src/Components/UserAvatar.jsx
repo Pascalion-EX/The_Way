@@ -9,7 +9,7 @@ export default function UserAvatar({ user, className = "h-10 w-10 text-sm", deco
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-900 font-semibold text-white ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border-[3px] border-black bg-gray-900 font-semibold text-white ${className}`}
       role={decorative ? undefined : "img"}
       aria-label={decorative ? undefined : `${name}'s profile picture`}
       aria-hidden={decorative || undefined}

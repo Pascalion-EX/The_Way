@@ -11,6 +11,7 @@ import { AppContent } from "../Context/AppContext.jsx";
 import Navbar from "../Components/Navbar";
 import AvatarPicker from "../Components/AvatarPicker.jsx";
 import { normalizeAuthEmail, passwordInputError } from "../../../shared/authValidation.mjs";
+import { canAccessAllAttendanceClasses } from "../../../shared/attendanceAccess.mjs";
 
 const Profile = () => {
   const {
@@ -126,6 +127,8 @@ const Profile = () => {
         role
       )
     );
+
+  const canEditClass = !userRoles.includes("leader") || canAccessAllAttendanceClasses(userRoles);
 
   // ======================================================
   // LOAD USER DATA
@@ -835,7 +838,7 @@ const Profile = () => {
                       Class
                     </p>
 
-                    {isEditing ? (
+                    {isEditing && canEditClass ? (
                       <input
                         type="number"
                         name="class"

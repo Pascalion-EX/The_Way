@@ -1,6 +1,31 @@
 import mongoose from "mongoose";
 import Attendance from "../models/attendanceModel.js";
 import childProfilemodel from "../models/childProfileModel.js";
+import { getConsecutiveAbsences } from "../services/attendanceStreaks.js";
+
+const childIsAccessible = (req, child) =>
+  req.attendanceAccess.allClasses || child.grade === req.attendanceAccess.grade;
+
+const attendanceFilter = async (req) => {
+  if (req.attendanceAccess.allClasses) return {};
+  const children = await childProfilemodel.find({ grade: req.attendanceAccess.grade }).select("_id");
+  return { child: mongoose.trusted({ $in: children.map((child) => child._id) }) };
+};
+
+const denyOtherClass = (res) => res.status(403).json({
+  success: false,
+  message: "You can only access attendance for your assigned class.",
+});
+
+export const getAttendanceChildren = async (req, res) => {
+  try {
+    const filter = req.attendanceAccess.allClasses ? {} : { grade: req.attendanceAccess.grade };
+    const children = await childProfilemodel.find(filter).sort({ grade: 1, name: 1 });
+    return res.status(200).json({ success: true, children, access: req.attendanceAccess });
+  } catch {
+    return res.status(500).json({ success: false, message: "Unable to load attendance children." });
+  }
+};
 
 // ======================================================
 // HELPER: CHECK IF DATE IS WEDNESDAY
@@ -82,6 +107,8 @@ export const takeAttendance = async (req, res) => {
         message: "Child profile not found",
       });
     }
+
+    if (!childIsAccessible(req, childExists)) return denyOtherClass(res);
 
     const serviceYear = normalizedDate.getUTCFullYear();
 
@@ -194,6 +221,9 @@ export const takeWeeklyAttendance = async (req, res) => {
       });
     }
 
+    // Validate the entire batch before writing any records.
+    if (children.some((child) => !childIsAccessible(req, child))) return denyOtherClass(res);
+
     /*
       bulkWrite is useful here because we may have:
 
@@ -230,6 +260,7 @@ export const takeWeeklyAttendance = async (req, res) => {
     await Attendance.bulkWrite(operations);
 
     const savedAttendance = await Attendance.find({
+      ...await attendanceFilter(req),
       serviceDate: normalizedDate,
     })
       .populate("child")
@@ -267,18 +298,21 @@ export const getAttendanceByDate = async (req, res) => {
       });
     }
 
-    const attendance = await Attendance.find({
-      serviceDate: normalizedDate,
-    })
-      .populate("child")
-      .populate("recordedBy", "name")
-      .sort({ status: 1 });
+    const filter = await attendanceFilter(req);
+    const [attendance, consecutiveAbsences] = await Promise.all([
+      Attendance.find({ ...filter, serviceDate: normalizedDate })
+        .populate("child")
+        .populate("recordedBy", "name")
+        .sort({ status: 1 }),
+      getConsecutiveAbsences(filter, normalizedDate),
+    ]);
 
     return res.status(200).json({
       success: true,
       serviceDate: normalizedDate,
       count: attendance.length,
       attendance,
+      consecutiveAbsences,
     });
   } catch (error) {
     console.error("Get attendance by date error:", error);
@@ -306,6 +340,8 @@ export const getChildAttendance = async (req, res) => {
         message: "Child profile not found",
       });
     }
+
+    if (!childIsAccessible(req, child)) return denyOtherClass(res);
 
     const filter = {
       child: childId,
@@ -352,6 +388,7 @@ export const getAttendanceByYear = async (req, res) => {
     }
 
     const attendance = await Attendance.find({
+      ...await attendanceFilter(req),
       serviceYear,
     })
       .populate("child")
@@ -382,8 +419,8 @@ export const updateAttendance = async (req, res) => {
     const { id } = req.params;
     const { status, notes } = req.body;
 
-    const attendance = await Attendance.findByIdAndUpdate(
-      id,
+    const attendance = await Attendance.findOneAndUpdate(
+      { _id: id, ...await attendanceFilter(req) },
       {
         status,
         notes,
@@ -426,7 +463,7 @@ export const deleteAttendance = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const attendance = await Attendance.findByIdAndDelete(id);
+    const attendance = await Attendance.findOneAndDelete({ _id: id, ...await attendanceFilter(req) });
 
     if (!attendance) {
       return res.status(404).json({

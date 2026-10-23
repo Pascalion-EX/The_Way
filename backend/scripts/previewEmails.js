@@ -21,8 +21,9 @@ const examples = [
 ];
 for (const example of examples) {
   const { html, attachments } = buildBrandedEmail(example);
-  await writeFile(resolve(directory, `${example.kind}.html`), html.replace(`cid:${EMAIL_LOGO_CID}`, "the-way-logo.png"));
-  if (example === examples[0]) await writeFile(resolve(directory, "the-way-logo.png"), attachments[0].content);
+  const logo = attachments[0];
+  await writeFile(resolve(directory, `${example.kind}.html`), html.replace(`cid:${EMAIL_LOGO_CID}`, logo.filename));
+  if (example === examples[0]) await writeFile(resolve(directory, logo.filename), logo.content);
 }
 await writeFile(resolve(directory, "index.html"), `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Way email previews</title></head>

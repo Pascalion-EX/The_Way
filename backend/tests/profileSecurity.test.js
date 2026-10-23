@@ -119,6 +119,32 @@ test("ordinary edits and unchanged email preserve verification and credentials w
   }
 });
 
+test("leaders cannot change their own attendance class, including through forged role claims", async (t) => {
+  const state = await setup(t);
+  state.user.role = ["parent", "leader"];
+  for (const assignedClass of [0, 2, "2"]) {
+    const result = await state.request({ class: assignedClass, role: ["admin"], name: "Blocked edit" });
+    assert.equal(result.status, 403);
+    assert.equal(state.user.class, 1);
+    assert.equal(state.writes, 0);
+  }
+  const result = await state.request({ class: "1", name: "Allowed edit" });
+  assert.equal(result.status, 200);
+  assert.equal(state.user.name, "Allowed edit");
+  assert.equal(state.user.class, 1);
+  assert.equal(Object.hasOwn(state.update.mock.calls[0].arguments[1].$set, "class"), false);
+});
+
+test("admin, pascal, and pamela can update their own class even with the leader role", async (t) => {
+  const state = await setup(t);
+  for (const role of ["admin", "pascal", "pamela"]) {
+    state.user.role = ["leader", role];
+    state.user.class = 1;
+    assert.equal((await state.request({ class: 2 })).status, 200);
+    assert.equal(state.user.class, 2);
+  }
+});
+
 test("email changes fail if password, email, or verified status changes during reauthentication", async (t) => {
   const state = await setup(t);
   const initial = clone(state.user);

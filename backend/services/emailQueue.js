@@ -5,6 +5,7 @@ import transporter from "../config/nodemailer.js";
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "./otpPolicy.js";
 import { normalizeAuthEmail } from "./authEmail.js";
 import { buildBrandedEmail } from "./emailTemplate.js";
+import { emailErrorDetails } from "./emailErrors.js";
 
 export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset", "ban"];
 const LEASE_MS = 5 * 60 * 1000;
@@ -86,7 +87,7 @@ export async function processNextEmailJob(kind, {
       },
       $unset: { [`${path}.leaseToken`]: "", [`${path}.lockedUntil`]: "" },
     });
-    logger.warn(`Email job ${job.id} failed (${errorCode}); retry scheduled.`);
+    logger.warn(`Email job ${job.id} failed (${emailErrorDetails(error)}); retry scheduled.`);
     return true;
   }
 

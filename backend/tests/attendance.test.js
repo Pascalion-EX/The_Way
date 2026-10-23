@@ -49,6 +49,7 @@ test("weekly attendance saves and populates with sanitizeFilter enabled", async 
   };
   await takeWeeklyAttendance({
     userId,
+    attendanceAccess: { allClasses: true, grade: null },
     body: {
       serviceDate: "2026-10-14",
       attendance: childIds.map((child) => ({ child, status: "present" })),
@@ -78,6 +79,7 @@ test("weekly attendance rejects missing children before writing", async (t) => {
   };
   await takeWeeklyAttendance({
     userId,
+    attendanceAccess: { allClasses: true, grade: null },
     body: {
       serviceDate: "2026-10-14",
       attendance: childIds.map((child) => ({ child })),
