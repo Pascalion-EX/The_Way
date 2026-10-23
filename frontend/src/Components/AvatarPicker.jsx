@@ -68,7 +68,7 @@ export default function AvatarPicker({ disabled = false }) {
           <fieldset disabled={saving || disabled} aria-describedby="profile-picture-hint">
             <legend className="font-semibold text-gray-900">Choose your picture</legend>
             <p id="profile-picture-hint" className="mt-1 text-xs leading-5 text-gray-500">
-              Pick a favorite. Your saved picture appears across The Way.
+              Choose a New Testament character. Your saved picture appears across The Way.
             </p>
             <div className="mt-4 grid grid-cols-4 gap-2">
               {AVATAR_PRESETS.map(({ id, label }) => (

@@ -3,7 +3,7 @@ import { getAvatarPreset } from "../../../shared/avatarPresets.mjs";
 
 export default function UserAvatar({ user, className = "h-10 w-10 text-sm", decorative = false }) {
   const preset = getAvatarPreset(user?.avatarId);
-  const src = preset ? `${import.meta.env.BASE_URL}avatars/${preset.id}.svg` : "";
+  const src = preset ? `${import.meta.env.BASE_URL}avatars/${preset.image}` : "";
   const [failedSrc, setFailedSrc] = useState(null);
   const name = user?.name?.trim() || "User";
 

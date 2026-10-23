@@ -1,17 +1,18 @@
-// Stable IDs are stored on accounts. Keep existing IDs when adding new artwork.
+// Legacy animal IDs are stored on accounts; preserve them for the character artwork.
+// Image filenames can change independently of saved account IDs.
 export const AVATAR_PRESETS = Object.freeze([
-  { id: "fox", label: "Fox" },
-  { id: "cat", label: "Cat" },
-  { id: "bear", label: "Bear" },
-  { id: "panda", label: "Panda" },
-  { id: "rabbit", label: "Rabbit" },
-  { id: "owl", label: "Owl" },
-  { id: "koala", label: "Koala" },
-  { id: "lion", label: "Lion" },
-  { id: "penguin", label: "Penguin" },
-  { id: "frog", label: "Frog" },
-  { id: "dog", label: "Dog" },
-  { id: "tiger", label: "Tiger" },
+  { id: "fox", label: "Jesus", image: "jesus.png" },
+  { id: "cat", label: "Mary", image: "mary.png" },
+  { id: "bear", label: "Joseph", image: "joseph.png" },
+  { id: "panda", label: "Peter", image: "peter.png" },
+  { id: "rabbit", label: "John", image: "john.png" },
+  { id: "owl", label: "Paul", image: "paul.png" },
+  { id: "koala", label: "Mary Magdalene", image: "mary-magdalene.png" },
+  { id: "lion", label: "John the Baptist", image: "john-the-baptist.png" },
+  { id: "penguin", label: "Luke", image: "luke.png" },
+  { id: "frog", label: "Mark", image: "mark.png" },
+  { id: "dog", label: "Matthew", image: "matthew.png" },
+  { id: "tiger", label: "Thomas", image: "thomas.png" },
 ].map(Object.freeze));
 
 export const AVATAR_IDS = Object.freeze(AVATAR_PRESETS.map(({ id }) => id));
