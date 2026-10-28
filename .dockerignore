@@ -1,0 +1,14 @@
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+.git
+.agents
+.aws
+.codex
+deployment/secrets
+deployment/backups
+deployment/reports
+security-review
+SECURITY_REVIEW.md

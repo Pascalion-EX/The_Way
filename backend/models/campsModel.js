@@ -129,6 +129,8 @@ const campSchema = new mongoose.Schema(
   },
 );
 
+campSchema.index({ createdAt: -1 });
+campSchema.index({ years: 1, createdAt: -1 });
 const Camp = mongoose.models.Camp || mongoose.model("Camp", campSchema);
 
 export default Camp;

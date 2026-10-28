@@ -1,7 +1,7 @@
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 

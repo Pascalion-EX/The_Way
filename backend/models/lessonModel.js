@@ -97,6 +97,9 @@ const lessonSchema = new mongoose.Schema(
   }
 );
 
+lessonSchema.index({ variantGroup: 1, createdAt: -1 });
+lessonSchema.index({ variantGroup: 1, year: 1, createdAt: -1 });
+
 const lessonModel =
   mongoose.models.lesson || mongoose.model("lesson", lessonSchema);
 

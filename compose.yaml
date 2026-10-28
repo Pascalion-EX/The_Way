@@ -1,0 +1,170 @@
+name: the-way
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-app-env: &app-env
+  NODE_ENV: production
+  PORT: "4000"
+  APP_ORIGIN: https://${DOMAIN:?Set DOMAIN in .env}
+  TRUST_PROXY: "1"
+  MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+  SMTP_PASS: ${SMTP_PASS:?Set SMTP_PASS in .env}
+  SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST}
+  SMTP_PORT: ${SMTP_PORT:-465}
+  SMTP_USER: ${SMTP_USER:?Set SMTP_USER}
+  SENDER_EMAIL: ${SENDER_EMAIL:?Set SENDER_EMAIL}
+  VIDEO_REQUEST_EMAIL: ${VIDEO_REQUEST_EMAIL:?Set VIDEO_REQUEST_EMAIL}
+  EMAIL_WORKER_ENABLED: "false"
+  MONGO_POOL_SIZE: "20"
+  REQUEST_LOGS: "true"
+  QUERY_TIMING_LOGS: "true"
+  SLOW_QUERY_MS: "100"
+
+x-api: &api
+  extends:
+    file: compose.build.yaml
+    service: api
+  environment:
+    <<: *app-env
+    NODE_OPTIONS: --max-old-space-size=640
+  depends_on:
+    db:
+      condition: service_healthy
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp:size=32m,mode=1777
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  mem_limit: 1g
+  cpus: 1.0
+  pids_limit: 128
+  stop_grace_period: 45s
+  logging: *logging
+  healthcheck:
+    test: [CMD, node, -e, "fetch('http://127.0.0.1:4000/health/ready', {signal: AbortSignal.timeout(3000)}).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+    interval: 30s
+    timeout: 5s
+    retries: 3
+    start_period: 30s
+  networks: [private]
+
+services:
+  db:
+    image: mongo:8.0
+    command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, "1.25", --quiet]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
+      MONGO_INITDB_DATABASE: the_way
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}
+    volumes:
+      - mongo_data:/data/db
+      - ./deployment/mongo-init.js:/docker-entrypoint-initdb.d/10-app-user.js:ro
+    networks: [private]
+    restart: unless-stopped
+    mem_limit: 3g
+    cpus: 1.5
+    pids_limit: 256
+    stop_grace_period: 60s
+    logging: *logging
+    healthcheck:
+      test: [CMD, mongosh, --quiet, --eval, "const app=db.getSiblingDB('the_way'); app.auth('way',process.env.MONGO_APP_PASSWORD); quit(app.runCommand({ping:1}).ok ? 0 : 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  api:
+    <<: *api
+    depends_on: &app-dependencies
+      db:
+        condition: service_healthy
+      indexes:
+        condition: service_completed_successfully
+
+  api2:
+    <<: *api
+    depends_on: *app-dependencies
+
+  worker:
+    <<: *api
+    depends_on: *app-dependencies
+    command: [node, worker.js]
+    environment:
+      <<: *app-env
+      NODE_OPTIONS: --max-old-space-size=128
+      MONGO_POOL_SIZE: "5"
+      REQUEST_LOGS: "false"
+    healthcheck:
+      disable: true
+    mem_limit: 256m
+    cpus: 0.25
+
+  web:
+    extends:
+      file: compose.build.yaml
+      service: web
+    environment:
+      SITE_ADDRESS: ${DOMAIN:?Set DOMAIN}
+      API_UPSTREAMS: "api:4000 api2:4000"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [private]
+    depends_on:
+      api:
+        condition: service_healthy
+      api2:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 128
+    logging: *logging
+
+  indexes:
+    <<: *api
+    command: [node, scripts/createIndexes.js]
+    restart: "no"
+    healthcheck:
+      disable: true
+
+  backup:
+    image: mongo:8.0
+    profiles: [tools]
+    entrypoint: [sh, /scripts/backup-container.sh]
+    environment:
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}
+    volumes:
+      - ./deployment/mongo-tools-config.js:/scripts/mongo-tools-config.js:ro
+      - ./deployment/backup-container.sh:/scripts/backup-container.sh:ro
+      - ./deployment/restore-container.sh:/scripts/restore-container.sh:ro
+      - ./deployment/backups:/backups
+    networks: [private]
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *logging
+
+networks:
+  # No host ports on MongoDB or Node. Outbound DNS/SMTP is still allowed.
+  private:
+
+volumes:
+  mongo_data:
+  caddy_data:
+  caddy_config:

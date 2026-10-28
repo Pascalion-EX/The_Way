@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios.js";
 import { pageAccessRoles } from "../../../shared/pageAccess.mjs";
 

@@ -93,18 +93,6 @@ const eventSchema = new mongoose.Schema(
 );
 
 
-// =========================================================
-// UNIQUE GENERATED EVENT
-// =========================================================
-//
-// sparse means documents without calendarKey are ignored.
-//
-// This prevents:
-//   coptic:2027:resurrection
-//
-// from being inserted twice.
-//
-
 eventSchema.index(
   {
     calendarKey: 1,

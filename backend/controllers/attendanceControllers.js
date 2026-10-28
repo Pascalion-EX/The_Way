@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { timeOperation } from "../services/performance.js";
 import Attendance from "../models/attendanceModel.js";
 import childProfilemodel from "../models/childProfileModel.js";
 import { getConsecutiveAbsences } from "../services/attendanceStreaks.js";
@@ -304,7 +305,7 @@ export const getAttendanceByDate = async (req, res) => {
         .populate("child")
         .populate("recordedBy", "name")
         .sort({ status: 1 }),
-      getConsecutiveAbsences(filter, normalizedDate),
+      timeOperation("attendanceHistory", () => getConsecutiveAbsences(filter, normalizedDate)),
     ]);
 
     return res.status(200).json({

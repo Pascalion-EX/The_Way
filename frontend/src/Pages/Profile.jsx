@@ -7,7 +7,7 @@ import React, {
 import axios from "axios";
 import { toast } from "react-toastify";
 
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar";
 import AvatarPicker from "../Components/AvatarPicker.jsx";
 import { normalizeAuthEmail, passwordInputError } from "../../../shared/authValidation.mjs";

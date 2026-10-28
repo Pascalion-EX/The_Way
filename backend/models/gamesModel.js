@@ -38,6 +38,8 @@ const gameSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+gameSchema.index({ createdAt: -1 });
+
 const gamesModel =
   mongoose.models.game || mongoose.model("game", gameSchema);
 

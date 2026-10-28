@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import Navbar from "../Components/Navbar";
 
 import ChantCard from "../Components/chantCard.jsx";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import { useNavigate } from "react-router-dom";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
@@ -17,7 +17,7 @@ const Chants = () => {
   const [favoriteOnly, setFavoriteOnly] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const allowedRoles = ["admin", "leader", "pascal"];
+  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
   const canManageChants = allowedRoles.some((role) =>
     Array.isArray(userData?.role)

@@ -95,7 +95,7 @@ const Waves = ({
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
   const boundingRef = useRef({ width: 0, height: 0, left: 0, top: 0 });
-  const noiseRef = useRef(new Noise(Math.random()));
+  const noiseRef = useRef(null);
   const linesRef = useRef([]);
   const mouseRef = useRef({
     x: -10,
@@ -143,6 +143,10 @@ const Waves = ({
     const canvas = canvasRef.current;
     const container = containerRef.current;
     ctxRef.current = canvas.getContext('2d');
+    if (!ctxRef.current) return;
+    noiseRef.current = new Noise(Math.random());
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let lastFrame = 0;
 
     function setSize() {
       boundingRef.current = container.getBoundingClientRect();
@@ -155,7 +159,8 @@ const Waves = ({
       linesRef.current = [];
       const oWidth = width + 200,
         oHeight = height + 30;
-      const { xGap, yGap } = configRef.current;
+      const xGap = Math.max(configRef.current.xGap, width < 768 ? 24 : 16);
+      const yGap = Math.max(configRef.current.yGap, 28);
       const totalLines = Math.ceil(oWidth / xGap);
       const totalPoints = Math.ceil(oHeight / yGap);
       const xStart = (width - xGap * totalLines) / 2;
@@ -235,6 +240,10 @@ const Waves = ({
     }
 
     function tick(t) {
+      if (document.hidden || reducedMotion.matches) return;
+      frameIdRef.current = requestAnimationFrame(tick);
+      if (t - lastFrame < 1000 / 30) return;
+      lastFrame = t;
       const mouse = mouseRef.current;
       mouse.sx += (mouse.x - mouse.sx) * 0.1;
       mouse.sy += (mouse.y - mouse.sy) * 0.1;
@@ -252,12 +261,22 @@ const Waves = ({
 
       movePoints(t);
       drawLines();
-      frameIdRef.current = requestAnimationFrame(tick);
+    }
+
+    function syncAnimation() {
+      cancelAnimationFrame(frameIdRef.current);
+      if (reducedMotion.matches) {
+        movePoints(0);
+        drawLines();
+      } else if (!document.hidden) {
+        frameIdRef.current = requestAnimationFrame(tick);
+      }
     }
 
     function onResize() {
       setSize();
       setLines();
+      syncAnimation();
     }
     function onMouseMove(e) {
       updateMouse(e.clientX, e.clientY);
@@ -284,13 +303,17 @@ const Waves = ({
     setLines();
     const resizeObserver = new ResizeObserver(onResize);
     resizeObserver.observe(container);
-    frameIdRef.current = requestAnimationFrame(tick);
+    syncAnimation();
+    document.addEventListener('visibilitychange', syncAnimation);
+    reducedMotion.addEventListener('change', syncAnimation);
     window.addEventListener('resize', onResize);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('touchmove', onTouchMove, { passive: true });
 
     return () => {
       resizeObserver.disconnect();
+      document.removeEventListener('visibilitychange', syncAnimation);
+      reducedMotion.removeEventListener('change', syncAnimation);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchmove', onTouchMove);

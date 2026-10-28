@@ -5,7 +5,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 
@@ -191,9 +191,7 @@ const handleDeleteEvent = async () => {
   };
 
   useEffect(() => {
-    if (backendUrl) {
-      getEvents();
-    }
+    getEvents();
   }, [backendUrl]);
 
   // =========================================================

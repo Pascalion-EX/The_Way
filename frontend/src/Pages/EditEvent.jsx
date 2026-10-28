@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../Components/Navbar.jsx";
 
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 
@@ -90,7 +90,7 @@ const EditEvent = () => {
 
   useEffect(() => {
     const getEvent = async () => {
-      if (!backendUrl || !id) return;
+      if (!id) return;
 
       try {
         setFetching(true);

@@ -70,19 +70,26 @@ export const getAdminDashboard = async (req, res) => {
       });
     }
 
-    const users = await userModel
+    const usersQuery = userModel
       .find()
       .select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs")
-      .sort({ createdAt: -1 });
+      .sort({ _id: -1 })
+      .lean();
 
-    const totalUsers = await userModel.countDocuments();
-    const totalLessons = await lessonModel.countDocuments();
-
-    const adminCount = await userModel.countDocuments({ role: "admin" });
-    const leaderCount = await userModel.countDocuments({ role: "leader" });
-    const pascalCount = await userModel.countDocuments({ role: "pascal" });
-    const pamelaCount = await userModel.countDocuments({ role: "pamela" });
-    const parentCount = await userModel.countDocuments({ role: "parent" });
+    // All role counts share one scan. Multi-role users still count in each role.
+    const roles = ["admin", "leader", "pascal", "pamela", "parent"];
+    const [users, counts, totalLessons] = await Promise.all([
+      usersQuery,
+      userModel.aggregate([{ $group: {
+        _id: null, totalUsers: { $sum: 1 },
+        ...Object.fromEntries(roles.map((role) => [`${role}Count`, {
+          $sum: { $cond: [{ $in: [role, { $ifNull: ["$role", []] }] }, 1, 0] },
+        }])),
+      } }]),
+      lessonModel.countDocuments(),
+    ]);
+    const { totalUsers = 0, adminCount = 0, leaderCount = 0, pascalCount = 0,
+      pamelaCount = 0, parentCount = 0 } = counts[0] || {};
 
     return res.status(200).json({
       success: true,

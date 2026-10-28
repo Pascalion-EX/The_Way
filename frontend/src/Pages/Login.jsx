@@ -1,6 +1,6 @@
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { normalizeAuthEmail, newPasswordError, passwordInputError, PASSWORD_HINT, PASSWORD_MIN_CHARACTERS } from "../../../shared/authValidation.mjs";

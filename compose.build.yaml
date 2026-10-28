@@ -1,0 +1,16 @@
+# Build application images without deployment credentials or a hostname.
+# compose.yaml extends these definitions when running the full VPS stack.
+name: the-way
+
+services:
+  api:
+    image: the-way-api:${APP_VERSION:-local}
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+
+  web:
+    image: the-way-web:${APP_VERSION:-local}
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile

@@ -21,7 +21,7 @@ const createResponse = () => {
 for (const { name, environment, override, secure, sameSite } of [
   { name: "default HTTPS cookies", secure: true, sameSite: "Strict" },
   { name: "explicit local HTTP override", environment: "development", override: "false", secure: false, sameSite: "Strict" },
-  { name: "production ignores HTTP override", environment: "production", override: "false", secure: true, sameSite: "None" },
+  { name: "production ignores HTTP override", environment: "production", override: "false", secure: true, sameSite: "Lax" },
 ]) {
   test(name, async (t) => {
     const previous = { ...process.env };

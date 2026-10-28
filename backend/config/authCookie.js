@@ -6,6 +6,6 @@ export const getAuthCookieOptions = () => ({
   secure:
     process.env.NODE_ENV === "production" ||
     process.env.AUTH_COOKIE_SECURE !== "false",
-  sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+  sameSite: process.env.NODE_ENV === "production" ? "lax" : "strict",
   path: "/",
 });

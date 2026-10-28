@@ -41,6 +41,8 @@ const activitySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+activitySchema.index({ createdAt: -1 });
+
 const activityModel =
   mongoose.models.activity || mongoose.model("activity", activitySchema);
 

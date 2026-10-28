@@ -7,7 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import { Trash2, Plus, Pencil } from "lucide-react";
 import axios from "../utils/axios";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import { toast } from "react-toastify";
 
 const CalendarView = ({onClose}) => {
@@ -128,9 +128,7 @@ const CalendarView = ({onClose}) => {
   };
 
   useEffect(() => {
-    if (backendUrl) {
-      getEvents();
-    }
+    getEvents();
   }, [backendUrl]);
 
   // =========================================================

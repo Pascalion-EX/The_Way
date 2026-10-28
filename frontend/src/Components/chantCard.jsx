@@ -1,6 +1,6 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 
@@ -8,7 +8,7 @@ const ChantCard = ({ chant, refreshChants }) => {
   const navigate = useNavigate();
   const { userData, backendUrl } = useContext(AppContent);
 
-  const allowedRoles = ["admin", "leader", "pascal"];
+  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
   const canManageChants = allowedRoles.some((role) =>
     Array.isArray(userData?.role)
@@ -16,13 +16,10 @@ const ChantCard = ({ chant, refreshChants }) => {
       : userData?.role === role
   );
 
-  const [isFavorite, setIsFavorite] = useState(
-    chant.isFavorite ?? false
-  );
-
-  useEffect(() => {
-    setIsFavorite(chant.isFavorite ?? false);
-  }, [chant.isFavorite]);
+  const [favoriteChange, setFavoriteChange] = useState(null);
+  const isFavorite = favoriteChange?.source === chant
+    ? favoriteChange.value
+    : chant.isFavorite ?? false;
 
   const handleFavorite = async (e) => {
     e.stopPropagation();
@@ -42,7 +39,7 @@ const ChantCard = ({ chant, refreshChants }) => {
       );
 
       if (data.success) {
-        setIsFavorite(data.isFavorite);
+        setFavoriteChange({ source: chant, value: data.isFavorite });
         toast.success(data.message);
       }
     } catch (error) {

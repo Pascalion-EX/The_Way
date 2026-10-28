@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar";
 import UserAvatar from "../Components/UserAvatar.jsx";
 

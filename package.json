@@ -1,9 +1,13 @@
 {
   "private": true,
-  "engines": { "node": ">=20.19.0" },
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run server --prefix backend\"",
-    "start": "concurrently \"npm run build --prefix frontend && npm run preview --prefix frontend\" \"npm run start --prefix backend\"",
+    "start": "docker compose up -d --wait",
+    "deploy:build": "docker compose -f compose.build.yaml build api web",
+    "deploy:config": "docker compose config --quiet",
     "frontend": "npm run dev --prefix frontend",
     "backend": "npm run server --prefix backend",
     "test": "node --test backend/tests/*.test.js frontend/tests/*.test.js"

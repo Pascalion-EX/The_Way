@@ -276,8 +276,8 @@ See [MDN's cookie attribute documentation](https://developer.mozilla.org/en-US/d
 
 HTTPS-only cookies are enabled by default. For local development over plain HTTP,
 you can set `AUTH_COOKIE_SECURE=false` in `backend/.env`. This override is ignored
-when `NODE_ENV=production`. Production uses `SameSite=None` for cross-site
-frontend/API deployments; other environments use `SameSite=Strict`.
+when `NODE_ENV=production`. Production uses `SameSite=Lax` for the same-origin
+frontend/API deployment; other environments use `SameSite=Strict`.
 
 ---
 
@@ -996,46 +996,36 @@ npm run dev
 
 ## Production Deployment
 
-A typical production architecture is:
-
-```text
-Internet
-   |
-   v
-Nginx / Reverse Proxy
-   |
-   +--> Frontend static build
-   |
-   +--> /api -> Node/Express backend
-                 |
-                 v
-              MongoDB
-```
-
-### Frontend Build
+To build both application images locally without a domain or runtime secrets:
 
 ```bash
-cd frontend
-npm run build
+npm run deploy:build
 ```
 
-Vite creates:
+This uses [`compose.build.yaml`](compose.build.yaml) and does not start
+containers. Push the source and Docker configuration to GitHub, then clone and
+build on the VPS. Local Docker images are not included in a Git push.
 
-```text
-frontend/dist/
-```
-
-Serve this directory with Nginx, a static host, or another production web server.
-
-### Backend Start
+[`compose.yaml`](compose.yaml) runs MongoDB, two API processes, a dedicated email
+worker, and the Caddy frontend on one VPS. It creates the application database
+user on a fresh volume and creates indexes before starting the APIs. To start
+the deployment, run these commands from the repository root on the VPS:
 
 ```bash
-cd backend
+cp .env.example .env
+chmod 600 .env
+# Fill in .env with your domain, unique database/JWT secrets, and SMTP settings.
+npm run deploy:config
+npm run deploy:build
 npm start
 ```
 
-For a VPS, use a process manager such as PM2 or a systemd service so the backend restarts after failures or reboots.
-
+See the [Compose guide](DOCKER.md) for environment variables, health checks,
+backups, and recovery. Compose injects credentials at runtime, and
+[`backend/config/secrets.js`](backend/config/secrets.js) reads them through
+`process.env`. The root `.env` is ignored by Git and excluded from Docker builds.
+The [backend](backend/DOCKER.md) and [frontend](frontend/DOCKER.md) guides also
+cover standalone image builds.
 
 ## Project Structure
 
@@ -1379,14 +1369,11 @@ The controller currently matches the lowercase form for updates, so it can work,
 ### DevOps Improvements
 
 - Add GitHub Actions for linting and tests.
-- Add Dockerfiles for frontend/backend or a single production container strategy.
 - Add Docker Compose for local development.
-- Add PM2/systemd configuration for VPS deployment.
-- Add Nginx configuration.
-- Add HTTPS with Let's Encrypt.
-- Add MongoDB backups.
+- Validate the supplied production Compose deployment and HTTPS on the VPS.
+- Schedule the supplied MongoDB backups and test restoration off the VPS.
 - Add weekly off-site backups for uploaded assets if local file storage is introduced.
-- Add monitoring and structured application logs.
+- Connect resource/uptime alerts to the supplied structured request/runtime logs.
 
 ---
 

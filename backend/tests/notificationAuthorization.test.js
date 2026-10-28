@@ -39,7 +39,7 @@ const setup = (t) => {
   };
   t.mock.method(User.collection, "findOne", async (filter, options) => {
     assert.equal(String(filter._id), userId);
-    if (options?.projection?.role) {
+    if (options?.projection?.role && !options.projection.tokenVersion) {
       if (state.roleLookupError) throw new Error("Private database details");
       if (state.roleLookupMissing) return null;
     }

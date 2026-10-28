@@ -17,7 +17,7 @@ import {
 import { toast } from "react-toastify";
 
 import axios from "../utils/axios";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar.jsx";
 
 // ======================================================

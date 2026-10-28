@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import {
   Navigate,
   Outlet,
@@ -6,41 +6,41 @@ import {
   Routes,
 } from "react-router-dom";
 
-import Login from "./Pages/Login";
-import Home from "./Pages/Home";
-import Calendar from "./Pages/Calendar.jsx";
-import Lessons from "./Pages/Lessons";
-import Curriculum from "./Pages/Curriculum.jsx";
-import EmailVerify from "./Pages/EmailVerify";
-import ResetPassword from "./Pages/ResetPassword";
-import CreateLesson from "./Pages/CreateLesson";
-import LessonViewer from "./Pages/LessonViewer";
-import EditLesson from "./Pages/EditLesson.jsx";
-import Camp from "./Pages/Camps.jsx";
-import CreateCamp from "./Pages/Createcamp.jsx";
-import Games from "./Pages/Games.jsx";
-import Chants from "./Pages/Chants.jsx";
-import ChantViewer from "./Pages/ChantViewer.jsx";
-import CreateChant from "./Pages/CreateChant.jsx";
-import EditChant from "./Pages/EditChant.jsx";
-import CampDetails from "./Pages/CampDetails.jsx";
-import Profile from "./Pages/Profile.jsx";
-import Admin from "./Pages/Admin.jsx";
-import Activities from "./Pages/Activities.jsx";
-import CreateGame from "./Pages/Creategame.jsx";
-import Info from "./Pages/Info.jsx";
-import GameViewer from "./Pages/GamesViewer.jsx";
-import CreateEvent from "./Pages/CreateEvent";
-import EditEvent from "./Pages/EditEvent.jsx";
-import ActivitiesViewer from "./Pages/ActivitiesViewer.jsx";
-import CreateActivities from "./Pages/CreateActivities.jsx";
-import Attendance from "./Pages/Attendance.jsx";
-import EditActivities from "./Pages/EditActivities.jsx";
-import ChildProfiles from "./Pages/ChildProfile";
-import EditGame from "./Pages/EditGame";
+const Login = lazy(() => import("./Pages/Login"));
+const Home = lazy(() => import("./Pages/Home"));
+const Calendar = lazy(() => import("./Pages/Calendar.jsx"));
+const Lessons = lazy(() => import("./Pages/Lessons"));
+const Curriculum = lazy(() => import("./Pages/Curriculum.jsx"));
+const EmailVerify = lazy(() => import("./Pages/EmailVerify"));
+const ResetPassword = lazy(() => import("./Pages/ResetPassword"));
+const CreateLesson = lazy(() => import("./Pages/CreateLesson"));
+const LessonViewer = lazy(() => import("./Pages/LessonViewer"));
+const EditLesson = lazy(() => import("./Pages/EditLesson.jsx"));
+const Camp = lazy(() => import("./Pages/Camps.jsx"));
+const CreateCamp = lazy(() => import("./Pages/Createcamp.jsx"));
+const Games = lazy(() => import("./Pages/Games.jsx"));
+const Chants = lazy(() => import("./Pages/Chants.jsx"));
+const ChantViewer = lazy(() => import("./Pages/ChantViewer.jsx"));
+const CreateChant = lazy(() => import("./Pages/CreateChant.jsx"));
+const EditChant = lazy(() => import("./Pages/EditChant.jsx"));
+const CampDetails = lazy(() => import("./Pages/CampDetails.jsx"));
+const Profile = lazy(() => import("./Pages/Profile.jsx"));
+const Admin = lazy(() => import("./Pages/Admin.jsx"));
+const Activities = lazy(() => import("./Pages/Activities.jsx"));
+const CreateGame = lazy(() => import("./Pages/Creategame.jsx"));
+const Info = lazy(() => import("./Pages/Info.jsx"));
+const GameViewer = lazy(() => import("./Pages/GamesViewer.jsx"));
+const CreateEvent = lazy(() => import("./Pages/CreateEvent"));
+const EditEvent = lazy(() => import("./Pages/EditEvent.jsx"));
+const ActivitiesViewer = lazy(() => import("./Pages/ActivitiesViewer.jsx"));
+const CreateActivities = lazy(() => import("./Pages/CreateActivities.jsx"));
+const Attendance = lazy(() => import("./Pages/Attendance.jsx"));
+const EditActivities = lazy(() => import("./Pages/EditActivities.jsx"));
+const ChildProfiles = lazy(() => import("./Pages/ChildProfile"));
+const EditGame = lazy(() => import("./Pages/EditGame"));
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import CalendarFloatingButton from "./Components/CalendarFloatingButton.jsx";
-import VideoRequests from "./Pages/VideoRequests";
+const VideoRequests = lazy(() => import("./Pages/VideoRequests"));
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Footer from "./Components/footer";
@@ -87,6 +87,7 @@ const App = () => {
       />
 
       <div className="relative z-10 flex-1">
+      <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center" role="status">Loading page…</div>}>
       <Routes>
         {/* =========================
             PUBLIC ROUTES
@@ -132,11 +133,6 @@ const App = () => {
             {/* Info */}
             <Route path="/info" element={<Info />} />
 
-            {/* Calendar */}
-            <Route
-              path="/calendar"
-              element={<Calendar />}
-            />
 
             {/* Profile */}
             <Route
@@ -285,6 +281,7 @@ const App = () => {
           element={<Navigate to="/" replace />}
         />
       </Routes>
+      </Suspense>
       </div>
       <Footer />
     </div>

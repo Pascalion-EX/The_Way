@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { lazy, Suspense, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, X } from "lucide-react";
-import CalendarView from "./CalendarView.jsx";
+const CalendarView = lazy(() => import("./CalendarView.jsx"));
 
 const CalendarFloatingButton = () => {
   const navigate = useNavigate();
@@ -112,7 +112,9 @@ const CalendarFloatingButton = () => {
               </p>
             </div>
 
-            <CalendarView onClose={() => setCalendarOpen(false)}/>
+            <Suspense fallback={<p role="status">Loading calendar…</p>}>
+              <CalendarView onClose={() => setCalendarOpen(false)}/>
+            </Suspense>
           </div>
         </div>
       )}

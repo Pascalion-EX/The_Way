@@ -46,4 +46,7 @@ attendanceSchema.index(
   }
 );
 
+attendanceSchema.index({ serviceDate: 1, status: 1 });
+attendanceSchema.index({ serviceYear: 1, serviceDate: -1 });
+
 export default mongoose.model("Attendance", attendanceSchema);

@@ -74,6 +74,9 @@ const videoRequestSchema = new mongoose.Schema(
   }
 );
 
+videoRequestSchema.index({ requestedBy: 1, createdAt: -1 });
+videoRequestSchema.index({ createdAt: -1 });
+
 const VideoRequest =
   mongoose.models.VideoRequest ||
   mongoose.model(

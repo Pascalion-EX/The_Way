@@ -12,6 +12,7 @@ import { normalizeAuthEmail } from "../services/authEmail.js";
 import { findUserByAuthEmail } from "../services/authIdentity.js";
 import { newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
 import { sendBannedResponse } from "../services/accessDenials.js";
+import { getSecrets } from "../config/secrets.js";
 
 
 export const checkAuth = async (req, res) => {
@@ -132,7 +133,7 @@ export const login = async (req, res) => {
 
     if (user.isBanned) return sendBannedResponse(res);
 
-    if (!process.env.JWT_SECRET) {
+    if (!getSecrets().jwtSecret) {
       console.error("JWT_SECRET is not configured");
 
       return res.status(500).json({

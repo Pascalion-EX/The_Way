@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { assets } from "../assets/assets";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 

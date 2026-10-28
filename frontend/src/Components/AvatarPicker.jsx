@@ -2,7 +2,7 @@ import { useContext, useRef, useState } from "react";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import { Check } from "lucide-react";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import { AVATAR_PRESETS, getAvatarPreset } from "../../../shared/avatarPresets.mjs";
 import UserAvatar from "./UserAvatar.jsx";
 

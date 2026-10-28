@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js";
+import { getRequestIdentity } from "../services/requestIdentity.js";
 import { pageAccessRoles, canAccessPage } from "../../shared/pageAccess.mjs";
 import { denyAccess } from "../services/accessDenials.js";
 
@@ -8,7 +9,7 @@ export async function checkPageAccess(req, res) {
     return res.status(400).json({ success: false, message: "Unknown restricted page." });
   }
   try {
-    const user = await userModel.findById(req.userId).select("role");
+    const user = getRequestIdentity(req) || await userModel.findById(req.userId).select("role");
     if (!user) return res.status(401).json({ success: false, message: "User not found." });
     if (!canAccessPage(pathname, user.role)) {
       return await denyAccess(req, res, { message: "You do not have permission to access this page." });

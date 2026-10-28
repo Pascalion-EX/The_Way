@@ -41,8 +41,9 @@ and TTL-index creation for this collection. Counter failures reject requests
 with HTTP 503 instead of disabling the limits. Express uses the socket peer IP;
 configure only actual trusted proxy hops when deploying behind a proxy.
 
-The backend starts the worker after MongoDB connects. No additional service or
-package is required. Every two seconds, it claims a due job of each type with an
+In local development the backend starts the worker after MongoDB connects. The
+production Compose deployment sets `EMAIL_WORKER_ENABLED=false` on API processes
+and runs `node worker.js` as a separate service. Every two seconds, it claims a due job of each type with an
 atomic MongoDB update. A five-minute lease prevents simultaneous claims and lets
 another worker recover work after a crash. Completion and retry updates require
 the lease token, so an older job cannot erase a newer resend request.

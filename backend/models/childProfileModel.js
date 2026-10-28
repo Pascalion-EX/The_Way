@@ -57,5 +57,6 @@ const childProfileschema = new mongoose.Schema(
         
     }
 )
+childProfileschema.index({ grade: 1, name: 1 });
 const childProfilemodel = mongoose.models.childProfile || mongoose.model("childprofile",childProfileschema);
 export default childProfilemodel;

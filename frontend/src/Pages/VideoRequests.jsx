@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 import Navbar from "../Components/Navbar.jsx";
 import VideoRequestForm from "../Components/VideoRequestForm.jsx";
 
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 
 const PAGE_ROLES = [

@@ -70,6 +70,10 @@ const chantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+chantSchema.index({ createdAt: -1 });
+chantSchema.index({ category: 1, createdAt: -1 });
+chantSchema.index({ favorites: 1, createdAt: -1 });
+
 const chantModel =
   mongoose.models.chant || mongoose.model("chant", chantSchema);
 

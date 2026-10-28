@@ -10,3 +10,7 @@ shared/*
 !shared/pageAccess.mjs
 !shared/avatarPresets.mjs
 !shared/videoUrls.mjs
+!shared/authValidation.mjs
+deployment/secrets/
+deployment/backups/
+frontend/dist/

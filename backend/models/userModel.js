@@ -43,6 +43,7 @@ const userSchema = new mongoose.Schema({
 })
 for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
     userSchema.index({ [`emailJobs.${kind}.status`]: 1, [`emailJobs.${kind}.nextAttemptAt`]: 1 });
+    userSchema.index({ [`emailJobs.${kind}.status`]: 1, [`emailJobs.${kind}.lockedUntil`]: 1 });
 }
 const userModel = mongoose.models.user || mongoose.model('user',
     userSchema

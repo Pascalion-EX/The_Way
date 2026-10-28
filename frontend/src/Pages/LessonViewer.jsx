@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import Navbar from "@/Components/Navbar.jsx";
 import LessonVariants from "@/Components/LessonVariants.jsx";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 
 /*

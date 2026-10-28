@@ -14,7 +14,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 
 const NotificationBell = () => {
   const { backendUrl } = useContext(AppContent);

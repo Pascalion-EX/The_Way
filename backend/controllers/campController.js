@@ -5,6 +5,8 @@ import transporter from "../config/nodemailer.js";
 import mongoose from "mongoose";
 import { campSummaryProjection, toCampSummary, toStaffApplicant } from "../services/campResponses.js";
 import { buildBrandedEmail } from "../services/emailTemplate.js";
+import { timeOperation } from "../services/performance.js";
+import { getSecrets } from "../config/secrets.js";
 
 const createRoles = ['admin', 'leader', 'pascal','pamela'];
 const applyRoles = ['parent', 'admin', 'leader', 'pascal'];
@@ -590,13 +592,13 @@ export const notifyCampApplicants = async (req, res) => {
       });
     }
 
-    await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+    await timeOperation("smtp", () => transporter.sendMail({
+      from: getSecrets().senderEmail,
       bcc: emails,
       subject,
       text: `${camp.title}\n\n${message}`,
       ...buildBrandedEmail({ kind: "camp", title: camp.title, text: message }),
-    });
+    }));
 
     return res.status(200).json({
       success: true,

@@ -6,6 +6,7 @@ import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "./otpPolicy.js";
 import { normalizeAuthEmail } from "./authEmail.js";
 import { buildBrandedEmail } from "./emailTemplate.js";
 import { emailErrorDetails } from "./emailErrors.js";
+import { getSecrets } from "../config/secrets.js";
 
 export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset", "ban"];
 const LEASE_MS = 5 * 60 * 1000;
@@ -72,7 +73,7 @@ export async function processNextEmailJob(kind, {
 
   try {
     await mailer.sendMail({
-      from: process.env.SENDER_EMAIL, to: recipient, subject: job.subject, text: job.text,
+      from: getSecrets().senderEmail, to: recipient, subject: job.subject, text: job.text,
       ...buildBrandedEmail({ kind, text: job.text, code: prefix ? user[prefix] : undefined, year: now().getUTCFullYear() }),
       messageId: `<${job.id}@the-way.invalid>`,
     });

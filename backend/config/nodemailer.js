@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getSecrets } from './secrets.js';
 
 const positiveInteger = (env, name, fallback, maximum = Number.MAX_SAFE_INTEGER) => {
     if (!env[name]?.trim()) return fallback;
@@ -11,6 +12,7 @@ const positiveInteger = (env, name, fallback, maximum = Number.MAX_SAFE_INTEGER)
 
 export const smtpOptions = (env = process.env) => {
     const port = positiveInteger(env, 'SMTP_PORT', 465, 65535);
+    const { smtpUser, smtpPass } = getSecrets(env);
     return {
         host: env.SMTP_HOST?.trim() || 'SMTP.gmail.com',
         port,
@@ -23,8 +25,8 @@ export const smtpOptions = (env = process.env) => {
         socketTimeout: positiveInteger(env, 'SMTP_SOCKET_TIMEOUT_MS', 30000),
         dnsTimeout: 15000,
         auth: {
-            user: env.SMTP_USER,
-            pass: env.SMTP_PASS,
+            user: smtpUser,
+            pass: smtpPass,
         },
     };
 };

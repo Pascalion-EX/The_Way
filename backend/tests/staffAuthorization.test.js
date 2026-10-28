@@ -202,7 +202,7 @@ test("staff authorization uses current database roles and fails closed on lookup
   state.authorizationError = true;
   const result = await request(app, route, state.token);
   assert.equal(result.status, 500);
-  assert.equal(result.body.message, "Unable to check staff permissions.");
+  assert.equal(result.body.message, "Authentication failed.");
   assert.equal(state.businessCalls, before);
 });
 

@@ -1,9 +1,8 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
-import { assets } from "../assets/assets.js";
 
 import Navbar from "@/Components/Navbar.jsx";
 
@@ -17,7 +16,7 @@ const Games = () => {
   const [search, setSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("0");
 
-  const allowedRoles = ["pascal", "admin", "leader"];
+  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
 
   const canManageGames = useMemo(() => {
     const roles = Array.isArray(userData?.role)

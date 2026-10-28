@@ -4,7 +4,7 @@ import ChantYouTubePlayer from "../Components/ChantYouTubePlayer.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
 import { getYouTubeEmbedUrl } from "../utils/youtubePlayer.js";
 
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
@@ -22,7 +22,7 @@ const ChantViewer = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [projectorMode, setProjectorMode] = useState(false);
 
-  const allowedRoles = ["admin", "leader", "pascal"];
+  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
   const canManageChants = allowedRoles.some((role) =>
     Array.isArray(userData?.role)

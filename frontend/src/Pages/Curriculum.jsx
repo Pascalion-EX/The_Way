@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BookOpen, ChevronRight, GitBranch, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "react-toastify";
-import { AppContent } from "../Context/AppContext.jsx";
+import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import Navbar from "../Components/Navbar.jsx";
 

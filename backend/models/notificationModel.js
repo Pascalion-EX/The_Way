@@ -51,6 +51,8 @@ const notificationSchema = new mongoose.Schema(
   }
 );
 
+notificationSchema.index({ targetRoles: 1, createdAt: -1 });
+
 const notificationModel = mongoose.model(
   "Notification",
   notificationSchema

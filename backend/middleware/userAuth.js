@@ -1,6 +1,7 @@
 import userModel from "../models/userModel.js";
 import { verifyAuthToken } from "../services/authTokens.js";
 import { sendBannedResponse } from "../services/accessDenials.js";
+import { getRequestIdentity, setRequestIdentity } from "../services/requestIdentity.js";
 
 export const authenticateUser = async (req, res, next) => {
   try {
@@ -22,7 +23,7 @@ export const authenticateUser = async (req, res, next) => {
       });
     }
 
-    const user = await userModel.findById(decodedToken.id).select("tokenVersion isBanned");
+    const user = await userModel.findById(decodedToken.id).select("tokenVersion isBanned isAccountVerified role class");
     if (user?.isBanned) return sendBannedResponse(res);
     if (!user || user.tokenVersion !== decodedToken.tokenVersion) {
       return res.status(401).json({
@@ -32,6 +33,7 @@ export const authenticateUser = async (req, res, next) => {
     }
 
     req.userId = decodedToken.id;
+    setRequestIdentity(req, user);
 
     return next();
   } catch (error) {
@@ -62,7 +64,7 @@ export const requireVerifiedUser = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Not authorized. Please log in again." });
     }
 
-    const user = await userModel.findById(req.userId).select("isAccountVerified");
+    const user = getRequestIdentity(req) || await userModel.findById(req.userId).select("isAccountVerified");
     if (!user) {
       return res.status(401).json({ success: false, message: "User not found. Please log in again." });
     }

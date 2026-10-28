@@ -1,4 +1,17 @@
-# React + Vite
+# The Way frontend
+
+React + Vite client for The Way. See [Docker setup](DOCKER.md) for building and
+running the production frontend image from the repository root:
+
+```bash
+docker build --pull -f frontend/Dockerfile -t the-way-frontend:local .
+```
+
+The image serves compiled files with Caddy, supports direct React Router links,
+and proxies same-origin API requests to the backend. Runtime configuration and
+HTTPS examples are in the Docker guide.
+
+## Vite development notes
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

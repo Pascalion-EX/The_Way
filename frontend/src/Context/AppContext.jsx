@@ -1,5 +1,4 @@
 import {
-  createContext,
   useCallback,
   useEffect,
   useState,
@@ -7,11 +6,10 @@ import {
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import globalAxios from "axios";
-
-export const AppContent = createContext();
+import { AppContent } from "./AppContent.js";
 
 export const AppContextProvider = ({ children }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || "";
 
   const [isLoggedin, setIsLoggedin] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -47,41 +45,13 @@ export const AppContextProvider = ({ children }) => {
 
   const getAuthState = useCallback(async () => {
     try {
-      const { data } = await axios.get(
-        `${backendUrl}/api/auth/is-auth`
-      );
-
-      if (data.success) {
-        setIsLoggedin(true);
-
-        const user = await getUserData();
-
-        if (!user) {
-          setIsLoggedin(false);
-          setUserData(null);
-        }
-      } else {
-        setIsLoggedin(false);
-        setUserData(null);
-      }
-    } catch (error) {
-      setIsLoggedin(false);
-      setUserData(null);
-
-      // Missing/expired token is expected when the user is logged out
-      if (
-        error.response?.status !== 401 &&
-        error.response?.status !== 403
-      ) {
-        toast.error(
-          error.response?.data?.message ||
-            "Unable to verify authentication."
-        );
-      }
+      // This endpoint already verifies the cookie and returns the profile.
+      const user = await getUserData();
+      setIsLoggedin(Boolean(user));
     } finally {
       setAuthLoading(false);
     }
-  }, [backendUrl, getUserData]);
+  }, [getUserData]);
 
   useEffect(() => {
     getAuthState();

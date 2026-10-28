@@ -1,5 +1,6 @@
 import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
+import { getRequestIdentity } from "../services/requestIdentity.js";
 
 const STAFF_ROLES = new Set(["admin", "leader", "pascal", "pamela"]);
 
@@ -13,7 +14,7 @@ export const requireStaff = async (req, res, next) => {
       });
     }
 
-    const user = await userModel.findById(req.userId).select("role class isAccountVerified");
+    const user = getRequestIdentity(req) || await userModel.findById(req.userId).select("role class isAccountVerified");
 
     if (!user) {
       return res.status(401).json({

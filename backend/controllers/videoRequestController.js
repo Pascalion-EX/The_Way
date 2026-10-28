@@ -2,9 +2,8 @@ import VideoRequest from "../models/VideoRequestModel.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import { buildBrandedEmail } from "../services/emailTemplate.js";
-
-const VIDEO_REQUEST_EMAIL =
-  process.env.VIDEO_REQUEST_EMAIL || "kerolos.a.fam@gmail.com";
+import { timeOperation } from "../services/performance.js";
+import { getSecrets } from "../config/secrets.js";
 
 
 // ============================================================
@@ -145,13 +144,13 @@ Pending
     let emailSent = true;
 
     try {
-      await transporter.sendMail({
-        from: process.env.SMTP_USER,
-        to: VIDEO_REQUEST_EMAIL,
+      await timeOperation("smtp", () => transporter.sendMail({
+        from: getSecrets().senderEmail,
+        to: getSecrets().videoRequestEmail,
         subject,
         text: `${textMessage.trim()}\n\nRequest ID: ${videoRequest._id}`,
         ...brandedEmail,
-      });
+      }));
     } catch (emailError) {
       emailSent = false;
 
