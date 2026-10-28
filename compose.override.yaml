@@ -1,0 +1,20 @@
+x-ghcr-api: &ghcr-api
+  image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
+  build: !reset null
+
+services:
+  api:
+    <<: *ghcr-api
+
+  api2:
+    <<: *ghcr-api
+
+  worker:
+    <<: *ghcr-api
+
+  indexes:
+    <<: *ghcr-api
+
+  web:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
+    build: !reset null

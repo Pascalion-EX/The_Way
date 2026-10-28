@@ -1,5 +1,10 @@
 # Single-VPS Compose setup
 
+For production deployment through GitHub Actions and GitHub Container Registry
+(GHCR), follow the [step-by-step VPS deployment guide](DEPLOYMENT.md). It includes
+the publishing workflow and registry override to add to the repository. This
+reference also covers optional local image builds and the base Compose setup.
+
 Run commands from the repository root. The host needs Docker Engine with the
 Compose plugin. The stack targets the planned 4-vCPU / 8-GB VPS; its resource
 limits are a starting configuration, not a measured concurrent-user capacity.
@@ -12,20 +17,25 @@ npm run deploy:build
 
 This runs `docker compose -f compose.build.yaml build api web`. It builds both
 images without a hostname, database, SMTP credentials, JWT secret, or `.env`.
-It does not start containers. `compose.yaml` extends the same image/build
-definitions when the full stack runs, so both workflows use the same tags and
-Dockerfiles.
+It does not start containers. `compose.yaml` extends the same base image/build
+definitions. The guide's production override replaces runtime image references
+with published GHCR tags and removes application builds from production.
 
 Commit the source, Dockerfiles, both Compose files, and `.env.example` to
-GitHub. Local images are stored in Docker, not Git. After cloning the source
-on the VPS, run the same build command there. Runtime `.env` files remain
-private on each machine and are excluded from Git and Docker build contexts.
+GitHub along with the workflow and override described in the deployment guide.
+Local images are stored in Docker, not Git. For the GHCR route, GitHub Actions
+builds release images and the VPS pulls them. Runtime `.env` files remain private
+on each machine and are excluded from Git and Docker build contexts.
 
 `docker compose up -d --build` starts the deployment stack as well as building
 it, so it requires the production settings described below. Use the build-only
 command above while preparing the project locally.
 
 ## Configure on the VPS
+
+Complete the workflow and registry-override setup in the deployment guide first.
+That setup adds `GHCR_OWNER` and a published `sha-<full commit SHA>` value for
+`APP_VERSION` to the following application configuration.
 
 ```bash
 cp .env.example .env
@@ -56,22 +66,24 @@ only passed to MongoDB. The web container gets `SITE_ADDRESS` and
 as frontend build arguments. `.env` is ignored by Git and the Docker build
 context. Use `config --quiet` for validation without printing resolved secrets.
 
-## Build and start
+## Pull and start a published release
+
+After configuring the registry override, production environment, and any
+private-GHCR login from the deployment guide:
 
 ```bash
-npm run deploy:config
-npm run deploy:build
-npm start
-docker compose ps -a
+sudo docker compose config --quiet
+sudo docker compose pull
+sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
+sudo docker compose ps -a
 curl --fail https://YOUR-DOMAIN/health/frontend
 curl --fail https://YOUR-DOMAIN/health/ready
 ```
 
-These npm scripts run `docker compose config --quiet`,
-`docker compose -f compose.build.yaml build api web`, and
-`docker compose up -d --wait`. API, worker, and index services
-reuse the same backend image tag. To use another environment file, run the
-equivalent Docker commands with `docker compose --env-file /path/to/file ...`.
+API, worker, and index services reuse the same published backend image tag.
+Keep the web image on the same release tag. The VPS runs no application image
+builds and needs no host Node/npm installation. To use another environment
+file, pass `docker compose --env-file /path/to/file ...`.
 
 MongoDB persists to `mongo_data`. On a fresh volume,
 `deployment/mongo-init.js` creates `way` with `readWrite` access to `the_way`.

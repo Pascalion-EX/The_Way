@@ -996,28 +996,32 @@ npm run dev
 
 ## Production Deployment
 
+Follow the [step-by-step VPS deployment guide](DEPLOYMENT.md) to configure
+GitHub Actions testing and publishing to GitHub Container Registry (GHCR),
+then manually pull and start a selected release on Contabo. The guide includes
+the publishing workflow and production Compose override to add before deployment.
+
 To build both application images locally without a domain or runtime secrets:
 
 ```bash
 npm run deploy:build
 ```
 
-This uses [`compose.build.yaml`](compose.build.yaml) and does not start
-containers. Push the source and Docker configuration to GitHub, then clone and
-build on the VPS. Local Docker images are not included in a Git push.
+This uses [`compose.build.yaml`](compose.build.yaml) for an optional local build
+check and does not start containers. Production images are built by GitHub
+Actions and pushed to GHCR. The VPS downloads those published images; local
+Docker images are not included in a Git push.
 
 [`compose.yaml`](compose.yaml) runs MongoDB, two API processes, a dedicated email
 worker, and the Caddy frontend on one VPS. It creates the application database
 user on a fresh volume and creates indexes before starting the APIs. To start
-the deployment, run these commands from the repository root on the VPS:
+the deployment after completing the guide's workflow, registry override,
+production `.env`, and registry-login setup, run from the VPS repository root:
 
 ```bash
-cp .env.example .env
-chmod 600 .env
-# Fill in .env with your domain, unique database/JWT secrets, and SMTP settings.
-npm run deploy:config
-npm run deploy:build
-npm start
+sudo docker compose config --quiet
+sudo docker compose pull
+sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
 ```
 
 See the [Compose guide](DOCKER.md) for environment variables, health checks,
