@@ -392,12 +392,6 @@ const handleNotifySubmit = async (e) => {
                 Clear
               </button>
 
-              {!canApplyCamp && isLoggedin && (
-                <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                  You can view trips, but only parent, child, admin, leader, or
-                  pascal roles can apply.
-                </div>
-              )}
             </div>
 
             <div className="mt-10">

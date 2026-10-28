@@ -6,6 +6,7 @@ import UserAvatar from "../Components/UserAvatar.jsx";
 
 import { toast } from "react-toastify";
 import { CalendarPlus } from "lucide-react";
+import { hasProtectedAccountRole } from "../../../shared/accountProtection.mjs";
 
 const Admin = () => {
   const { backendUrl, userData, getUserData } = useContext(AppContent);
@@ -363,7 +364,7 @@ const Admin = () => {
                             >
                               {formatRole(user.role)}
                             </span>
-                            <UserRoleEditor user={user} onSave={handleSaveRoles} />
+                            <UserRoleEditor user={user} onSave={handleSaveRoles} canEditAllRoles={hasProtectedAccountRole(userData?.role)} />
                           </td>
 
                           <td className="px-4 py-4">
@@ -387,7 +388,8 @@ const Admin = () => {
                             <button
                               onClick={() => handleDeleteUser(user._id)}
                               className="rounded-xl bg-red-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                              disabled={user._id === userData?._id}
+                              disabled={user._id === userData?._id || hasProtectedAccountRole(user.role)}
+                              title={hasProtectedAccountRole(user.role) ? "Pascal and Pamela accounts cannot be deleted" : undefined}
                             >
                               Delete
                             </button>
@@ -487,11 +489,15 @@ const UserClassEditor = ({ user, onSave }) => {
   );
 };
 
-const UserRoleEditor = ({ user, onSave }) => {
+const UserRoleEditor = ({ user, onSave, canEditAllRoles = false }) => {
   const [editing, setEditing] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [saving, setSaving] = useState(false);
   const roles = ["pascal", "admin", "pamela", "leader", "parent", "unAssigned"];
+
+  if (hasProtectedAccountRole(user.role) && !canEditAllRoles) {
+    return <p className="mt-2 text-xs text-gray-500">Roles locked for this protected account.</p>;
+  }
 
   const toggleRole = (role) => {
     setSelectedRoles((prev) => {

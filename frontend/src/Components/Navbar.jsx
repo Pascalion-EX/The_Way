@@ -6,6 +6,7 @@ import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import NotificationBell from "./NotificationBell.jsx";
 import UserAvatar from "./UserAvatar.jsx";
+import { canAccessYearOneToThreeActivities } from "../../../shared/pageAccess.mjs";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -256,6 +257,14 @@ const hasVideoRequestAccess = userData
             >
               Activities
             </button>
+
+            {canAccessYearOneToThreeActivities(userData?.role, userData?.class) && <button
+              type="button"
+              onClick={() => handleNavigate("/activities/year-1-3")}
+              className="cursor-pointer rounded-full border border-gray-500 bg-white px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-200 sm:px-5 sm:text-base"
+            >
+              Year 1–3 Activities
+            </button>}
 
             <button
               type="button"

@@ -73,9 +73,16 @@ export async function processNextEmailJob(kind, {
 
   try {
     await mailer.sendMail({
-      from: getSecrets().senderEmail, to: recipient, subject: job.subject, text: job.text,
-      ...buildBrandedEmail({ kind, text: job.text, code: prefix ? user[prefix] : undefined, year: now().getUTCFullYear() }),
-      messageId: `<${job.id}@the-way.invalid>`,
+      from: getSecrets().senderEmail,
+      to: recipient,
+      subject: job.subject,
+      text: job.text,
+      ...buildBrandedEmail({
+        kind,
+        text: job.text,
+        code: prefix ? user[prefix] : undefined,
+        year: now().getUTCFullYear(),
+      }),
     });
   } catch (error) {
     // Keep error metadata only: SMTP errors can contain addresses and mail content.

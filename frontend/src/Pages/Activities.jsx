@@ -8,6 +8,7 @@ import { toast } from "react-toastify";
 
 import Navbar from "@/Components/Navbar.jsx";
 import Footer from "@/Components/footer.jsx";
+import { canAccessYearOneToThreeActivities } from "../../../shared/pageAccess.mjs";
 
 const Activities = () => {
   const navigate = useNavigate();
@@ -118,6 +119,11 @@ const Activities = () => {
             </p>
           </div>
 
+          {canAccessYearOneToThreeActivities(userData?.role, userData?.class) && <button type="button" onClick={() => navigate("/activities/year-1-3")}
+            className="mt-5 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-semibold text-indigo-700 hover:bg-indigo-100">
+            Year 1–3 Wednesday activities
+          </button>}
+
           {/* Search */}
           <form
             onSubmit={handleSearch}
@@ -156,14 +162,6 @@ const Activities = () => {
               </button>
             )}
           </form>
-
-          {/* Permission Notice */}
-          {!canManageActivities && isLoggedin && (
-            <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-600 sm:p-5">
-              You can view activities, but only users with pascal, admin,
-              leader, or pamela roles can create, edit, or delete activities.
-            </div>
-          )}
 
           {/* Activities */}
           <section className="mt-8 sm:mt-10">

@@ -27,6 +27,7 @@ const CampDetails = lazy(() => import("./Pages/CampDetails.jsx"));
 const Profile = lazy(() => import("./Pages/Profile.jsx"));
 const Admin = lazy(() => import("./Pages/Admin.jsx"));
 const Activities = lazy(() => import("./Pages/Activities.jsx"));
+const YearOneToThreeActivities = lazy(() => import("./Pages/YearOneToThreeActivities.jsx"));
 const CreateGame = lazy(() => import("./Pages/Creategame.jsx"));
 const Info = lazy(() => import("./Pages/Info.jsx"));
 const GameViewer = lazy(() => import("./Pages/GamesViewer.jsx"));
@@ -230,6 +231,7 @@ const App = () => {
               path="/activities"
               element={<Activities />}
             />
+            <Route path="/activities/year-1-3" element={<YearOneToThreeActivities />} />
             <Route
               path="/activities/:id"
               element={<ActivitiesViewer />}

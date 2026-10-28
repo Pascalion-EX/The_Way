@@ -2,6 +2,7 @@ import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 import lessonModel from "../models/lessonModel.js";
 import mongoose from "mongoose";
+import { hasProtectedAccountRole, PROTECTED_ACCOUNT_ROLE_PATTERNS } from "../../shared/accountProtection.mjs";
 
 const allowedAdminRoles = ["admin", "pamela", "pascal"];
 const assignableRoles = ["pascal", "admin", "leader", "parent", "pamela", "unAssigned"];
@@ -133,20 +134,35 @@ export const deleteUserByAdmin = async (req, res) => {
       });
     }
 
-    if (userId === id) {
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({ success: false, message: "Invalid user ID" });
+    }
+
+    if (String(userId) === id) {
       return res.status(400).json({
         success: false,
         message: "You cannot delete your own account",
       });
     }
 
-    const deletedUser = await userModel.findByIdAndDelete(id);
-
-    if (!deletedUser) {
+    const targetUser = await userModel.findById(id).select("role");
+    if (!targetUser) {
       return res.status(404).json({
         success: false,
         message: "User to delete was not found",
       });
+    }
+
+    if (hasProtectedAccountRole(targetUser.role)) {
+      return res.status(403).json({ success: false, message: "Pascal and Pamela accounts cannot be deleted" });
+    }
+
+    const deletedUser = await userModel.findOneAndDelete({
+      _id: id,
+      role: mongoose.trusted({ $nin: PROTECTED_ACCOUNT_ROLE_PATTERNS }),
+    });
+    if (!deletedUser) {
+      return res.status(409).json({ success: false, message: "Account changed. Please reload and try again." });
     }
 
     return res.status(200).json({
@@ -188,14 +204,29 @@ export const updateUserRolesByAdmin = async (req, res) => {
       return res.status(400).json({ success: false, message: "Unassigned cannot be combined with other roles" });
     }
 
-    const user = await userModel.findByIdAndUpdate(
-      id,
-      { role: [...new Set(role)] },
+    const targetUser = await userModel.findById(id).select("role");
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: "User to update was not found" });
+    }
+
+    const canEditAllRoles = hasProtectedAccountRole(currentUser.role);
+    if (hasProtectedAccountRole(targetUser.role) && !canEditAllRoles) {
+      return res.status(403).json({ success: false, message: "Only Pascal and Pamela users can change this account's roles" });
+    }
+
+    const userFilter = { _id: id };
+    if (!canEditAllRoles) {
+      userFilter.role = mongoose.trusted({ $nin: PROTECTED_ACCOUNT_ROLE_PATTERNS });
+    }
+
+    const user = await userModel.findOneAndUpdate(
+      userFilter,
+      { $set: { role: [...new Set(role)] } },
       { returnDocument: "after", runValidators: true }
     ).select("-password -verifyOtp -resetOtp -verifyOtpAttempts -resetOtpAttempts -verifyOtpGeneration -resetOtpGeneration -verifyOtpExpireAt -resetOtpExpireAt -emailJobs");
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User to update was not found" });
+      return res.status(409).json({ success: false, message: "Account changed. Please reload and try again." });
     }
 
     return res.status(200).json({ success: true, message: "User roles updated successfully", user });

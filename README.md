@@ -169,6 +169,23 @@ Application types currently used by the controller are:
 - `child_self`
 - `leader`
 
+### Year 1–3 Activities
+
+The `/activities/year-1-3` page contains a monthly Wednesday schedule with Date
+and Day activity columns. The server generates every Wednesday for the selected
+month and uses Cairo time for the current month. The page follows the current
+month automatically and also supports browsing past and future months. Saved
+activities remain attached to their dates in MongoDB. Access to the page and its
+read/write API is limited to verified leaders assigned to classes 1–3, plus
+admin, Pascal, and Pamela users regardless of class. These users can edit and
+clear activities. The navigation menu and Activities page show the schedule
+link only to eligible users.
+
+The API uses `GET /api/activities/year-1-3/schedule?month=YYYY-MM` (the month is
+optional) and `PUT /api/activities/year-1-3/schedule/:date` with an `activity`
+string. Both endpoints enforce the role and class restriction; writes also
+require a valid Wednesday date.
+
 ### Admin Dashboard
 
 Authorized administrators can:
@@ -181,6 +198,12 @@ Authorized administrators can:
 - See user class/year information
 - Delete users
 - Prevent self-deletion at the backend level
+
+Accounts with the `pascal` or `pamela` role cannot be deleted, including accounts
+that also hold other roles. Pascal and Pamela users can change any account's
+roles, including their own and each other's. Other administrators cannot change
+the roles of Pascal or Pamela accounts. The API and admin dashboard enforce
+these permissions.
 
 ---
 
