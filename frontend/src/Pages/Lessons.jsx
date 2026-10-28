@@ -1,6 +1,7 @@
+import Pagination from "../Components/Pagination.jsx";
+import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, {
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -19,12 +20,6 @@ const Lessons = () => {
     isLoggedin,
   } = useContext(AppContent);
 
-  const [lessons, setLessons] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
-
   const [search, setSearch] =
     useState("");
 
@@ -37,15 +32,15 @@ const Lessons = () => {
   |--------------------------------------------------------------------------
   */
 
-  const allowedRoles = [
-    "pascal",
-    "admin",
-    "leader",
-    "pamela",
-  ];
-
   const canManageLessons =
     useMemo(() => {
+      const allowedRoles = [
+        "pascal",
+        "admin",
+        "leader",
+        "pamela",
+      ];
+
       const roles = Array.isArray(
         userData?.role
       )
@@ -73,62 +68,11 @@ const Lessons = () => {
   |--------------------------------------------------------------------------
   */
 
-  const fetchLessons = async (
-    currentSearch = "",
-    currentYear = ""
-  ) => {
-    try {
-      setLoading(true);
-
-      const params =
-        new URLSearchParams();
-
-      if (currentSearch.trim()) {
-        params.append(
-          "search",
-          currentSearch.trim()
-        );
-      }
-
-      if (Number(currentYear) > 0) {
-        params.append(
-          "year",
-          currentYear
-        );
-      }
-
-      const url = `${backendUrl}/api/lessons${
-        params.toString()
-          ? `?${params.toString()}`
-          : ""
-      }`;
-
-      const { data } =
-        await axios.get(url);
-
-      if (data.success) {
-        setLessons(
-          data.lessons || []
-        );
-      } else {
-        toast.error(
-          data.message ||
-            "Failed to load lessons"
-        );
-      }
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          error.message
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLessons();
-  }, []);
+  const { items: lessons, loading, pagination, setPage, setFilters, refresh } = usePaginatedList({
+    url: `${backendUrl}/api/lessons`,
+    dataKey: "lessons",
+    initialFilters: { search: "", year: "" },
+  });
 
   /*
   |--------------------------------------------------------------------------
@@ -139,17 +83,14 @@ const Lessons = () => {
   const handleSearch = (e) => {
     e.preventDefault();
 
-    fetchLessons(
-      search,
-      yearFilter
-    );
+    setFilters({ search, year: yearFilter });
   };
 
   const clearFilters = () => {
     setSearch("");
     setYearFilter("0");
 
-    fetchLessons("", "");
+    setFilters({ search: "", year: "" });
   };
 
   /*
@@ -179,10 +120,7 @@ const Lessons = () => {
               "Lesson deleted successfully"
           );
 
-          fetchLessons(
-            search,
-            yearFilter
-          );
+          refresh();
         } else {
           toast.error(
             data.message ||
@@ -576,6 +514,7 @@ const Lessons = () => {
                   )}
                 </div>
               )}
+              <Pagination pagination={pagination} onPageChange={setPage} loading={loading} />
             </section>
           </div>
         </main>

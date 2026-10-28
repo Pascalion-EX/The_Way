@@ -1,4 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import Pagination from "../Components/Pagination.jsx";
+import usePaginatedList from "../hooks/usePaginatedList.js";
+import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
@@ -10,12 +12,15 @@ const Camp = () => {
   const navigate = useNavigate();
   const { backendUrl, userData, isLoggedin } = useContext(AppContent);
 
-  const [camps, setCamps] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [yearFilter, setYearFilter] = useState("0");
-  const [sortOrder, setSortOrder] = useState("asc");
+  const {
+    items: camps, setItems: setCamps, loading, pagination, setPage, setFilters, refresh,
+    filters: { search, year: yearFilter, sortOrder },
+  } = usePaginatedList({
+    url: `${backendUrl}/api/camps`,
+    dataKey: "camps",
+    initialFilters: { search: "", year: "0", sortOrder: "asc" },
+    debounce: 300,
+  });
   const [notifyCamp, setNotifyCamp] = useState(null);
   const [notifySubject, setNotifySubject] = useState("");
   const [notifyMessage, setNotifyMessage] = useState("");
@@ -84,73 +89,8 @@ const Camp = () => {
     });
   };
 
-  const fetchCamps = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await axios.get(`${backendUrl}/api/camps`);
-
-      if (data.success) {
-        setCamps(data.camps || []);
-      } else {
-        toast.error(data.message || "Failed to load trips");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCamps();
-  }, []);
-
-  const filteredAndSortedCamps = useMemo(() => {
-    let result = [...camps];
-
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-
-      result = result.filter((camp) => {
-        const titleMatch = camp.title?.toLowerCase().includes(q);
-        const nameMatch = camp.name?.toLowerCase().includes(q);
-        const bodyMatch = camp.body?.toLowerCase().includes(q);
-        const tripTypeMatch = camp.TripType?.toLowerCase().includes(q);
-
-        const yearsMatch = Array.isArray(camp.years)
-          ? camp.years.some((year) => String(year).includes(q))
-          : false;
-
-        return titleMatch || nameMatch || bodyMatch || tripTypeMatch || yearsMatch;
-      });
-    }
-
-    if (Number(yearFilter) > 0) {
-      result = result.filter(
-        (camp) =>
-          Array.isArray(camp.years) &&
-          camp.years.map(String).includes(String(yearFilter))
-      );
-    }
-
-    result.sort((a, b) => {
-      const minYearA =
-        Array.isArray(a.years) && a.years.length ? Math.min(...a.years) : 9999;
-
-      const minYearB =
-        Array.isArray(b.years) && b.years.length ? Math.min(...b.years) : 9999;
-
-      return sortOrder === "asc" ? minYearA - minYearB : minYearB - minYearA;
-    });
-
-    return result;
-  }, [camps, search, yearFilter, sortOrder]);
-
   const clearFilters = () => {
-    setSearch("");
-    setYearFilter("0");
-    setSortOrder("asc");
+    setFilters({ search: "", year: "0", sortOrder: "asc" });
   };
 
   const openApplyForm = (camp) => {
@@ -298,9 +238,7 @@ const Camp = () => {
       if (data.success) {
         toast.success(data.message || "Trip deleted successfully");
 
-        setCamps((prevCamps) =>
-          prevCamps.filter((camp) => camp._id !== campId)
-        );
+        refresh();
       } else {
         toast.error(data.message || "Failed to delete trip");
       }
@@ -418,14 +356,14 @@ const handleNotifySubmit = async (e) => {
                 placeholder="Search by title, leader, type, body, or year"
                 className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 md:col-span-2"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
               />
 
               <select
                 className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 aria-label="Filter by year"
                 value={yearFilter}
-                onChange={(e) => setYearFilter(e.target.value)}
+                onChange={(e) => setFilters((previous) => ({ ...previous, year: e.target.value }))}
               >
                 <option value="0">0 — All years</option>
                 {yearOptions.map((year) => (
@@ -438,7 +376,7 @@ const handleNotifySubmit = async (e) => {
               <select
                 className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
+                onChange={(e) => setFilters((previous) => ({ ...previous, sortOrder: e.target.value }))}
               >
                 <option value="asc">Sort by year: Low to high</option>
                 <option value="desc">Sort by year: High to low</option>
@@ -465,13 +403,13 @@ const handleNotifySubmit = async (e) => {
             <div className="mt-10">
               {loading ? (
                 <p className="text-sm text-gray-500">Loading trips...</p>
-              ) : filteredAndSortedCamps.length === 0 ? (
+              ) : camps.length === 0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
                   No trips found.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  {filteredAndSortedCamps.map((camp) => {
+                  {camps.map((camp) => {
                     const applied = hasApplied(camp);
 
                     return (
@@ -600,6 +538,7 @@ const handleNotifySubmit = async (e) => {
                   })}
                 </div>
               )}
+              <Pagination pagination={pagination} onPageChange={setPage} loading={loading} />
             </div>
           </div>
         </main>

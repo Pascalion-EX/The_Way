@@ -67,99 +67,96 @@ const CalendarView = ({onClose}) => {
   // FETCH EVENTS
   // =========================================================
 
-  const getEvents = async () => {
-    try {
-      setLoading(true);
+  useEffect(() => {
+    const getEventColor = (eventType) => {
+      switch (eventType) {
+        case "Trip":
+          return "#3B82F6";
 
-      const { data } = await axios.get(
-        `${backendUrl}/api/events`
-      );
+        case "Visit":
+          return "#8B5CF6";
 
-      if (data.success) {
-        const formattedEvents = data.events.map((event) => ({
-          id: event._id,
+        case "Fasting":
+          return "#F59E0B";
 
-          title: event.title,
+        case "Mass":
+          return "#EF4444";
 
-          start: event.startDate,
+        case "Meeting":
+          return "#22C55E";
 
-          end: event.endDate || undefined,
+        case "Other":
+          return "#6B7280";
 
-          allDay: event.allDay,
+        default:
+          return "#6B7280";
+      }
+    };
 
-          backgroundColor: getEventColor(
-            event.eventType
-          ),
+    const getEvents = async () => {
+      try {
+        setLoading(true);
 
-          borderColor: getEventColor(
-            event.eventType
-          ),
+        const { data } = await axios.get(
+          `${backendUrl}/api/events`
+        );
 
-          extendedProps: {
-            description: event.description,
-            eventType: event.eventType,
-            location: event.location,
-            years: event.years,
-            createdBy: event.createdBy,
-            originalEvent: event,
-          },
-        }));
+        if (data.success) {
+          const formattedEvents = data.events.map((event) => ({
+            id: event._id,
 
-        setEvents(formattedEvents);
-      } else {
+            title: event.title,
+
+            start: event.startDate,
+
+            end: event.endDate || undefined,
+
+            allDay: event.allDay,
+
+            backgroundColor: getEventColor(
+              event.eventType
+            ),
+
+            borderColor: getEventColor(
+              event.eventType
+            ),
+
+            extendedProps: {
+              description: event.description,
+              eventType: event.eventType,
+              location: event.location,
+              years: event.years,
+              createdBy: event.createdBy,
+              originalEvent: event,
+            },
+          }));
+
+          setEvents(formattedEvents);
+        } else {
+          toast.error(
+            data.message ||
+              "Failed to load calendar events"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Calendar fetch error:",
+          error
+        );
+
         toast.error(
-          data.message ||
+          error.response?.data?.message ||
             "Failed to load calendar events"
         );
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error(
-        "Calendar fetch error:",
-        error
-      );
+    };
 
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to load calendar events"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
     getEvents();
   }, [backendUrl]);
 
-  // =========================================================
-  // EVENT COLORS
-  // =========================================================
-
-  const getEventColor = (eventType) => {
-    switch (eventType) {
-      case "Trip":
-        return "#3B82F6";
-
-      case "Visit":
-        return "#8B5CF6";
-
-      case "Fasting":
-        return "#F59E0B";
-
-      case "Mass":
-        return "#EF4444";
-
-      case "Meeting":
-        return "#22C55E";
-
-      case "Other":
-        return "#6B7280";
-
-      default:
-        return "#6B7280";
-    }
-  };
-  // =========================================================
+// =========================================================
 // EDIT EVENT
 // =========================================================
 

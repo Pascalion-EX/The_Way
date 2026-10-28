@@ -7,6 +7,7 @@ import { campSummaryProjection, toCampSummary, toStaffApplicant } from "../servi
 import { buildBrandedEmail } from "../services/emailTemplate.js";
 import { timeOperation } from "../services/performance.js";
 import { getSecrets } from "../config/secrets.js";
+import { readPage, paginationFor } from "../utils/pagination.js";
 
 const createRoles = ['admin', 'leader', 'pascal','pamela'];
 const applyRoles = ['parent', 'admin', 'leader', 'pascal'];
@@ -116,11 +117,13 @@ export const createCamp = async (req, res) => {
 
 export const getAllCamps = async (req, res) => {
   try {
-    const { search = "", year = "", tripType = "" } = req.query;
+    const page = readPage(req.query.page);
+    const { search = "", year = "", tripType = "", sortOrder = "" } = req.query;
 
     if (typeof search !== "string" || search.length > 200 ||
         typeof year !== "string" || (year && !/^(?:0|[1-9]|1[0-2])$/.test(year)) ||
-        typeof tripType !== "string" || (tripType && !tripTypeOptions.includes(tripType))) {
+        typeof tripType !== "string" || (tripType && !tripTypeOptions.includes(tripType)) ||
+        !["", "asc", "desc"].includes(sortOrder)) {
       return res.status(400).json({ success: false, message: "Invalid camp filters" });
     }
 
@@ -128,12 +131,14 @@ export const getAllCamps = async (req, res) => {
 
     if (search.trim()) {
       const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      filter.$or = [
-        { title: { $regex: escapedSearch, $options: "i" } },
-        { name: { $regex: escapedSearch, $options: "i" } },
-        { body: { $regex: escapedSearch, $options: "i" } },
-        { TripType: { $regex: escapedSearch, $options: "i" } },
-      ];
+      filter.$or = ["title", "name", "body", "TripType"].map((field) => ({
+        [field]: mongoose.trusted({ $regex: escapedSearch, $options: "i" }),
+      }));
+      const matchingYears = Array.from({ length: 12 }, (_, index) => index + 1)
+        .filter((value) => String(value).includes(search.trim()));
+      if (matchingYears.length) {
+        filter.$or.push({ years: mongoose.trusted({ $in: matchingYears }) });
+      }
     }
 
     if (Number(year) > 0) {
@@ -144,21 +149,40 @@ export const getAllCamps = async (req, res) => {
       filter.TripType = tripType;
     }
 
-    const camps = await Camp.aggregate([
-      { $match: filter }, { $sort: { createdAt: -1 } },
-      { $project: campSummaryProjection(req.userId) },
-    ]);
+    const pagination = page === null ? undefined : paginationFor(await Camp.countDocuments(filter), page);
+    const pipeline = [{ $match: filter }];
+    if (sortOrder) {
+      pipeline.push(
+        { $addFields: { _sortYear: { $cond: [
+          { $gt: [{ $size: { $ifNull: ["$years", []] } }, 0] },
+          { $min: "$years" },
+          9999,
+        ] } } },
+        { $sort: { _sortYear: sortOrder === "asc" ? 1 : -1, createdAt: -1, _id: -1 } },
+      );
+    } else {
+      pipeline.push({ $sort: { createdAt: -1, _id: -1 } });
+    }
+    if (pagination) {
+      pipeline.push(
+        { $skip: (pagination.page - 1) * pagination.pageSize },
+        { $limit: pagination.pageSize },
+      );
+    }
+    pipeline.push({ $project: campSummaryProjection(req.userId) });
+    const camps = await Camp.aggregate(pipeline);
 
     return res.status(200).json({
       success: true,
       camps: camps.map((camp) => toCampSummary(camp, req.userId)),
+      pagination,
     });
   } catch (error) {
     console.error("GET CAMPS ERROR:", error);
 
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
-      message: "Unable to load camps",
+      message: error.status === 400 ? error.message : "Unable to load camps",
     });
   }
 };

@@ -90,14 +90,14 @@ const EditGame = () => {
   |--------------------------------------------------------------------------
   */
 
-  const allowedRoles = [
-    "admin",
-    "leader",
-    "pascal",
-    "pamela",
-  ];
-
   const canEdit = useMemo(() => {
+    const allowedRoles = [
+      "admin",
+      "leader",
+      "pascal",
+      "pamela",
+    ];
+
     const rawRoles = userData?.role;
 
     const roles = Array.isArray(rawRoles)

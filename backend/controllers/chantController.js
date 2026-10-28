@@ -1,3 +1,4 @@
+import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import chantModel from "../models/chantModel.js";
@@ -114,16 +115,22 @@ export const createChant = async (req, res) => {
 
 export const getAllChants = async (req, res) => {
   try {
+    const page = readPage(req.query.page);
     const { search = "", category = "", favoriteOnly = "false" } = req.query;
 
+    if (typeof search !== "string" || search.length > 200 ||
+        typeof category !== "string" || category.length > 100 ||
+        !["true", "false"].includes(favoriteOnly)) {
+      return res.status(400).json({ success: false, message: "Invalid chant filters" });
+    }
     const query = {};
     const userId = req.userId;
 
     if (search.trim()) {
-      query.title = {
+      query.title = mongoose.trusted({
         $regex: escapeRegex(search.trim()),
         $options: "i",
-      };
+      });
     }
 
     if (category && category !== "All") {
@@ -141,11 +148,11 @@ export const getAllChants = async (req, res) => {
       query.favorites = userId;
     }
 
-    const chants = await chantModel
+    const { items: chants, pagination } = await paginateQuery(chantModel
       .find(query)
       .populate("createdBy", "name email role")
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1, _id: -1 })
+      .lean(), page);
 
     const chantsWithFavoriteStatus = chants.map((chant) => {
       const isFavorite = userId
@@ -164,9 +171,10 @@ export const getAllChants = async (req, res) => {
     return res.status(200).json({
       success: true,
       chants: chantsWithFavoriteStatus,
+      pagination,
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message,
     });

@@ -35,11 +35,12 @@ const CreateCamp = () => {
   const [selectedYears, setSelectedYears] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
   const yearOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   const tripTypeOptions = ["Camp", "Trip", "Outing", "Other"];
 
   const canCreate = useMemo(() => {
+    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+
     const rawRoles = userData?.role;
 
     const normalizedRoles = Array.isArray(rawRoles)

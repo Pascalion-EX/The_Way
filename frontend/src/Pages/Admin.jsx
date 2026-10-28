@@ -89,27 +89,6 @@ const Admin = () => {
     return role;
   };
 
-  const fetchAdminDashboard = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await axios.get(`${backendUrl}/api/admin/dashboard`, {
-        withCredentials: true,
-      });
-
-      if (data.success) {
-        setStats(data.stats);
-        setUsers(data.users);
-      } else {
-        toast.error(data.message);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to load admin page");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteUser = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this user?"
@@ -192,8 +171,29 @@ const Admin = () => {
   };
 
   useEffect(() => {
+    const fetchAdminDashboard = async () => {
+      try {
+        setLoading(true);
+
+        const { data } = await axios.get(`${backendUrl}/api/admin/dashboard`, {
+          withCredentials: true,
+        });
+
+        if (data.success) {
+          setStats(data.stats);
+          setUsers(data.users);
+        } else {
+          toast.error(data.message);
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || "Failed to load admin page");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAdminDashboard();
-  }, []);
+  }, [backendUrl]);
 
   if (!isAdmin && !loading) {
     return (

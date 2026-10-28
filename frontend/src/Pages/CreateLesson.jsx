@@ -44,9 +44,9 @@ const CreateLesson = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
-
   const canCreate = useMemo(() => {
+    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+
     const rawRoles = userData?.role;
 
     const normalizedRoles = Array.isArray(rawRoles)

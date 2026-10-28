@@ -43,9 +43,9 @@ const CreateGame = () => {
   const [video, setVideo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const allowedRoles = ["admin", "leader", 'pascal', 'pamela'];
-
   const canCreate = useMemo(() => {
+    const allowedRoles = ["admin", "leader", 'pascal', 'pamela'];
+
     const rawRoles = userData?.role;
 
     const normalizedRoles = Array.isArray(rawRoles)

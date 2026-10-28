@@ -1,21 +1,26 @@
-import React, { useContext, useEffect, useState } from "react";
+import Pagination from "../Components/Pagination.jsx";
+import usePaginatedList from "../hooks/usePaginatedList.js";
+import React, { useContext } from "react";
 import Navbar from "../Components/Navbar";
 
 import ChantCard from "../Components/chantCard.jsx";
 import { AppContent } from "../Context/AppContent.js";
 import { useNavigate } from "react-router-dom";
-import axios from "../utils/axios";
 import { toast } from "react-toastify";
 
 const Chants = () => {
   const navigate = useNavigate();
   const { backendUrl, userData } = useContext(AppContent);
 
-  const [chants, setChants] = useState([]);
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("All");
-  const [favoriteOnly, setFavoriteOnly] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const {
+    items: chants, loading, pagination, setPage, setFilters, refresh,
+    filters: { search, category, favoriteOnly },
+  } = usePaginatedList({
+    url: `${backendUrl}/api/chants`,
+    dataKey: "chants",
+    initialFilters: { search: "", category: "All", favoriteOnly: false },
+    debounce: 300,
+  });
 
   const allowedRoles = ["admin", "leader", "pascal", "pamela"];
 
@@ -24,39 +29,6 @@ const Chants = () => {
       ? userData.role.includes(role)
       : userData?.role === role
   );
-
-  const fetchChants = async () => {
-    try {
-      setLoading(true);
-      axios.defaults.withCredentials = true;
-
-      const params = new URLSearchParams();
-
-      if (search.trim()) params.append("search", search.trim());
-      if (category !== "All") params.append("category", category);
-      if (favoriteOnly) params.append("favoriteOnly", "true");
-
-      const { data } = await axios.get(
-        `${backendUrl}/api/chants?${params.toString()}`
-      );
-
-      if (data.success) {
-        setChants(data.chants);
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchChants();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search, category, favoriteOnly]);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-transparent">
@@ -89,14 +61,14 @@ const Chants = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
             <input
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
               placeholder="Search by title..."
               className="md:col-span-2 w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
             />
 
             <select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => setFilters((previous) => ({ ...previous, category: e.target.value }))}
               className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
             >
               <option value="All">All Categories</option>
@@ -115,7 +87,7 @@ const Chants = () => {
                   return;
                 }
 
-                setFavoriteOnly((prev) => !prev);
+                setFilters((previous) => ({ ...previous, favoriteOnly: !previous.favoriteOnly }));
               }}
               className={`px-4 py-3 rounded-xl border font-semibold transition ${
                 favoriteOnly
@@ -144,11 +116,12 @@ const Chants = () => {
                 <ChantCard
                   key={chant._id}
                   chant={chant}
-                  refreshChants={fetchChants}
+                  refreshChants={refresh}
                 />
               ))}
             </div>
           )}
+          <Pagination pagination={pagination} onPageChange={setPage} loading={loading} />
         </div>
       </main>
     </div>

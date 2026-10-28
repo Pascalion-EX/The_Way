@@ -1,4 +1,5 @@
 import React, {
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -39,7 +40,7 @@ const NotificationBell = () => {
   // FETCH NOTIFICATIONS
   // ======================================================
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -70,7 +71,7 @@ const NotificationBell = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [backendUrl]);
 
   // ======================================================
   // INITIAL FETCH
@@ -78,7 +79,7 @@ const NotificationBell = () => {
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [fetchNotifications]);
 
   // ======================================================
   // CLOSE WHEN CLICKING OUTSIDE

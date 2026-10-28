@@ -26,35 +26,6 @@ const [deleting, setDeleting] = useState(false);
       : allowedRoles.includes(userData.role)
     : false;
 
-  // =========================================================
-  // EVENT COLOR
-  // =========================================================
-
-  const getEventColor = (eventType) => {
-    switch (eventType) {
-      case "Trip":
-        return "#3B82F6";
-
-      case "Visit":
-        return "#8B5CF6";
-
-      case "Fasting":
-        return "#F59E0B";
-
-      case "Mass":
-        return "#EF4444";
-
-      case "Meeting":
-        return "#22C55E";
-
-      case "Other":
-        return "#6B7280";
-
-      default:
-        return "#6B7280";
-    }
-  };
-
 // =========================================================
 // DELETE EVENT
 // =========================================================
@@ -136,61 +107,86 @@ const handleDeleteEvent = async () => {
   // FETCH EVENTS
   // =========================================================
 
-  const getEvents = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await axios.get(
-        `${backendUrl}/api/events`
-      );
-
-      if (data.success) {
-        const calendarEvents = data.events || [];
-
-        const formattedEvents = calendarEvents.map((event) => ({
-          id: event._id,
-
-          title: event.title,
-
-          start: event.startDate,
-
-          end: event.endDate || undefined,
-
-          allDay: event.allDay ?? false,
-
-          backgroundColor: getEventColor(event.eventType),
-
-          borderColor: getEventColor(event.eventType),
-
-          extendedProps: {
-            description: event.description,
-            eventType: event.eventType,
-            location: event.location,
-            years: event.years,
-            createdBy: event.createdBy,
-            originalEvent: event,
-          },
-        }));
-
-        setEvents(formattedEvents);
-      } else {
-        toast.error(
-          data.message || "Failed to load events"
-        );
-      }
-    } catch (error) {
-      console.error("Calendar fetch error:", error);
-
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to load calendar events"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const getEventColor = (eventType) => {
+      switch (eventType) {
+        case "Trip":
+          return "#3B82F6";
+
+        case "Visit":
+          return "#8B5CF6";
+
+        case "Fasting":
+          return "#F59E0B";
+
+        case "Mass":
+          return "#EF4444";
+
+        case "Meeting":
+          return "#22C55E";
+
+        case "Other":
+          return "#6B7280";
+
+        default:
+          return "#6B7280";
+      }
+    };
+
+    const getEvents = async () => {
+      try {
+        setLoading(true);
+
+        const { data } = await axios.get(
+          `${backendUrl}/api/events`
+        );
+
+        if (data.success) {
+          const calendarEvents = data.events || [];
+
+          const formattedEvents = calendarEvents.map((event) => ({
+            id: event._id,
+
+            title: event.title,
+
+            start: event.startDate,
+
+            end: event.endDate || undefined,
+
+            allDay: event.allDay ?? false,
+
+            backgroundColor: getEventColor(event.eventType),
+
+            borderColor: getEventColor(event.eventType),
+
+            extendedProps: {
+              description: event.description,
+              eventType: event.eventType,
+              location: event.location,
+              years: event.years,
+              createdBy: event.createdBy,
+              originalEvent: event,
+            },
+          }));
+
+          setEvents(formattedEvents);
+        } else {
+          toast.error(
+            data.message || "Failed to load events"
+          );
+        }
+      } catch (error) {
+        console.error("Calendar fetch error:", error);
+
+        toast.error(
+          error.response?.data?.message ||
+            "Failed to load calendar events"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     getEvents();
   }, [backendUrl]);
 

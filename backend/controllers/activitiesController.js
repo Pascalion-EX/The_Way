@@ -1,3 +1,4 @@
+import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import activitiesModel from "../models/activitiesModel.js";
 import userModel from "../models/userModel.js";
@@ -152,7 +153,12 @@ export const getAllActivities = async (
   res
 ) => {
   try {
+    const page = readPage(req.query.page);
     const { search = "" } = req.query;
+
+    if (typeof search !== "string" || search.length > 200) {
+      return res.status(400).json({ success: false, message: "Invalid activity search" });
+    }
 
     const filter = {};
 
@@ -194,20 +200,21 @@ export const getAllActivities = async (
       ];
     }
 
-    const activities =
-      await activitiesModel
+    const { items: activities, pagination } = await paginateQuery(
+      activitiesModel
         .find(filter)
         .populate(
           "createdBy",
           "name email role"
         )
         .sort({
-          createdAt: -1,
-        });
+          createdAt: -1, _id: -1,
+        }), page);
 
     return res.status(200).json({
       success: true,
       activities,
+      pagination,
     });
   } catch (error) {
     console.log(
@@ -215,10 +222,9 @@ export const getAllActivities = async (
       error
     );
 
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
-      message:
-        "Error fetching activities.",
+      message: error.status === 400 ? error.message : "Error fetching activities.",
       error: error.message,
     });
   }

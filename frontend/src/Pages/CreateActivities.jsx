@@ -50,14 +50,14 @@ const CreateActivities = () => {
   |--------------------------------------------------------------------------
   */
 
-  const allowedRoles = [
-    "pascal",
-    "admin",
-    "leader",
-    "pamela",
-  ];
-
   const canCreate = useMemo(() => {
+    const allowedRoles = [
+      "pascal",
+      "admin",
+      "leader",
+      "pamela",
+    ];
+
     const rawRoles = userData?.role;
 
     const roles = Array.isArray(rawRoles)

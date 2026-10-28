@@ -41,6 +41,7 @@ const ChantCard = ({ chant, refreshChants }) => {
       if (data.success) {
         setFavoriteChange({ source: chant, value: data.isFavorite });
         toast.success(data.message);
+        refreshChants?.();
       }
     } catch (error) {
       toast.error(

@@ -79,8 +79,8 @@ class Noise {
 const Waves = ({
   lineColor = 'black',
   backgroundColor = 'transparent',
-  waveSpeedX = 0.0125,
-  waveSpeedY = 0.005,
+  waveSpeedX = 5,
+  waveSpeedY = 5,
   waveAmpX = 32,
   waveAmpY = 16,
   xGap = 10,
@@ -145,8 +145,6 @@ const Waves = ({
     ctxRef.current = canvas.getContext('2d');
     if (!ctxRef.current) return;
     noiseRef.current = new Noise(Math.random());
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let lastFrame = 0;
 
     function setSize() {
       boundingRef.current = container.getBoundingClientRect();
@@ -240,10 +238,8 @@ const Waves = ({
     }
 
     function tick(t) {
-      if (document.hidden || reducedMotion.matches) return;
+      if (document.hidden) return;
       frameIdRef.current = requestAnimationFrame(tick);
-      if (t - lastFrame < 1000 / 30) return;
-      lastFrame = t;
       const mouse = mouseRef.current;
       mouse.sx += (mouse.x - mouse.sx) * 0.1;
       mouse.sy += (mouse.y - mouse.sy) * 0.1;
@@ -265,10 +261,8 @@ const Waves = ({
 
     function syncAnimation() {
       cancelAnimationFrame(frameIdRef.current);
-      if (reducedMotion.matches) {
-        movePoints(0);
-        drawLines();
-      } else if (!document.hidden) {
+      frameIdRef.current = null;
+      if (!document.hidden) {
         frameIdRef.current = requestAnimationFrame(tick);
       }
     }
@@ -305,7 +299,6 @@ const Waves = ({
     resizeObserver.observe(container);
     syncAnimation();
     document.addEventListener('visibilitychange', syncAnimation);
-    reducedMotion.addEventListener('change', syncAnimation);
     window.addEventListener('resize', onResize);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('touchmove', onTouchMove, { passive: true });
@@ -313,7 +306,6 @@ const Waves = ({
     return () => {
       resizeObserver.disconnect();
       document.removeEventListener('visibilitychange', syncAnimation);
-      reducedMotion.removeEventListener('change', syncAnimation);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('touchmove', onTouchMove);

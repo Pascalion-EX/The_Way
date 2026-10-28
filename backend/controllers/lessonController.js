@@ -1,3 +1,4 @@
+import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import lessonModel from "../models/lessonModel.js";
@@ -192,6 +193,7 @@ export const createLesson = async (req, res) => {
 
 export const getLessons = async (req, res) => {
   try {
+    const page = readPage(req.query.page);
     const {
       search = "",
       year = "",
@@ -249,24 +251,25 @@ export const getLessons = async (req, res) => {
         }));
     }
 
-    const lessons = await lessonModel
+    const { items: lessons, pagination } = await paginateQuery(lessonModel
       .find(filter)
       .sort({
-        createdAt: -1,
+        createdAt: -1, _id: -1,
       })
       .populate(
         "createdBy",
         "name email role"
-      );
+      ), page);
 
     return res.status(200).json({
       success: true,
       lessons,
+      pagination,
     });
   } catch (error) {
     console.log("getLessons error:", error);
 
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message,
     });

@@ -1,3 +1,4 @@
+import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
 import gamesModel from "../models/gamesModel.js";
@@ -88,19 +89,32 @@ export const createGame = async (req, res) => {
 // GET ALL GAMES
 export const getAllGames = async (req, res) => {
   try {
-    const games = await gamesModel
-      .find()
+    const page = readPage(req.query.page);
+    const { search = "" } = req.query;
+    if (typeof search !== "string" || search.length > 200) {
+      return res.status(400).json({ success: false, message: "Invalid game search" });
+    }
+    const filter = {};
+    if (search.trim()) {
+      const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.$or = ["name", "materials", "explanation"].map((field) => ({
+        [field]: mongoose.trusted({ $regex: escapedSearch, $options: "i" }),
+      }));
+    }
+    const { items: games, pagination } = await paginateQuery(gamesModel
+      .find(filter)
       .populate("createdBy", "name email role")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: -1 }), page);
 
     return res.status(200).json({
       success: true,
       games,
+      pagination,
     });
   } catch (error) {
     console.error("Get all games error:", error);
 
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message || "Failed to fetch games.",
     });

@@ -6,6 +6,39 @@ import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 
+// Format dates for HTML inputs.
+const pad = (value) => String(value).padStart(2, "0");
+
+const formatDateForInput = (value, allDay) => {
+  if (!value) return "";
+
+  // Already in a browser-friendly input format.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return allDay ? value : `${value}T00:00`;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !value.endsWith("Z")) {
+    return allDay ? value.slice(0, 10) : value.slice(0, 16);
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+
+  if (allDay) {
+    return `${year}-${month}-${day}`;
+  }
+
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const EditEvent = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -36,42 +69,6 @@ const EditEvent = () => {
   const canManageEvents = userRoles.some((role) =>
     allowedManageRoles.includes(role)
   );
-
-  // =========================================================
-  // FORMAT DATES FOR HTML INPUTS
-  // =========================================================
-
-  const pad = (value) => String(value).padStart(2, "0");
-
-  const formatDateForInput = (value, allDay) => {
-    if (!value) return "";
-
-    // Already in a browser-friendly input format.
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      return allDay ? value : `${value}T00:00`;
-    }
-
-    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !value.endsWith("Z")) {
-      return allDay ? value.slice(0, 10) : value.slice(0, 16);
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) return "";
-
-    const year = date.getFullYear();
-    const month = pad(date.getMonth() + 1);
-    const day = pad(date.getDate());
-
-    if (allDay) {
-      return `${year}-${month}-${day}`;
-    }
-
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   // =========================================================
   // PERMISSION CHECK

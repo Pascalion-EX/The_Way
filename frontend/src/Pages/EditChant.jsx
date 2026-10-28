@@ -28,37 +28,37 @@ const EditChant = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const fetchChant = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await axios.get(`${backendUrl}/api/chants/${id}`);
-
-      if (data.success) {
-        setFormData({
-          title: data.chant.title || "",
-          category: data.chant.category || "Other",
-          image: data.chant.image || "",
-          audio: data.chant.audio || "",
-          video: data.chant.video || "",
-          lyrics: {
-            arabic: data.chant.lyrics?.arabic || "",
-            coptic: data.chant.lyrics?.coptic || "",
-            english: data.chant.lyrics?.english || "",
-          },
-        });
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-      navigate("/chants");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchChant = async () => {
+      try {
+        setLoading(true);
+
+        const { data } = await axios.get(`${backendUrl}/api/chants/${id}`);
+
+        if (data.success) {
+          setFormData({
+            title: data.chant.title || "",
+            category: data.chant.category || "Other",
+            image: data.chant.image || "",
+            audio: data.chant.audio || "",
+            video: data.chant.video || "",
+            lyrics: {
+              arabic: data.chant.lyrics?.arabic || "",
+              coptic: data.chant.lyrics?.coptic || "",
+              english: data.chant.lyrics?.english || "",
+            },
+          });
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || error.message);
+        navigate("/chants");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchChant();
-  }, [id]);
+  }, [backendUrl, id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

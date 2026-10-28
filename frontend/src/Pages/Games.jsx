@@ -1,4 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import Pagination from "../Components/Pagination.jsx";
+import usePaginatedList from "../hooks/usePaginatedList.js";
+import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
@@ -10,15 +12,12 @@ const Games = () => {
   const navigate = useNavigate();
   const { backendUrl, userData, isLoggedin } = useContext(AppContent);
 
-  const [games, setGames] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const [search, setSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("0");
 
-  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
-
   const canManageGames = useMemo(() => {
+    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+
     const roles = Array.isArray(userData?.role)
       ? userData.role
       : userData?.role
@@ -28,46 +27,21 @@ const Games = () => {
     return roles.some((role) => allowedRoles.includes(role));
   }, [userData]);
 
-  const fetchGames = async (currentSearch = "", currentYear = "") => {
-    try {
-      setLoading(true);
-
-      const params = new URLSearchParams();
-
-      if (currentSearch.trim()) params.append("search", currentSearch.trim());
-      if (Number(currentYear) > 0) params.append("year", currentYear);
-
-      const url = `${backendUrl}/api/games${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
-
-      const { data } = await axios.get(url);
-
-      if (data.success) {
-        setGames(data.games);
-      } else {
-        toast.error(data.message || "Failed to load games");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGames();
-  }, []);
+  const { items: games, loading, pagination, setPage, setFilters, refresh } = usePaginatedList({
+    url: `${backendUrl}/api/games`,
+    dataKey: "games",
+    initialFilters: { search: "", year: "" },
+  });
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchGames(search, yearFilter);
+    setFilters({ search, year: yearFilter });
   };
 
   const clearFilters = () => {
     setSearch("");
     setYearFilter("0");
-    fetchGames("", "");
+    setFilters({ search: "", year: "" });
   };
 
   const deleteGameHandler = async (gameId) => {
@@ -82,7 +56,7 @@ const Games = () => {
 
       if (data.success) {
         toast.success(data.message || "Game deleted successfully");
-        fetchGames(search, yearFilter);
+        refresh();
       } else {
         toast.error(data.message || "Failed to delete game");
       }
@@ -276,6 +250,7 @@ const handleViewGame = (game) => {
                   ))}
                 </div>
               )}
+              <Pagination pagination={pagination} onPageChange={setPage} loading={loading} />
             </section>
           </div>
         </main>

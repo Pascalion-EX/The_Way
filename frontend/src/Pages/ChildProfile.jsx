@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   BriefcaseBusiness,
@@ -92,7 +92,7 @@ const ChildProfiles = () => {
   // FETCH CHILDREN
   // ======================================================
 
-  const fetchChildren = async () => {
+  const fetchChildren = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -120,7 +120,7 @@ const ChildProfiles = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL]);
 
   // ======================================================
   // INITIAL LOAD
@@ -128,7 +128,7 @@ const ChildProfiles = () => {
 
   useEffect(() => {
     fetchChildren();
-  }, []);
+  }, [fetchChildren]);
 
   // ======================================================
   // HANDLE FORM CHANGE

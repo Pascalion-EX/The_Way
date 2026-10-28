@@ -29,34 +29,35 @@ const ChantViewer = () => {
       ? userData.role.includes(role)
       : userData?.role === role
   );
-  const fetchChant = async () => {
-    try {
-      setLoading(true);
-
-      const { data } = await axios.get(`${backendUrl}/api/chants/${id}`);
-
-      if (data.success) {
-        setChant(data.chant);
-
-        if (data.chant.lyrics?.arabic) {
-          setLanguage("arabic");
-        } else if (data.chant.lyrics?.coptic) {
-          setLanguage("coptic");
-        } else {
-          setLanguage("english");
-        }
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-      navigate("/chants");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
+    const fetchChant = async () => {
+      try {
+        setLoading(true);
+
+        const { data } = await axios.get(`${backendUrl}/api/chants/${id}`);
+
+        if (data.success) {
+          setChant(data.chant);
+
+          if (data.chant.lyrics?.arabic) {
+            setLanguage("arabic");
+          } else if (data.chant.lyrics?.coptic) {
+            setLanguage("coptic");
+          } else {
+            setLanguage("english");
+          }
+        }
+      } catch (error) {
+        toast.error(error.response?.data?.message || error.message);
+        navigate("/chants");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchChant();
-  }, [id]);
+  }, [backendUrl, id, navigate]);
 
   useEffect(() => {
     setCurrentSlide(0);

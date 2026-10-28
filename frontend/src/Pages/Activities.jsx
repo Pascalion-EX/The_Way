@@ -1,4 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import Pagination from "../Components/Pagination.jsx";
+import usePaginatedList from "../hooks/usePaginatedList.js";
+import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
@@ -11,14 +13,11 @@ const Activities = () => {
   const navigate = useNavigate();
   const { backendUrl, userData, isLoggedin } = useContext(AppContent);
 
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const [search, setSearch] = useState("");
 
-  const allowedRoles = ["pascal", "admin", "leader", "pamela"];
-
   const canManageActivities = useMemo(() => {
+    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+
     const roles = Array.isArray(userData?.role)
       ? userData.role
       : userData?.role
@@ -28,46 +27,20 @@ const Activities = () => {
     return roles.some((role) => allowedRoles.includes(role));
   }, [userData]);
 
-  const fetchActivities = async (currentSearch = "") => {
-    try {
-      setLoading(true);
-
-      const params = new URLSearchParams();
-
-      if (currentSearch.trim()) {
-        params.append("search", currentSearch.trim());
-      }
-
-      const url = `${backendUrl}/api/activities${
-        params.toString() ? `?${params.toString()}` : ""
-      }`;
-
-      const { data } = await axios.get(url);
-
-      if (data.success) {
-        setActivities(data.activities);
-      } else {
-        toast.error(data.message || "Failed to load activities");
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchActivities();
-  }, []);
+  const { items: activities, loading, pagination, setPage, setFilters, refresh } = usePaginatedList({
+    url: `${backendUrl}/api/activities`,
+    dataKey: "activities",
+    initialFilters: { search: "" },
+  });
 
   const handleSearch = (e) => {
     e.preventDefault();
-    fetchActivities(search);
+    setFilters({ search });
   };
 
   const clearFilters = () => {
     setSearch("");
-    fetchActivities("");
+    setFilters({ search: "" });
   };
 
   const deleteActivityHandler = async (activityId) => {
@@ -84,7 +57,7 @@ const Activities = () => {
 
       if (data.success) {
         toast.success(data.message || "Activity deleted successfully");
-        fetchActivities(search);
+        refresh();
       } else {
         toast.error(data.message || "Failed to delete activity");
       }
@@ -270,6 +243,7 @@ const Activities = () => {
                 ))}
               </div>
             )}
+            <Pagination pagination={pagination} onPageChange={setPage} loading={loading} />
           </section>
         </div>
 
