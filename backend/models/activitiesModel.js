@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { isValidVideoUrl, VIDEO_URL_ERROR } from "../../shared/videoUrls.mjs";
+import { isValidActivityVideoUrl, ACTIVITY_VIDEO_URL_ERROR } from "../../shared/videoUrls.mjs";
 
 mongoose.set("sanitizeFilter", true);
 mongoose.set("strictQuery", true);
@@ -28,7 +28,7 @@ const activitySchema = new mongoose.Schema(
     },
     video: {
       type: String,
-      validate: { validator: isValidVideoUrl, message: VIDEO_URL_ERROR },
+      validate: { validator: isValidActivityVideoUrl, message: ACTIVITY_VIDEO_URL_ERROR },
       required: false,
       trim: true,
     },

@@ -4,6 +4,7 @@ const shareHosts = new Set(["youtu.be", "www.youtu.be"]);
 const videoIdPattern = /^[A-Za-z0-9_-]{11}$/;
 
 export const VIDEO_URL_ERROR = "Use an HTTPS YouTube video link or a direct .mp4, .webm, .ogv, or .m4v video URL.";
+export const ACTIVITY_VIDEO_URL_ERROR = "Use an HTTPS YouTube or Pinterest Pin link, a pin.it share link, or a direct .mp4, .webm, .ogv, or .m4v video URL.";
 export const VIDEO_IFRAME_ALLOW = "autoplay; encrypted-media; picture-in-picture; fullscreen";
 // YouTube needs scripts and its own origin for playback/API access. Forms,
 // popups, downloads, and navigation of the parent page remain blocked.
@@ -60,3 +61,26 @@ export const normalizeVideoUrl = (value) => {
 };
 
 export const isValidVideoUrl = (value) => normalizeVideoUrl(value) !== null;
+
+export const getPinterestPinUrl = (value) => {
+  const url = parseVideoUrl(value);
+  if (!url) return "";
+  if (url.hostname === "pin.it") {
+    const token = /^\/([A-Za-z0-9]{1,64})\/?$/.exec(url.pathname)?.[1];
+    return token ? `https://pin.it/${token}/` : "";
+  }
+  // Accept Pinterest's main domain and locale subdomains, never lookalikes.
+  if (!/^(?:(?:www|[a-z]{2})\.)?pinterest\.com$/.test(url.hostname)) return "";
+  const pinId = /^\/pin\/([0-9]{1,30})\/?$/.exec(url.pathname)?.[1];
+  return pinId ? `https://www.pinterest.com/pin/${pinId}/` : "";
+};
+
+export const getPinterestEmbedUrl = (value) => {
+  const pinUrl = getPinterestPinUrl(value);
+  const pinId = /^https:\/\/www\.pinterest\.com\/pin\/([0-9]+)\/$/.exec(pinUrl)?.[1];
+  // Short links stay external: they cannot identify a Pin until Pinterest resolves them.
+  return pinId ? `https://assets.pinterest.com/ext/embed.html?id=${pinId}` : "";
+};
+
+export const normalizeActivityVideoUrl = (value) => getPinterestPinUrl(value) || normalizeVideoUrl(value);
+export const isValidActivityVideoUrl = (value) => normalizeActivityVideoUrl(value) !== null;

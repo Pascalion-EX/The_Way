@@ -210,7 +210,7 @@ const ActivitiesViewer = () => {
                     Activity Video
                   </h2>
 
-                  <ContentVideo video={activity.video} title={`${activity.name || "Activity"} video`} />
+                  <ContentVideo video={activity.video} title={`${activity.name || "Activity"} video`} allowPinterest />
                 </section>
               )}
 
