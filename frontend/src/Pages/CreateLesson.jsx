@@ -1,3 +1,4 @@
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +29,7 @@ const CreateLesson = () => {
   const navigate = useNavigate();
   const { backendUrl, userData } = useContext(AppContent);
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [year, setYear] = useState("");
@@ -138,6 +140,11 @@ const CreateLesson = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeVideoUrl(video) === null) {
       toast.error(VIDEO_URL_ERROR);
@@ -334,16 +341,11 @@ const CreateLesson = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Image URL
-                    </label>
-
-                    <input
-                      type="text"
+                    <ImageUpload
                       value={image}
-                      onChange={(e) => setImage(e.target.value)}
-                      placeholder="Image URL"
-                      className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                      onChange={setImage}
+                      onUploadingChange={setImageUploading}
+                      disabled={isSubmitting || imageUploading}
                       required
                     />
                   </div>
@@ -498,7 +500,7 @@ const CreateLesson = () => {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting
@@ -509,7 +511,7 @@ const CreateLesson = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/lessons")}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl border border-gray-300 px-8 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"
                 >
                   Cancel

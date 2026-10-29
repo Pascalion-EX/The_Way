@@ -28,7 +28,9 @@ The supplied [Compose stack](../DOCKER.md) publishes only Traefik on TCP 80/443
 and UDP 443 for HTTP/3. Traefik handles HTTPS certificates and redirects, routes
 `/api`, `/api/*`, `/health/live`, and `/health/ready` directly to `api:4000` and
 `api2:4000`, and balances requests across healthy API containers. Other paths
-go to Caddy at `web:80` over the private Docker network.
+go to Caddy at `web:80` over the private Docker network. Caddy also serves
+uploaded images at `/uploads/` from its read-only mount of `uploads_data`;
+missing uploads return 404 instead of React HTML.
 
 Caddy serves the React files over HTTP only. It has no API upstream setting,
 public port binding, or certificate responsibility. A standalone preview
@@ -48,7 +50,9 @@ public `/health/ready` to check the API through Traefik.
 
 ## API URL at build time
 
-Leave `VITE_BACKEND_URL` empty for the single-VPS setup. Browser requests use the frontend origin, and Traefik routes `/api` directly to the API containers. The routing configuration is not embedded in browser JavaScript.
+Leave `VITE_BACKEND_URL` empty for the single-VPS setup. Browser requests use the frontend origin, and Traefik routes `/api` directly to the API containers. The routing configuration is not embedded in browser JavaScript. Locally,
+Vite proxies `/uploads` to port 4000. Uploaded image paths also resolve against
+`VITE_BACKEND_URL` when a separate API origin is configured.
 
 If a separately hosted API is needed, override the public build argument:
 

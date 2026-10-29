@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
@@ -114,7 +115,7 @@ const CampDetails = () => {
       <>
         {camp.image && (
           <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
-            <img
+            <ContentImage
               src={camp.image}
               alt={camp.title}
               className="h-44 w-full object-cover sm:h-72 lg:h-96"

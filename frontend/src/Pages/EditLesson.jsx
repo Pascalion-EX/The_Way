@@ -1,3 +1,4 @@
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
@@ -83,6 +84,7 @@ const EditLesson = () => {
 
   const passedLesson = location.state?.lesson;
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [lesson, setLesson] = useState(
     passedLesson || null
   );
@@ -262,6 +264,11 @@ const EditLesson = () => {
 
   const updateLessonHandler = async (e) => {
     e?.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeVideoUrl(video) === null) {
       toast.error(VIDEO_URL_ERROR);
@@ -517,17 +524,12 @@ const EditLesson = () => {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Image URL
-                    </label>
-
-                    <input
-                      type="text"
+                    <ImageUpload
                       value={image}
-                      onChange={(e) =>
-                        setImage(e.target.value)
-                      }
-                      className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                      onChange={setImage}
+                      onUploadingChange={setImageUploading}
+                      disabled={loadingUpdate || imageUploading}
+                      required
                     />
                   </div>
                 </div>
@@ -694,7 +696,7 @@ const EditLesson = () => {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
-                  disabled={loadingUpdate}
+                  disabled={loadingUpdate || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-6 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {loadingUpdate
@@ -707,7 +709,7 @@ const EditLesson = () => {
                   onClick={() =>
                     navigate("/lessons")
                   }
-                  disabled={loadingUpdate}
+                  disabled={loadingUpdate || imageUploading}
                   className="h-12 w-full rounded-xl border border-gray-300 px-6 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"
                 >
                   Cancel

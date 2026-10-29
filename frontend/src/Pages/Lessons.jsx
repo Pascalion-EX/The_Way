@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import Pagination from "../Components/Pagination.jsx";
 import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, {
@@ -396,7 +397,7 @@ const Lessons = () => {
                           {/* Image */}
 
                           {lesson.image && (
-                            <img
+                            <ContentImage
                               src={
                                 lesson.image
                               }

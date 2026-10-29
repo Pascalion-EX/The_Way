@@ -15,3 +15,5 @@ shared/*
 deployment/secrets/
 deployment/backups/
 frontend/dist/
+uploads/*
+!uploads/.gitkeep

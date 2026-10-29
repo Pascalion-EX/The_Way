@@ -1,3 +1,5 @@
+import ContentImage from "../Components/ContentImage.jsx";
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,6 +38,7 @@ const CreateGame = () => {
 
   const { backendUrl, userData } = useContext(AppContent);
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [name, setName] = useState("");
   const [materials, setMaterials] = useState("");
   const [explanation, setExplanation] = useState("");
@@ -67,6 +70,11 @@ const CreateGame = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeVideoUrl(video) === null) {
       toast.error(VIDEO_URL_ERROR);
@@ -211,28 +219,17 @@ const CreateGame = () => {
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={name}
                     onChange={(event) => setName(event.target.value)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     required
                   />
                 </div>
 
                 <div>
-                  <label
-                    htmlFor="game-image"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Image URL
-                  </label>
-
-                  <input
-                    id="game-image"
-                    type="url"
-                    placeholder="https://example.com/game-image.jpg"
-                    className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                  <ImageUpload
                     value={image}
-                    onChange={(event) => setImage(event.target.value)}
-                    disabled={isSubmitting}
-                  
+                    onChange={setImage}
+                    onUploadingChange={setImageUploading}
+                    disabled={isSubmitting || imageUploading}
                   />
                 </div>
 
@@ -254,13 +251,13 @@ const CreateGame = () => {
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={video}
                     onChange={(event) => setVideo(event.target.value)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                   />
                 </div>
 
                 {image.trim() && (
                   <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-                    <img
+                    <ContentImage
                       src={image}
                       alt="Game preview"
                       className="h-56 w-full object-cover sm:h-72"
@@ -286,7 +283,7 @@ const CreateGame = () => {
                     className="min-h-[180px] w-full resize-y rounded-2xl border border-gray-300 px-4 py-4 text-sm leading-6 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={materials}
                     onChange={(event) => setMaterials(event.target.value)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     required
                   />
                 </div>
@@ -306,7 +303,7 @@ const CreateGame = () => {
                     className="min-h-[280px] w-full resize-y rounded-2xl border border-gray-300 px-4 py-4 text-sm leading-6 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 sm:min-h-[380px]"
                     value={explanation}
                     onChange={(event) => setExplanation(event.target.value)}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     required
                   />
                 </div>
@@ -315,7 +312,7 @@ const CreateGame = () => {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting ? "Creating..." : "Create Game"}
@@ -324,7 +321,7 @@ const CreateGame = () => {
                 <button
                   type="button"
                   onClick={() => navigate("/games")}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl border border-gray-300 px-8 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   Back to Games
@@ -333,7 +330,7 @@ const CreateGame = () => {
                 <button
                   type="button"
                   onClick={resetForm}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl border border-gray-300 px-8 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   Clear Form

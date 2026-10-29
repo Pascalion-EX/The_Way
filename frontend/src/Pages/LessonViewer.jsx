@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -495,7 +496,7 @@ const LessonViewer = () => {
 
           <article className="relative z-10 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             {lesson.image && (
-              <img
+              <ContentImage
                 src={lesson.image}
                 alt={
                   lesson.title ||

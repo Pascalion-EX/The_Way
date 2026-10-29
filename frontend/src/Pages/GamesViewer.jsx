@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -187,7 +188,7 @@ const GameViewer = () => {
 
           <article className="relative z-10 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             {game.image && (
-              <img
+              <ContentImage
                 src={game.image}
                 alt={game.name || "Game"}
                 className="h-44 w-full object-cover sm:h-72 lg:h-[420px]"

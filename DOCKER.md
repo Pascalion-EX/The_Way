@@ -89,8 +89,9 @@ file, pass `docker compose --env-file /path/to/file ...`.
 
 MongoDB persists to `mongo_data`. On a fresh volume,
 `deployment/mongo-init.js` creates `kerolosafam_db_user` with `readWrite` access to `the_way`.
-An `indexes` job then creates declared indexes and exits successfully before
-either API or the email worker starts. It remains visible as an exited
+An `indexes` job then creates declared indexes. The `uploads-init` job sets
+ownership of the shared uploads folder for the unprivileged API user. Both
+jobs exit successfully before either API or the email worker starts. It remains visible as an exited
 container. Caddy serves the React frontend internally. Traefik waits for Caddy
 and both APIs to become healthy, publishes ports 80/443, redirects HTTP to HTTPS,
 and owns certificate issuance and renewal. Certificate state persists in
@@ -104,7 +105,7 @@ Browser → Traefik (HTTPS / TLS)
 
 [`deployment/traefik/dynamic.yml`](deployment/traefik/dynamic.yml) defines the
 hostname routes, equal-weight API load balancing, readiness checks, security
-headers, and the 100 KB API request limit. Failed readiness checks remove an
+headers, and the 100 KB API request limit (5 MB for `/api/uploads/images`). Failed readiness checks remove an
 API from rotation; if both are unavailable, Traefik returns an error rather
 than frontend HTML. Caddy retains SPA fallback and static asset caching.
 Traefik uses the file provider without a Docker socket mount or public dashboard.
@@ -129,7 +130,7 @@ credential rotation. Keep named volumes when restarting or updating the stack;
 Useful operator commands:
 
 ```bash
-docker compose logs --tail 100 traefik api api2 worker db web
+docker compose logs --tail 100 traefik api api2 worker db web uploads-init
 docker compose run --rm --no-deps indexes
 docker compose exec api node scripts/checkEmail.js
 ```
@@ -139,19 +140,45 @@ After changing runtime credentials, recreate the affected services with
 container environment. Image build/start and HTTPS still need to be verified
 on a Docker-enabled host with the actual domain and SMTP account.
 
+## Uploaded images
+
+Lessons, games, activities, trips, and chants use image file pickers on their
+create/edit pages. Existing image links remain visible until replaced. Audio
+and video fields retain their current behavior. The upload endpoint requires a
+verified staff account and shares a 60-upload hourly allowance per account
+across both API containers. JPEG, PNG, and still WebP images up to 5 MB and
+20 megapixels are decoded, stripped of metadata, resized to fit 2560 × 2560,
+and saved as WebP using [Sharp](https://sharp.pixelplumbing.com/api-output/).
+
+The local `uploads/` folder is created automatically and its files stay out of
+Git and image builds. In Compose, `uploads_data` persists at `/app/uploads` in
+both APIs. Caddy mounts the same volume read-only at `/srv/uploads` and serves
+`/uploads/<generated-name>.webp` without React fallback. Uploaded content images
+are publicly accessible at their generated URLs. Certificate and database
+volumes remain separate. Keep all three volumes across updates.
+
+Publish matching backend and frontend images with these Compose changes. The
+`uploads-init` service uses the backend image and initializes permissions
+before the APIs and Caddy start; no host-directory ownership change is needed.
+Do not remove images merely because a form is cancelled or one record is
+removed: lesson variants and other records can share an image URL. Abandoned
+uploads remain stored; review references before pruning files.
+
 ## Backup and recovery
 
 ```bash
 docker compose --profile tools run --rm backup
 ```
 
-This writes a compressed archive under the ignored `deployment/backups/`
-directory. `BACKUP_RETENTION_DAYS` defaults to 7; older completed archives are
+This writes a database `.archive.gz` and a companion `.uploads.tar.gz` with
+the same timestamp under the ignored `deployment/backups/` directory. `BACKUP_RETENTION_DAYS` defaults to 7; older completed archives are
 removed after a successful dump. Schedule this command on the host for regular
 backups and copy the archives off the VPS. The tools use a private temporary
 config file for the password, following the
 [MongoDB tools documentation](https://www.mongodb.com/docs/database-tools/mongodump/#std-option-mongodump.--config).
-The temporary file and incomplete archive are removed when the command exits.
+Temporary configuration and incomplete archives are removed when the command
+exits. Copy both completed archives off the VPS; a database backup alone does
+not contain uploaded image bytes.
 
 For a consistent backup of this standalone database, quiesce writes first:
 stop `traefik`, `web`, `api`, `api2`, and `worker`, run the backup, then start the stack
@@ -169,5 +196,8 @@ docker compose run --rm --no-deps indexes
 docker compose up -d --wait
 ```
 
-Collections absent from the archive remain in the database. Validate recovery
+When the matching `.uploads.tar.gz` is present, recovery validates and restores
+those images before restoring the database. Older releases have no companion
+archive, so their database archives remain usable. Existing image files are
+retained. Collections absent from the archive remain in the database. Validate recovery
 on a separate test database before relying on backups for production.

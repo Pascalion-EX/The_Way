@@ -48,3 +48,12 @@ The Compose API/worker/index services share `backend/Dockerfile`. Follow the
 root [Compose setup](../DOCKER.md) to run the frontend, both APIs, the email
 worker, and MongoDB together. It supplies runtime credentials from a root `.env`
 through `process.env`; `config/secrets.js` exposes them to backend callers.
+
+
+Image uploads use `UPLOADS_DIR` (default: the repository’s `uploads/` folder;
+`/app/uploads` in the image). Mount persistent writable storage there when
+running a standalone API. Both Compose API containers share `uploads_data`,
+initialized by the one-off `uploads-init` service. Do not bake uploaded files
+into images. `/api/uploads/images` accepts JPEG, PNG, and WebP file bytes with
+the corresponding `Content-Type`; it requires a verified staff account and
+returns a relative `/uploads/…webp` URL for the content’s existing image field.

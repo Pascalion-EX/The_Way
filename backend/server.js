@@ -22,10 +22,13 @@ import attendanceRouter from "./routes/attendanceRoutes.js";
 import { startEmailWorker } from "./services/emailQueue.js";
 import transporter from "./config/nodemailer.js";
 import { requestMetrics, startRuntimeMetrics } from "./middleware/requestMetrics.js";
+import uploadRouter, { createUploadedImagesRouter } from "./routes/uploadRoutes.js";
+import { ensureUploadsDirectory } from "./services/imageUploads.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
 validateEnvironment();
+await ensureUploadsDirectory();
 await connectDB();
 const stopEmailWorker = process.env.EMAIL_WORKER_ENABLED === "false" ? async () => {} : startEmailWorker();
 const stopMetrics = process.env.REQUEST_LOGS === "true" ? startRuntimeMetrics() : () => {};
@@ -47,6 +50,8 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use("/api/uploads", uploadRouter);
+app.use("/uploads", createUploadedImagesRouter());
 
 app.get("/", (req, res) => res.send("API IS WORKING!, and nodeman is working"));
 app.get("/health/live", (req, res) => res.json({ status: "ok" }));

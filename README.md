@@ -1039,7 +1039,9 @@ Docker images are not included in a Git push.
 [`compose.yaml`](compose.yaml) runs MongoDB, two API processes, a dedicated email
 worker, an internal Caddy frontend, and Traefik for public HTTPS and API load
 balancing on one VPS. It creates the application database
-user on a fresh volume and creates indexes before starting the APIs. To start
+user on a fresh volume and creates indexes before starting the APIs. Image
+file pickers replace image-link inputs; uploaded images persist in a shared
+`uploads_data` volume and are served by Caddy. Local development uses `uploads/`. To start
 the deployment after completing the guide's workflow, registry override,
 production `.env`, and registry-login setup, run from the VPS repository root:
 

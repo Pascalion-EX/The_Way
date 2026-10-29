@@ -1,3 +1,4 @@
+import ImageUpload from "../Components/ImageUpload.jsx";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
@@ -27,6 +28,7 @@ const CreateCamp = () => {
   const navigate = useNavigate();
   const { backendUrl, userData } = useContext(AppContent);
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
@@ -64,6 +66,11 @@ const CreateCamp = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (!canCreate) {
       toast.error("You are not allowed to create Trips");
@@ -184,14 +191,15 @@ const CreateCamp = () => {
                   required
                 />
 
-                <input
-                  type="text"
-                  placeholder="Image URL"
-                  className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 md:col-span-2"
-                  value={image}
-                  onChange={(e) => setImage(e.target.value)}
-                  required
-                />
+                <div className="md:col-span-2">
+                  <ImageUpload
+                    value={image}
+                    onChange={setImage}
+                    onUploadingChange={setImageUploading}
+                    disabled={isSubmitting || imageUploading}
+                    required
+                  />
+                </div>
 
                 <select
                   className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 md:col-span-2"
@@ -251,7 +259,7 @@ const CreateCamp = () => {
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting ? "Creating..." : "Create Trip"}

@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import {
@@ -162,7 +163,7 @@ const ActivitiesViewer = () => {
 
           <article className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
             {activity.image && (
-              <img
+              <ContentImage
                 src={activity.image}
                 alt={activity.name || "Activity"}
                 className="h-56 w-full object-cover sm:h-80 lg:h-[440px]"

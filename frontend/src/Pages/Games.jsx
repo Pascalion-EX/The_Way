@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import Pagination from "../Components/Pagination.jsx";
 import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, { useContext, useMemo, useState } from "react";
@@ -192,7 +193,7 @@ const handleViewGame = (game) => {
                       className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
                     >
                       {/* Image */}
-                      <img
+                      <ContentImage
                         src={game.image}
                         alt={game.title}
                         className="h-40 w-full object-cover sm:h-48 lg:h-56"

@@ -7,6 +7,9 @@ export default defineConfig({
   build: { manifest: true },
   plugins: [react(), tailwindcss()],
   server: {
+    proxy: {
+      '/uploads': 'http://localhost:4000',
+    },
     fs: {
       allow: [
         searchForWorkspaceRoot(fileURLToPath(new URL('.', import.meta.url))),

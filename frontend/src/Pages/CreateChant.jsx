@@ -1,3 +1,4 @@
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useState } from "react";
 import Navbar from "../Components/Navbar";
@@ -11,6 +12,7 @@ const CreateChant = () => {
   const navigate = useNavigate();
   const { backendUrl } = useContext(AppContent);
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     category: "Other",
@@ -48,6 +50,11 @@ const CreateChant = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeVideoUrl(formData.video) === null) {
       toast.error(VIDEO_URL_ERROR);
@@ -145,15 +152,11 @@ const CreateChant = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">
-                  Image URL
-                </label>
-                <input
-                  name="image"
+                <ImageUpload
                   value={formData.image}
-                  onChange={handleChange}
-                  placeholder="Optional image URL"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-900"
+                  onChange={(image) => setFormData((prev) => ({ ...prev, image }))}
+                  onUploadingChange={setImageUploading}
+                  disabled={loading || imageUploading}
                 />
               </div>
 
@@ -227,7 +230,7 @@ const CreateChant = () => {
             <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || imageUploading}
                 className="px-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition disabled:opacity-50"
               >
                 {loading ? "Creating..." : "Create Chant"}

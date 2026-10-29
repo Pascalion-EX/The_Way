@@ -27,6 +27,9 @@ COPY --chown=node:node backend/services ./services
 COPY --chown=node:node backend/utils ./utils
 COPY --chown=node:node shared /app/shared
 
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+ENV UPLOADS_DIR=/app/uploads
+
 USER node
 EXPOSE 4000
 STOPSIGNAL SIGTERM

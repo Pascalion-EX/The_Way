@@ -1,3 +1,4 @@
+import ContentImage from "./ContentImage.jsx";
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
@@ -97,7 +98,7 @@ const ChantCard = ({ chant, refreshChants }) => {
         className="cursor-pointer"
       >
         {chant.image ? (
-          <img
+          <ContentImage
             src={chant.image}
             alt={chant.title}
             className="w-full h-48 object-cover"

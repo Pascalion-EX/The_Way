@@ -1,3 +1,5 @@
+import ContentImage from "../Components/ContentImage.jsx";
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
@@ -52,6 +54,7 @@ const EditGame = () => {
 
   const passedGame = location.state?.game;
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [game, setGame] = useState(
     passedGame || null
   );
@@ -197,6 +200,11 @@ const EditGame = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeVideoUrl(video) === null) {
       toast.error(VIDEO_URL_ERROR);
@@ -443,7 +451,7 @@ const EditGame = () => {
                         event.target.value
                       )
                     }
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
                     required
                   />
@@ -452,28 +460,11 @@ const EditGame = () => {
                 {/* Image */}
 
                 <div>
-                  <label
-                    htmlFor="game-image"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Image URL
-                    <span className="ml-1 font-normal text-gray-400">
-                      optional
-                    </span>
-                  </label>
-
-                  <input
-                    id="game-image"
-                    type="url"
+                  <ImageUpload
                     value={image}
-                    onChange={(event) =>
-                      setImage(
-                        event.target.value
-                      )
-                    }
-                    placeholder="https://example.com/game-image.jpg"
-                    disabled={isSubmitting}
-                    className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+                    onChange={setImage}
+                    onUploadingChange={setImageUploading}
+                    disabled={isSubmitting || imageUploading}
                   />
                 </div>
 
@@ -481,7 +472,7 @@ const EditGame = () => {
 
                 {image.trim() && (
                   <div className="overflow-hidden rounded-2xl border border-gray-200 bg-gray-50">
-                    <img
+                    <ContentImage
                       src={image}
                       alt={
                         name ||
@@ -519,7 +510,7 @@ const EditGame = () => {
                       )
                     }
                     placeholder="https://youtube.com/watch?v=..."
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
                   />
                 </div>
@@ -543,7 +534,7 @@ const EditGame = () => {
                       )
                     }
                     rows={7}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     className="min-h-[180px] w-full resize-y rounded-2xl border border-gray-300 px-4 py-4 text-sm leading-6 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
                     required
                   />
@@ -568,7 +559,7 @@ const EditGame = () => {
                       )
                     }
                     rows={12}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || imageUploading}
                     className="min-h-[280px] w-full resize-y rounded-2xl border border-gray-300 px-4 py-4 text-sm leading-6 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 sm:min-h-[380px]"
                     required
                   />
@@ -580,7 +571,7 @@ const EditGame = () => {
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting
@@ -593,7 +584,7 @@ const EditGame = () => {
                   onClick={() =>
                     navigate("/games")
                   }
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || imageUploading}
                   className="h-12 w-full rounded-xl border border-gray-300 px-8 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   Cancel

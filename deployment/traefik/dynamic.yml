@@ -2,6 +2,14 @@
 # Requests go directly to the API containers, keeping TRUST_PROXY=1 accurate.
 http:
   routers:
+    image-upload:
+      rule: 'Host(`{{ env "DOMAIN" }}`) && Path(`/api/uploads/images`)'
+      priority: 200
+      entryPoints: [websecure]
+      service: api
+      middlewares: [security-headers, image-body-limit]
+      tls:
+        certResolver: letsencrypt
     api:
       rule: 'Host(`{{ env "DOMAIN" }}`) && (Path(`/api`) || PathPrefix(`/api/`) || Path(`/health/live`) || Path(`/health/ready`))'
       priority: 100
@@ -43,6 +51,10 @@ http:
           status: 200
 
   middlewares:
+    image-body-limit:
+      buffering:
+        maxRequestBodyBytes: 5242880
+        memRequestBodyBytes: 5242880
     api-body-limit:
       buffering:
         maxRequestBodyBytes: 100000

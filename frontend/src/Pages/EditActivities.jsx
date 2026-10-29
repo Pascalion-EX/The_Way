@@ -1,3 +1,5 @@
+import ContentImage from "../Components/ContentImage.jsx";
+import ImageUpload from "../Components/ImageUpload.jsx";
 import { normalizeActivityVideoUrl, ACTIVITY_VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
@@ -41,6 +43,7 @@ const EditActivities = () => {
   const passedActivity =
     location.state?.activity;
 
+  const [imageUploading, setImageUploading] = useState(false);
   const [activity, setActivity] =
     useState(passedActivity || null);
 
@@ -140,6 +143,11 @@ const EditActivities = () => {
 
   const updateActivityHandler = async (e) => {
     e.preventDefault();
+
+    if (imageUploading) {
+      toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
 
     if (normalizeActivityVideoUrl(video) === null) {
       toast.error(ACTIVITY_VIDEO_URL_ERROR);
@@ -311,17 +319,12 @@ const EditActivities = () => {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Image URL
-                    </label>
-
-                    <input
-                      type="text"
+                    <ImageUpload
                       value={image}
-                      onChange={(e) =>
-                        setImage(e.target.value)
-                      }
-                      className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                      onChange={setImage}
+                      onUploadingChange={setImageUploading}
+                      disabled={loadingUpdate || imageUploading}
+                      required
                     />
                   </div>
 
@@ -389,7 +392,7 @@ const EditActivities = () => {
                     </h2>
                   </div>
 
-                  <img
+                  <ContentImage
                     src={image}
                     alt={name || "Activity preview"}
                     className="h-56 w-full object-cover sm:h-72"
@@ -402,7 +405,7 @@ const EditActivities = () => {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
-                  disabled={loadingUpdate}
+                  disabled={loadingUpdate || imageUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {loadingUpdate
@@ -412,7 +415,7 @@ const EditActivities = () => {
 
                 <button
                   type="button"
-                  disabled={loadingUpdate}
+                  disabled={loadingUpdate || imageUploading}
                   onClick={() =>
                     navigate("/activities")
                   }

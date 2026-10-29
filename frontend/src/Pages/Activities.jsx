@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import Pagination from "../Components/Pagination.jsx";
 import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, { useContext, useMemo, useState } from "react";
@@ -179,7 +180,7 @@ const Activities = () => {
                     className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
                   >
                     {/* Image */}
-                    <img
+                    <ContentImage
                       src={activity.image}
                       alt={activity.name}
                       className="h-40 w-full object-cover sm:h-48 lg:h-56"

@@ -15,6 +15,9 @@ services:
   indexes:
     <<: *ghcr-api
 
+  uploads-init:
+    <<: *ghcr-api
+
   web:
     image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
     build: !reset null

@@ -164,6 +164,8 @@ services:
     <<: *ghcr-api
   indexes:
     <<: *ghcr-api
+  uploads-init:
+    <<: *ghcr-api
   web:
     image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
     build: !reset null
@@ -517,7 +519,9 @@ The startup sequence is:
 
 1. MongoDB initializes its persistent volume and creates the `kerolosafam_db_user` application
    user with access to `the_way`.
-2. The `indexes` job creates declared database indexes and exits successfully.
+2. The `indexes` job creates declared database indexes. The `uploads-init` job
+   creates the shared uploads folder and assigns ownership to the API user.
+   Both jobs exit successfully before the APIs start.
 3. Both API processes and the dedicated email worker start.
 4. Caddy serves the frontend on internal HTTP port 80.
 5. Traefik starts after Caddy and both APIs are healthy, obtains TLS certificates,
@@ -528,7 +532,7 @@ Expected states:
 | Service | Expected state |
 | --- | --- |
 | `db` | Running and healthy |
-| `indexes` | Exited with code `0`; this is expected |
+| `indexes`, `uploads-init` | Exited with code `0`; this is expected |
 | `api`, `api2` | Running and healthy |
 | `worker` | Running; this service has no healthcheck |
 | `web` | Running and healthy (internal Caddy) |
@@ -538,7 +542,7 @@ Expected states:
 If startup fails, inspect logs before retrying:
 
 ```bash
-sudo docker compose logs --tail 100 traefik db indexes api api2 worker web
+sudo docker compose logs --tail 100 traefik db indexes uploads-init api api2 worker web
 ```
 
 A failed `up --wait` can leave some containers running. Caddy and Traefik
@@ -590,8 +594,9 @@ exists. Manage later role changes through the admin dashboard.
 ## 13. Create a backup and copy it off the VPS
 
 The database is stored in the named volume `the-way_mongo_data`. Traefik’s
-certificate state is stored in `the-way_traefik_data`. Keep these volumes
-through ordinary deployments.
+certificate state is stored in `the-way_traefik_data`. Uploaded images are
+stored in `the-way_uploads_data`, shared by both APIs and mounted read-only
+by Caddy. Keep all three volumes through ordinary deployments.
 
 For a consistent backup of the current standalone database, stop application
 writes during a maintenance window. The site is unavailable while these
@@ -609,8 +614,9 @@ sudo ls -lh deployment/backups
 ```
 
 Run the startup command even if the backup command fails, then investigate the
-failure. A successful backup prints an archive path such as
-`/backups/the_way-20261028T120000-1.archive.gz`. Retention cleanup applies only
+failure. A successful backup prints a database archive such as
+`/backups/the_way-20261028T120000-1.archive.gz` and a matching
+`the_way-20261028T120000-1.uploads.tar.gz`. Keep and copy both files. Retention cleanup applies only
 after a successful backup. The command runs once; no backup schedule is
 installed automatically.
 
@@ -618,7 +624,8 @@ The tool runs as root, so make the chosen archive readable by the deployment
 account before copying it. Substitute its actual filename:
 
 ```bash
-sudo chown deploy:deploy deployment/backups/ACTUAL_ARCHIVE.archive.gz
+sudo chown deploy:deploy deployment/backups/ACTUAL_ARCHIVE.archive.gz \
+  deployment/backups/ACTUAL_ARCHIVE.uploads.tar.gz
 ```
 
 **Workstation:**
@@ -626,6 +633,7 @@ sudo chown deploy:deploy deployment/backups/ACTUAL_ARCHIVE.archive.gz
 ```bash
 mkdir -p ~/the-way-backups
 scp deploy@VPS_IP:/home/deploy/apps/The_Way/deployment/backups/ACTUAL_ARCHIVE.archive.gz \
+  deploy@VPS_IP:/home/deploy/apps/The_Way/deployment/backups/ACTUAL_ARCHIVE.uploads.tar.gz \
   ~/the-way-backups/
 ```
 
@@ -726,6 +734,10 @@ Recovery replaces collections present in the archive. Collections absent from
 it remain in the database. Keep an additional backup of the current database
 before recovery when it is readable.
 
+Place the matching `.uploads.tar.gz` beside the database archive before
+recovery. The restore script restores those images when the companion archive
+is present. A database archive alone cannot recover uploaded image files.
+
 **VPS — repository root, using an actual archive filename:**
 
 ```bash
@@ -763,6 +775,7 @@ The workflow in step 1 stops at image publication and requires no VPS access.
 | Compose still references local image names | Confirm `compose.override.yaml` from step 2 exists at the checked-out revision, and use default `sudo docker compose` commands so it is loaded. |
 | Publishing fails with package permissions | Check the publish job's `packages: write` permission, organization policy, and the package's Actions access for this repository if the package already exists. |
 | Browser certificate error or HTTPS unavailable | Check A/AAAA records, inbound TCP 80/443, and `sudo docker compose logs --tail 100 traefik web`. Check whether another service already owns the ports with `sudo ss -lntup`. |
+| `uploads-init` exited with a nonzero status | Check its logs and available disk space. It must be able to create and assign ownership of the uploads volume before the APIs and frontend start. |
 | `indexes` exited with a nonzero status | Read its logs and resolve the database/index error. The APIs intentionally wait for this job to succeed. Exited `0` is normal. |
 | Database is unhealthy after changing credentials | Restore the previous matching `.env` values or rotate the users through MongoDB. Do not erase the volume to fix a password mismatch. |
 | Email verification does not arrive | Run the SMTP check from step 11 and inspect worker logs. Check the provider's credentials, allowed sender, outbound port access, and the recipient's spam folder. |

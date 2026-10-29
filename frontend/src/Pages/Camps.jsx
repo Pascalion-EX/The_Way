@@ -1,3 +1,4 @@
+import ContentImage from "../Components/ContentImage.jsx";
 import Pagination from "../Components/Pagination.jsx";
 import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, { useContext, useMemo, useState } from "react";
@@ -412,7 +413,7 @@ const handleNotifySubmit = async (e) => {
                         className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
                       >
                         {camp.image && (
-                          <img
+                          <ContentImage
                             src={camp.image}
                             alt={camp.title}
                             className="h-56 w-full object-cover"

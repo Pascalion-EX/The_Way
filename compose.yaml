@@ -24,6 +24,7 @@ x-app-env: &app-env
   REQUEST_LOGS: "true"
   QUERY_TIMING_LOGS: "true"
   SLOW_QUERY_MS: "100"
+  UPLOADS_DIR: /app/uploads
 
 x-api: &api
   extends:
@@ -83,15 +84,37 @@ services:
 
   api:
     <<: *api
+    volumes:
+      - uploads_data:/app/uploads
     depends_on: &app-dependencies
       db:
         condition: service_healthy
       indexes:
         condition: service_completed_successfully
+      uploads-init:
+        condition: service_completed_successfully
 
   api2:
     <<: *api
+    volumes:
+      - uploads_data:/app/uploads
     depends_on: *app-dependencies
+
+  uploads-init:
+    <<: *api
+    user: "0:0"
+    command: [node, -e, "const fs=require('node:fs'); fs.mkdirSync('/app/uploads',{recursive:true}); fs.chmodSync('/app/uploads',0o755); fs.chownSync('/app/uploads',1000,1000)"]
+    environment:
+      NODE_OPTIONS: --max-old-space-size=64
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on: []
+    restart: "no"
+    cap_add: [CHOWN, FOWNER]
+    healthcheck:
+      disable: true
+    mem_limit: 128m
+    cpus: 0.1
 
   worker:
     <<: *api
@@ -162,6 +185,11 @@ services:
     extends:
       file: compose.build.yaml
       service: web
+    volumes:
+      - uploads_data:/srv/uploads:ro
+    depends_on:
+      uploads-init:
+        condition: service_completed_successfully
     networks: [private]
     restart: unless-stopped
     mem_limit: 256m
@@ -188,6 +216,7 @@ services:
       - ./deployment/backup-container.sh:/scripts/backup-container.sh:ro
       - ./deployment/restore-container.sh:/scripts/restore-container.sh:ro
       - ./deployment/backups:/backups
+      - uploads_data:/uploads
     networks: [private]
     depends_on:
       db:
@@ -203,3 +232,4 @@ networks:
 volumes:
   mongo_data:
   traefik_data:
+  uploads_data:
