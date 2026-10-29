@@ -7,11 +7,12 @@ import { createChildProfile,
     } from "../controllers/childProfileController.js";
 import userAuth from "../middleware/userAuth.js";
 import { requireStaff } from "../middleware/staffAuth.js";
+import { requireChildProfileAccess } from "../middleware/childProfileAuth.js";
 import express from "express";
 
 const childProfileRouter = express.Router();
 
-childProfileRouter.use(userAuth, requireStaff);
+childProfileRouter.use(userAuth, requireStaff, requireChildProfileAccess);
 
 childProfileRouter.get("/", getAllChildProfiles);
 childProfileRouter.post("/", createChildProfile);

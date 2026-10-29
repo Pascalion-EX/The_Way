@@ -330,7 +330,8 @@ A user can hold multiple roles because `role` is stored as an array.
 | Manage games | `admin`, `leader`, `pascal`, `pamela` |
 | Manage chants | `admin`, `leader`, `pascal`, `pamela` |
 | Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
-| Read/manage child profiles and attendance | `admin`, `leader`, `pascal`, `pamela` |
+| Read/manage child profiles | `pascal`, `pamela` only |
+| Read/manage attendance | `admin`, `leader`, `pascal`, `pamela` |
 | Publish/broadcast/clear/delete shared notifications | `admin`, `leader`, `pascal`, `pamela` |
 | Read own notifications and mark them seen | Any verified account |
 | Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |

@@ -12,7 +12,7 @@ import { canAccessYearOneToThreeActivities } from "../../../shared/pageAccess.mj
 
 const Activities = () => {
   const navigate = useNavigate();
-  const { backendUrl, userData, isLoggedin } = useContext(AppContent);
+  const { backendUrl, userData } = useContext(AppContent);
 
   const [search, setSearch] = useState("");
 

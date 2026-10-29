@@ -217,7 +217,7 @@ test("banned accounts cannot queue password recovery, reset credentials or re-re
   assert.deepEqual(state.user, before);
 });
 
-test("ban mail delivers without verification or OTP, retries SMTP failures and retains its message ID", async (t) => {
+test("ban mail retries the same job after SMTP failures and leaves Message-ID generation to the mailer", async (t) => {
   const state = await setup(t);
   await Promise.all([1, 2, 3].map(() => recordAccessDenial(userId)));
   state.user.isAccountVerified = false;
@@ -226,11 +226,12 @@ test("ban mail delivers without verification or OTP, retries SMTP failures and r
   assert.equal(state.user.emailJobs.ban.status, "queued");
   assert.equal(state.user.emailJobs.ban.lastError, "ECONNECTION");
   assert.equal(state.user.emailJobs.ban.attempts, 1);
+  assert.equal(state.user.emailJobs.ban.id, id);
   state.time += 6000;
   assert.equal(await state.deliver(), true);
   assert.equal(state.mail.length, 1);
   assert.equal(state.mail[0].to, "viewer@example.com");
-  assert.equal(state.mail[0].messageId, `<${id}@the-way.invalid>`);
+  assert.equal(Object.hasOwn(state.mail[0], "messageId"), false);
   assert.equal(state.user.emailJobs.ban, undefined);
   assert.equal(await state.deliver(), false);
 });
@@ -256,10 +257,15 @@ test("page permissions preserve admin/staff distinctions and cover create and ed
   assert.equal(canAccessPage("/%61dmin/", ["parent"]), false);
   assert.equal(pageAccessRoles("/%invalid"), null);
   assert.equal(canAccessPage("/admin", ["parent", "pascal"]), true);
-  for (const page of ["/attendance", "/childrenProfile", "/video-requests", "/create-lesson", "/create-camp", "/create-game", "/create-chant", "/create-activity", "/lessons/123/edit", "/games/123/edit", "/chants/123/edit", "/edit-chant/123", "/activities/123/edit", "/events/create", "/events/123/edit"]) {
+  for (const page of ["/attendance", "/video-requests", "/create-lesson", "/create-camp", "/create-game", "/create-chant", "/create-activity", "/lessons/123/edit", "/games/123/edit", "/chants/123/edit", "/edit-chant/123", "/activities/123/edit", "/events/create", "/events/123/edit"]) {
     assert.ok(pageAccessRoles(page), page);
     assert.equal(canAccessPage(page, ["parent"]), false, page);
     for (const role of ["admin", "leader", "pascal", "pamela"]) assert.equal(canAccessPage(page, role), true, `${page}: ${role}`);
+  }
+  for (const page of ["/childrenProfile", "/CHILDRENPROFILE/", "/%63hildrenProfile"]) {
+    assert.ok(pageAccessRoles(page), page);
+    for (const role of ["admin", "leader", "parent", "unAssigned"]) assert.equal(canAccessPage(page, role), false, `${page}: ${role}`);
+    for (const role of ["pamela", "pascal"]) assert.equal(canAccessPage(page, ["admin", role]), true, `${page}: ${role}`);
   }
   assert.equal(pageAccessRoles("/profile"), null);
 });

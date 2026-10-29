@@ -6,7 +6,7 @@ import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import NotificationBell from "./NotificationBell.jsx";
 import UserAvatar from "./UserAvatar.jsx";
-import { canAccessYearOneToThreeActivities } from "../../../shared/pageAccess.mjs";
+import { canAccessChildrenProfiles, canAccessYearOneToThreeActivities } from "../../../shared/pageAccess.mjs";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -297,7 +297,7 @@ const hasVideoRequestAccess = userData
             >
               Info
             </button>
-                      {hasVideoRequestAccess && (
+                      {canAccessChildrenProfiles(userData?.role) && (
           <button
             onClick={() => navigate("/childrenProfile")}
             className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"

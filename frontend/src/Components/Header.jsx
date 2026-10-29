@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { AppContent } from "../Context/AppContent.js";
 import { useNavigate } from "react-router-dom";
+import { canAccessChildrenProfiles } from "../../../shared/pageAccess.mjs";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -82,7 +83,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           Info
         </button>
 
-                              {hasVideoRequestAccess && (
+                              {canAccessChildrenProfiles(userData?.role) && (
           <button
             onClick={() => navigate("/childrenProfile")}
             className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-gray-50 sm:px-5 sm:text-base"

@@ -1,13 +1,20 @@
 const STAFF = ["admin", "leader", "pascal", "pamela"];
+const CHILD_PROFILE_ROLES = ["pascal", "pamela"];
 const restrictedPages = [
   [/^\/admin\/?$/i, ["admin", "pascal", "pamela"]],
   [/^\/activities\/year-1-3\/?$/i, STAFF, canAccessYearOneToThreeActivities],
-  [/^\/(attendance|childrenProfile|video-requests)\/?$/i, STAFF],
+  [/^\/childrenProfile\/?$/i, CHILD_PROFILE_ROLES],
+  [/^\/(attendance|video-requests)\/?$/i, STAFF],
   [/^\/create-(lesson|camp|game|chant|activity)\/?$/i, STAFF],
   [/^\/(lessons|games|chants|activities)\/[^/]+\/edit\/?$/i, STAFF],
   [/^\/events\/(create|[^/]+\/edit)\/?$/i, STAFF],
   [/^\/edit-chant\/[^/]+\/?$/i, STAFF],
 ];
+
+export function canAccessChildrenProfiles(role) {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.some((value) => CHILD_PROFILE_ROLES.includes(value));
+}
 
 export function canAccessYearOneToThreeActivities(role, assignedClass) {
   const roles = Array.isArray(role) ? role : [role];

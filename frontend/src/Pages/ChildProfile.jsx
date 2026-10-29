@@ -19,6 +19,7 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar.jsx";
+import { canAccessChildrenProfiles } from "../../../shared/pageAccess.mjs";
 
 // ======================================================
 // EMPTY FORM
@@ -69,24 +70,7 @@ const ChildProfiles = () => {
   // PERMISSIONS
   // ======================================================
 
-  const allowedRoles = [
-    "admin",
-    "leader",
-    "pascal",
-    "pamela",
-  ];
-
-  const userRoles = userData
-    ? Array.isArray(userData.role)
-      ? userData.role.map((role) =>
-          String(role).toLowerCase()
-        )
-      : [String(userData.role).toLowerCase()]
-    : [];
-
-  const canManage = userRoles.some((role) =>
-    allowedRoles.includes(role)
-  );
+  const canManage = canAccessChildrenProfiles(userData?.role);
 
   // ======================================================
   // FETCH CHILDREN

@@ -157,7 +157,7 @@ test("every child alias, attendance route, and notification mutation rejects una
   }
 });
 
-test("all four verified staff roles retain access to every protected route", async (t) => {
+test("child profiles require Pascal or Pamela while other staff routes retain all four staff roles", async (t) => {
   const state = stubDatabase(t);
   const app = createApp();
   for (const role of ["admin", "leader", "pascal", "pamela"]) {
@@ -165,6 +165,13 @@ test("all four verified staff roles retain access to every protected route", asy
     for (const route of protectedRoutes) {
       const before = state.businessCalls;
       const result = await request(app, route, state.token);
+      const isChildProfile = /^\/api\/(children|childProfile)(\/|$)/.test(route.path);
+      if (isChildProfile && !["pascal", "pamela"].includes(role)) {
+        assert.equal(result.status, 403, `${role}: ${route.method} ${route.path}`);
+        assert.equal(result.body.code, "CHILD_PROFILE_ACCESS_REQUIRED");
+        assert.equal(state.businessCalls, before, "Denied profile requests must not reach the database");
+        continue;
+      }
       assert.equal(result.status, route.status, `${role}: ${route.method} ${route.path}`);
       assert.equal(result.body.success, true);
       assert.ok(state.businessCalls > before, "Authorized request should reach its real controller");
@@ -194,8 +201,9 @@ test("staff authorization uses current database roles and fails closed on lookup
   const state = stubDatabase(t);
   const app = createApp();
   const route = protectedRoutes[0];
+  state.user.role = ["pamela"];
   assert.equal((await request(app, route, state.token)).status, 200);
-  state.user.role = ["parent"];
+  state.user.role = ["admin"];
   const before = state.businessCalls;
   assert.equal((await request(app, route, state.token)).status, 403);
   assert.equal(state.businessCalls, before, "A still-valid staff JWT must not bypass role revocation");
