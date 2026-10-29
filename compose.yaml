@@ -142,9 +142,9 @@ services:
       - --ping=true
       - --providers.file.directory=/etc/traefik/dynamic
       - --providers.file.watch=true
-      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?Set ACME_EMAIL in .env}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL:?Set ACME_EMAIL in .env}
+      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
       - --serverstransport.forwardingtimeouts.dialtimeout=3s
       - --serverstransport.forwardingtimeouts.responseheadertimeout=45s
     environment:
