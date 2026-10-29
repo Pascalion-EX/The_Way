@@ -59,7 +59,8 @@ test("production environment fails early for missing credentials and non-HTTPS o
   for (const origin of ["http://way.example.org", "https://way.example.org/", "https://way.example.org/path"]) {
     assert.throws(() => validateEnvironment({ ...env, APP_ORIGIN: origin }));
   }
-  assert.match(databaseUrl({ MONGO_APP_PASSWORD: "p@ss:word" }), /p%40ss%3Aword@db/);
+  assert.equal(databaseUrl({ MONGO_APP_PASSWORD: "p@ss:word" }),
+    "mongodb://kerolosafam_db_user:p%40ss%3Aword@db:27017/the_way?authSource=the_way");
 });
 
 test("token signing and verification use the current runtime secret", (t) => {

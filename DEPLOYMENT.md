@@ -419,7 +419,7 @@ nano .env
 | `GHCR_OWNER` | GitHub account or organization in lowercase, matching the published image namespace |
 | `APP_VERSION` | `sha-` followed by the full commit SHA from the successful publish run |
 | `MONGO_ROOT_PASSWORD` | First generated secret, used only by MongoDB |
-| `MONGO_APP_PASSWORD` | Second generated secret, used by the `way` database user |
+| `MONGO_APP_PASSWORD` | Second generated secret, used by the `kerolosafam_db_user` database user |
 | `JWT_SECRET` | Third generated secret, used to sign login tokens |
 | `SMTP_HOST` | Your mail provider's SMTP hostname |
 | `SMTP_PORT` | `465` for implicit TLS or `587` for STARTTLS |
@@ -514,7 +514,7 @@ sudo docker compose ps -a
 
 The startup sequence is:
 
-1. MongoDB initializes its persistent volume and creates the `way` application
+1. MongoDB initializes its persistent volume and creates the `kerolosafam_db_user` application
    user with access to `the_way`.
 2. The `indexes` job creates declared database indexes and exits successfully.
 3. Both API processes and the dedicated email worker start.

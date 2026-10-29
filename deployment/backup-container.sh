@@ -22,7 +22,7 @@ trap 'exit 1' HUP INT TERM
 # Keep the password out of command-line arguments and tool logs.
 mongosh --nodb --quiet --file /scripts/mongo-tools-config.js
 mongodump --config "$MONGO_TOOLS_CONFIG" --host db --port 27017 \
-  --username way --authenticationDatabase the_way --db the_way \
+  --username kerolosafam_db_user --authenticationDatabase the_way --db the_way \
   --numParallelCollections 1 --gzip --archive="$archive.partial"
 mv "$archive.partial" "$archive"
 find /backups -maxdepth 1 -type f -name 'the_way-*.archive.gz' -mtime "+$retention" -delete

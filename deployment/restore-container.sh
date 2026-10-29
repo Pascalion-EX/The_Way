@@ -21,5 +21,5 @@ mongosh --nodb --quiet --file /scripts/mongo-tools-config.js
 
 # Manual recovery operation: replace collections contained in the archive.
 mongorestore --config "$MONGO_TOOLS_CONFIG" --host db --port 27017 \
-  --username way --authenticationDatabase the_way --nsInclude 'the_way.*' \
+  --username kerolosafam_db_user --authenticationDatabase the_way --nsInclude 'the_way.*' \
   --numParallelCollections 1 --stopOnError --drop --gzip --archive="$archive"

@@ -60,7 +60,7 @@ can inject the same names. Backend callers use `getSecrets()` from
 The [Docker environment documentation](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
 describes precedence and quoting.
 
-The app gets the `way` database user's password; the database root password is
+The app gets the `kerolosafam_db_user` database user's password; the database root password is
 only passed to MongoDB. The web container gets `SITE_ADDRESS` and
 `API_UPSTREAMS`. Backend credentials are runtime settings and are never passed
 as frontend build arguments. `.env` is ignored by Git and the Docker build
@@ -86,7 +86,7 @@ builds and needs no host Node/npm installation. To use another environment
 file, pass `docker compose --env-file /path/to/file ...`.
 
 MongoDB persists to `mongo_data`. On a fresh volume,
-`deployment/mongo-init.js` creates `way` with `readWrite` access to `the_way`.
+`deployment/mongo-init.js` creates `kerolosafam_db_user` with `readWrite` access to `the_way`.
 An `indexes` job then creates declared indexes and exits successfully before
 either API or the email worker starts. It remains visible as an exited
 container. Caddy waits for both APIs to become healthy, serves the frontend,

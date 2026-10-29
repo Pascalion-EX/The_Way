@@ -7,7 +7,7 @@ mongoose.set("strictQuery", true);
 export const databaseUrl = (env = process.env) => {
     const { mongodbUrl, mongoAppPassword } = getSecrets(env);
     return mongodbUrl ||
-        `mongodb://way:${encodeURIComponent(mongoAppPassword || "")}@db:27017/the_way?authSource=the_way`;
+        `mongodb://kerolosafam_db_user:${encodeURIComponent(mongoAppPassword || "")}@db:27017/the_way?authSource=the_way`;
 };
 
 const connectDB = async () => {
