@@ -7,9 +7,9 @@ running the production frontend image from the repository root:
 docker build --pull -f frontend/Dockerfile -t the-way-frontend:local .
 ```
 
-The image serves compiled files with Caddy, supports direct React Router links,
-and proxies same-origin API requests to the backend. Runtime configuration and
-HTTPS examples are in the Docker guide.
+The image serves compiled files internally with Caddy and supports direct React
+Router links. Traefik provides public HTTPS and routes same-origin API requests
+to the backend. Production setup is in the Docker guide.
 
 ## Vite development notes
 

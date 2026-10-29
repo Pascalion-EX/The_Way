@@ -1,0 +1,56 @@
+# The file provider expands DOMAIN from Traefik's environment at startup.
+# Requests go directly to the API containers, keeping TRUST_PROXY=1 accurate.
+http:
+  routers:
+    api:
+      rule: 'Host(`{{ env "DOMAIN" }}`) && (Path(`/api`) || PathPrefix(`/api/`) || Path(`/health/live`) || Path(`/health/ready`))'
+      priority: 100
+      entryPoints: [websecure]
+      service: api
+      middlewares: [security-headers, api-body-limit]
+      tls:
+        certResolver: letsencrypt
+    frontend:
+      rule: 'Host(`{{ env "DOMAIN" }}`)'
+      priority: 1
+      entryPoints: [websecure]
+      service: frontend
+      middlewares: [security-headers]
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    api:
+      loadBalancer:
+        # Equal weights use the default round-robin strategy; no sticky sessions.
+        servers:
+          - url: http://api:4000
+          - url: http://api2:4000
+        healthCheck:
+          path: /health/ready
+          interval: 15s
+          timeout: 3s
+          followRedirects: false
+          status: 200
+    frontend:
+      loadBalancer:
+        servers:
+          - url: http://web:80
+        healthCheck:
+          path: /health/frontend
+          interval: 15s
+          timeout: 3s
+          status: 200
+
+  middlewares:
+    api-body-limit:
+      buffering:
+        maxRequestBodyBytes: 100000
+        memRequestBodyBytes: 100000
+    security-headers:
+      headers:
+        contentTypeNosniff: true
+        customFrameOptionsValue: SAMEORIGIN
+        referrerPolicy: strict-origin-when-cross-origin
+        customResponseHeaders:
+          Server: ""

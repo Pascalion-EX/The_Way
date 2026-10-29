@@ -3,7 +3,7 @@
 Use GitHub for source control, GitHub Actions for checks and image builds,
 GitHub Container Registry (GHCR) for versioned images, and Contabo for running
 the application. The VPS pulls images; application builds run on GitHub's
-runners. MongoDB and Caddy certificate volumes remain on the VPS.
+runners. MongoDB and Traefik certificate volumes remain on the VPS.
 
 This guide walks through **Stage 1: automated checks/builds/publishing, followed
 by manual deployment over SSH**. A push does not automatically update the VPS.
@@ -317,7 +317,7 @@ sudo docker run --rm hello-world
 ```
 
 Use `sudo docker ...` consistently in the remaining VPS commands. This avoids
-depending on Docker group membership. Node, npm, MongoDB, and Caddy run inside
+depending on Docker group membership. Node, npm, MongoDB, Caddy, and Traefik run inside
 containers; you do not need to install them on the VPS host.
 
 ## 6. Configure inbound access and DNS
@@ -353,9 +353,9 @@ dig +short AAAA way.your-domain.com @1.1.1.1
 ```
 
 Wait until the A record returns your VPS IP. Initially use direct DNS routing
-if your DNS provider also offers a proxy service. The Caddy container handles
+if your DNS provider also offers a proxy service. The Traefik container handles
 TLS certificates and HTTP-to-HTTPS redirects once DNS and port access work.
-See [Caddy's automatic HTTPS requirements](https://caddyserver.com/docs/automatic-https).
+See [Traefik’s HTTP-01 requirements](https://doc.traefik.io/traefik/reference/install-configuration/tls/certificate-resolvers/acme/).
 
 ## 7. Clone the matching source revision on the VPS
 
@@ -416,6 +416,7 @@ nano .env
 | Setting | Value to enter |
 | --- | --- |
 | `DOMAIN` | `way.your-domain.com`, without `https://`, a path, or trailing slash |
+| `ACME_EMAIL` | Contact email for Let’s Encrypt certificate registration |
 | `GHCR_OWNER` | GitHub account or organization in lowercase, matching the published image namespace |
 | `APP_VERSION` | `sha-` followed by the full commit SHA from the successful publish run |
 | `MONGO_ROOT_PASSWORD` | First generated secret, used only by MongoDB |
@@ -518,7 +519,9 @@ The startup sequence is:
    user with access to `the_way`.
 2. The `indexes` job creates declared database indexes and exits successfully.
 3. Both API processes and the dedicated email worker start.
-4. Caddy starts the frontend and routes API requests to the healthy API processes.
+4. Caddy serves the frontend on internal HTTP port 80.
+5. Traefik starts after Caddy and both APIs are healthy, obtains TLS certificates,
+   redirects public HTTP to HTTPS, and balances API requests between the APIs.
 
 Expected states:
 
@@ -528,17 +531,18 @@ Expected states:
 | `indexes` | Exited with code `0`; this is expected |
 | `api`, `api2` | Running and healthy |
 | `worker` | Running; this service has no healthcheck |
-| `web` | Running and healthy |
+| `web` | Running and healthy (internal Caddy) |
+| `traefik` | Running and healthy (public HTTPS and API load balancing) |
 | `backup` | Not running normally; it is an on-demand tool |
 
 If startup fails, inspect logs before retrying:
 
 ```bash
-sudo docker compose logs --tail 100 db indexes api api2 worker web
+sudo docker compose logs --tail 100 traefik db indexes api api2 worker web
 ```
 
-A failed `up --wait` can leave some containers running. Caddy's container
-healthcheck is internal; validate public HTTPS separately in step 11.
+A failed `up --wait` can leave some containers running. Caddy and Traefik
+healthchecks are internal; validate public HTTPS separately in step 11.
 
 ## 11. Verify the public site and email
 
@@ -585,9 +589,9 @@ exists. Manage later role changes through the admin dashboard.
 
 ## 13. Create a backup and copy it off the VPS
 
-The database is stored in the named volume `the-way_mongo_data`. Caddy's
-certificate state is stored in `the-way_caddy_data` and
-`the-way_caddy_config`. Keep these volumes through ordinary deployments.
+The database is stored in the named volume `the-way_mongo_data`. Traefik’s
+certificate state is stored in `the-way_traefik_data`. Keep these volumes
+through ordinary deployments.
 
 For a consistent backup of the current standalone database, stop application
 writes during a maintenance window. The site is unavailable while these
@@ -598,7 +602,7 @@ services are stopped:
 ```bash
 mkdir -p deployment/backups
 chmod 700 deployment/backups
-sudo docker compose stop web api api2 worker
+sudo docker compose stop traefik web api api2 worker
 sudo docker compose --profile tools run --rm backup
 sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
 sudo ls -lh deployment/backups
@@ -679,6 +683,12 @@ images until startup replaces them. After startup, repeat the health and
 browser checks from step 11. Updates can briefly interrupt service; this
 procedure does not provide a rolling deployment.
 
+When upgrading from the public-Caddy configuration, add `ACME_EMAIL` to `.env`
+and deploy matching new frontend images and Compose files together. Compose
+recreates Caddy without host ports before Traefik binds them. Traefik requests
+new certificates and stores them in `the-way_traefik_data`; retain the old
+Caddy volumes for rollback. See the [routing migration notes](DOCKER.md).
+
 Changing `.env` requires container recreation through `compose up`; a simple
 `docker compose restart` keeps the old container environment. In particular,
 MongoDB initializes users only on an empty data directory. Editing a password
@@ -719,7 +729,7 @@ before recovery when it is readable.
 **VPS — repository root, using an actual archive filename:**
 
 ```bash
-sudo docker compose stop web api api2 worker
+sudo docker compose stop traefik web api api2 worker
 sudo docker compose --profile tools run --rm --entrypoint sh backup \
   /scripts/restore-container.sh /backups/ACTUAL_ARCHIVE.archive.gz
 sudo docker compose run --rm --no-deps indexes
@@ -752,7 +762,7 @@ The workflow in step 1 stops at image publication and requires no VPS access.
 | GHCR returns `unauthorized` or `denied` | For private images, use `sudo docker login ghcr.io` with a classic PAT granting `read:packages`, and confirm that user has package access and any required SSO authorization. The publisher uses its own built-in token. |
 | Compose still references local image names | Confirm `compose.override.yaml` from step 2 exists at the checked-out revision, and use default `sudo docker compose` commands so it is loaded. |
 | Publishing fails with package permissions | Check the publish job's `packages: write` permission, organization policy, and the package's Actions access for this repository if the package already exists. |
-| Browser certificate error or HTTPS unavailable | Check A/AAAA records, inbound TCP 80/443, and `sudo docker compose logs --tail 100 web`. Check whether another service already owns the ports with `sudo ss -lntup`. |
+| Browser certificate error or HTTPS unavailable | Check A/AAAA records, inbound TCP 80/443, and `sudo docker compose logs --tail 100 traefik web`. Check whether another service already owns the ports with `sudo ss -lntup`. |
 | `indexes` exited with a nonzero status | Read its logs and resolve the database/index error. The APIs intentionally wait for this job to succeed. Exited `0` is normal. |
 | Database is unhealthy after changing credentials | Restore the previous matching `.env` values or rotate the users through MongoDB. Do not erase the volume to fix a password mismatch. |
 | Email verification does not arrive | Run the SMTP check from step 11 and inspect worker logs. Check the provider's credentials, allowed sender, outbound port access, and the recipient's spam folder. |

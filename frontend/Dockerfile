@@ -19,13 +19,10 @@ RUN npm run build
 
 FROM caddy:2-alpine AS runtime
 
-ENV SITE_ADDRESS=:80 \
-    API_UPSTREAMS=api:4000
-
 COPY frontend/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/frontend/dist /srv
 
-EXPOSE 80 443 443/udp
+EXPOSE 80
 STOPSIGNAL SIGTERM
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \

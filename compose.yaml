@@ -107,26 +107,62 @@ services:
     mem_limit: 256m
     cpus: 0.25
 
-  web:
-    extends:
-      file: compose.build.yaml
-      service: web
+  traefik:
+    image: traefik:v3.7.16
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http3=true
+      - --entrypoints.traefik.address=127.0.0.1:8080
+      - --ping=true
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.file.watch=true
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:?Set ACME_EMAIL in .env}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --serverstransport.forwardingtimeouts.dialtimeout=3s
+      - --serverstransport.forwardingtimeouts.responseheadertimeout=45s
     environment:
-      SITE_ADDRESS: ${DOMAIN:?Set DOMAIN}
-      API_UPSTREAMS: "api:4000 api2:4000"
+      DOMAIN: ${DOMAIN:?Set DOMAIN}
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+      - ./deployment/traefik:/etc/traefik/dynamic:ro
+      - traefik_data:/letsencrypt
     networks: [private]
     depends_on:
+      web:
+        condition: service_healthy
       api:
         condition: service_healthy
       api2:
         condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 128
+    stop_grace_period: 30s
+    logging: *logging
+    healthcheck:
+      test: [CMD, traefik, healthcheck, --ping]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  web:
+    extends:
+      file: compose.build.yaml
+      service: web
+    networks: [private]
     restart: unless-stopped
     mem_limit: 256m
     cpus: 0.25
@@ -166,5 +202,4 @@ networks:
 
 volumes:
   mongo_data:
-  caddy_data:
-  caddy_config:
+  traefik_data:

@@ -1037,7 +1037,8 @@ Actions and pushed to GHCR. The VPS downloads those published images; local
 Docker images are not included in a Git push.
 
 [`compose.yaml`](compose.yaml) runs MongoDB, two API processes, a dedicated email
-worker, and the Caddy frontend on one VPS. It creates the application database
+worker, an internal Caddy frontend, and Traefik for public HTTPS and API load
+balancing on one VPS. It creates the application database
 user on a fresh volume and creates indexes before starting the APIs. To start
 the deployment after completing the guide's workflow, registry override,
 production `.env`, and registry-login setup, run from the VPS repository root:

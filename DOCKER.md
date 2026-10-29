@@ -44,7 +44,8 @@ chmod 600 .env
 
 Fill in `.env` before starting containers. Set `DOMAIN` to the public hostname without a
 scheme, port, or trailing slash. Point its DNS to the VPS and allow inbound TCP
-80/443; UDP 443 enables HTTP/3. Caddy obtains HTTPS certificates automatically.
+80/443; UDP 443 enables HTTP/3. Set `ACME_EMAIL` to the certificate contact
+address. Traefik obtains and renews HTTPS certificates through Let’s Encrypt.
 
 Generate three different values with `openssl rand -hex 32` for
 `MONGO_ROOT_PASSWORD`, `MONGO_APP_PASSWORD`, and `JWT_SECRET`. Supply your SMTP
@@ -61,8 +62,9 @@ The [Docker environment documentation](https://docs.docker.com/compose/how-tos/e
 describes precedence and quoting.
 
 The app gets the `kerolosafam_db_user` database user's password; the database root password is
-only passed to MongoDB. The web container gets `SITE_ADDRESS` and
-`API_UPSTREAMS`. Backend credentials are runtime settings and are never passed
+only passed to MongoDB. Traefik gets the public hostname and ACME contact
+address; Caddy serves static files on internal HTTP port 80. Backend credentials
+are runtime settings and are never passed
 as frontend build arguments. `.env` is ignored by Git and the Docker build
 context. Use `config --quiet` for validation without printing resolved secrets.
 
@@ -89,9 +91,34 @@ MongoDB persists to `mongo_data`. On a fresh volume,
 `deployment/mongo-init.js` creates `kerolosafam_db_user` with `readWrite` access to `the_way`.
 An `indexes` job then creates declared indexes and exits successfully before
 either API or the email worker starts. It remains visible as an exited
-container. Caddy waits for both APIs to become healthy, serves the frontend,
-and proxies `/api` to them. Only Caddy publishes host ports. Caddy certificate
-state persists in `caddy_data` and `caddy_config`.
+container. Caddy serves the React frontend internally. Traefik waits for Caddy
+and both APIs to become healthy, publishes ports 80/443, redirects HTTP to HTTPS,
+and owns certificate issuance and renewal. Certificate state persists in
+`traefik_data` at `/letsencrypt/acme.json`.
+
+```text
+Browser → Traefik (HTTPS / TLS)
+             ├── /api, /api/*, /health/live, /health/ready → API 1 + API 2
+             └── all other paths → Caddy (internal HTTP) → React files
+```
+
+[`deployment/traefik/dynamic.yml`](deployment/traefik/dynamic.yml) defines the
+hostname routes, equal-weight API load balancing, readiness checks, security
+headers, and the 100 KB API request limit. Failed readiness checks remove an
+API from rotation; if both are unavailable, Traefik returns an error rather
+than frontend HTML. Caddy retains SPA fallback and static asset caching.
+Traefik uses the file provider without a Docker socket mount or public dashboard.
+The backend keeps `TRUST_PROXY=1` because API traffic passes through one proxy;
+Traefik uses its direct peer address instead of trusting client-supplied
+forwarding headers. See [Traefik services](https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/)
+and [ACME configuration](https://doc.traefik.io/traefik/reference/install-configuration/tls/certificate-resolvers/acme/).
+
+When upgrading the previous public-Caddy stack, add `ACME_EMAIL` to `.env`,
+publish/pull the matching new frontend image, and run the normal Compose update.
+Compose recreates `web` without published ports before starting Traefik. Expect
+a brief interruption and a new certificate request. Existing `caddy_data` and
+`caddy_config` volumes are no longer used; keep them for rollback. Preserve
+`traefik_data` across later releases.
 
 The [official MongoDB image](https://hub.docker.com/_/mongo) initializes users
 only on an empty data directory. Changing passwords in `.env` does not change
@@ -102,7 +129,7 @@ credential rotation. Keep named volumes when restarting or updating the stack;
 Useful operator commands:
 
 ```bash
-docker compose logs --tail 100 api api2 worker db web
+docker compose logs --tail 100 traefik api api2 worker db web
 docker compose run --rm --no-deps indexes
 docker compose exec api node scripts/checkEmail.js
 ```
@@ -127,7 +154,7 @@ config file for the password, following the
 The temporary file and incomplete archive are removed when the command exits.
 
 For a consistent backup of this standalone database, quiesce writes first:
-stop `web`, `api`, `api2`, and `worker`, run the backup, then start the stack
+stop `traefik`, `web`, `api`, `api2`, and `worker`, run the backup, then start the stack
 again with `docker compose up -d --wait`.
 
 Recovery replaces collections present in the chosen archive. Stop traffic,
@@ -135,7 +162,7 @@ both APIs, and the worker first; keep MongoDB running. Use an actual archive
 filename in the restore command:
 
 ```bash
-docker compose stop web api api2 worker
+docker compose stop traefik web api api2 worker
 docker compose --profile tools run --rm --entrypoint sh backup \
   /scripts/restore-container.sh /backups/the_way-YYYYMMDDTHHMMSS-PID.archive.gz
 docker compose run --rm --no-deps indexes
