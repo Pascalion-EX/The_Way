@@ -40,7 +40,7 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
       </h1>
 
       <h2 className="text-3xl sm:text-5xl font-bold mb-4">
-        Welcome to The Way
+        Welcome to The Way's Family
       </h2>
 
 
