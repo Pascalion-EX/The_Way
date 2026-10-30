@@ -140,6 +140,17 @@ After changing runtime credentials, recreate the affected services with
 container environment. Image build/start and HTTPS still need to be verified
 on a Docker-enabled host with the actual domain and SMTP account.
 
+## Automatic image updates
+
+The optional [Watchtower integration](deployment/WATCHTOWER.md) connects the
+GitHub Actions publisher to the VPS. After both tested images publish, a final
+job promotes their `production` tags. `compose.watchtower.yaml` watches only
+`api`, `api2`, `worker`, and `web`, and uses the maintained Nicholas Fedor fork
+pinned by version and image digest. Follow its activation instructions after
+initial deployment checks. Named data volumes stay mounted across updates.
+Keep immutable SHA releases for rollback. Host configuration and migrations
+still require manual deployment.
+
 ## Uploaded images
 
 Lessons, games, activities, trips, and chants use image file pickers on their
@@ -165,6 +176,10 @@ removed: lesson variants and other records can share an image URL. Abandoned
 uploads remain stored; review references before pruning files.
 
 ## Backup and recovery
+
+When using automatic updates, stop Watchtower before backup/recovery with
+`docker compose stop watchtower`, and resume it only after successful startup
+and health checks. See the [maintenance procedure](deployment/WATCHTOWER.md#pause-maintenance-and-rollback).
 
 ```bash
 docker compose --profile tools run --rm backup

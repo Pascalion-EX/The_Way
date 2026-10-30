@@ -5,8 +5,11 @@ GitHub Container Registry (GHCR) for versioned images, and Contabo for running
 the application. The VPS pulls images; application builds run on GitHub's
 runners. MongoDB and Traefik certificate volumes remain on the VPS.
 
-This guide walks through **Stage 1: automated checks/builds/publishing, followed
-by manual deployment over SSH**. A push does not automatically update the VPS.
+This guide covers initial manual deployment over SSH. GitHub Actions checks
+and publishes each main release, including a `production` tag after both
+images succeed. To update the VPS automatically after bootstrap, enable the
+[Watchtower integration](deployment/WATCHTOWER.md). Without Watchtower, the
+manual release procedure below continues to use immutable SHA tags.
 First save the workflow and Compose override from steps 1–2 at the named paths
 and push them with the source. The subsequent VPS commands depend on those
 configuration files.
@@ -59,26 +62,36 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   checks:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           package-manager-cache: false
+
       - name: Install locked dependencies
         run: |
           npm ci
           npm ci --prefix backend
           npm ci --prefix frontend
+
       - name: Run backend and frontend tests
         run: npm test
+
       - name: Lint frontend
         run: npm run lint --prefix frontend
+
       - name: Build frontend
         env:
           VITE_BACKEND_URL: ""
@@ -88,9 +101,11 @@ jobs:
     needs: checks
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -99,21 +114,26 @@ jobs:
             dockerfile: backend/Dockerfile
           - image: the-way-web
             dockerfile: frontend/Dockerfile
+
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+
       - name: Set lowercase registry owner
         id: registry
         shell: bash
         run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-buildx-action@v4
+
       - name: Log in to GHCR
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and publish
         uses: docker/build-push-action@v7
         with:
@@ -125,6 +145,45 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
+
+  promote:
+    needs: publish
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set lowercase registry owner
+        id: registry
+        shell: bash
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote the complete current release for Watchtower
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GHCR_OWNER: ${{ steps.registry.outputs.owner }}
+        shell: bash
+        run: |
+          current_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          if [ "$current_sha" != "$GITHUB_SHA" ]; then
+            echo "A newer main commit exists; keeping the current production tags."
+            exit 0
+          fi
+          sh deployment/promote-images.sh "$GHCR_OWNER" "$GITHUB_SHA"
 ```
 
 Checks run for pull requests and release-branch pushes. Publishing waits for
@@ -593,6 +652,9 @@ exists. Manage later role changes through the admin dashboard.
 
 ## 13. Create a backup and copy it off the VPS
 
+If Watchtower is enabled, run `sudo docker compose stop watchtower` first.
+Resume it only after backup/recovery and application health checks succeed.
+
 The database is stored in the named volume `the-way_mongo_data`. Traefik’s
 certificate state is stored in `the-way_traefik_data`. Uploaded images are
 stored in `the-way_uploads_data`, shared by both APIs and mounted read-only
@@ -662,6 +724,10 @@ run the synthetic load-test seeder against the live database.
 
 ## Deploy a later update
 
+If Watchtower is enabled, stop it before this manual procedure. For ordinary
+image-only releases, use [automatic updates](deployment/WATCHTOWER.md); for
+configuration or migration releases, follow the maintenance instructions there.
+
 Push and review the new source on GitHub first. Wait for checks and both image
 publishes to succeed, then copy that run's full commit SHA. On the VPS, record
 the current source SHA with `git rev-parse HEAD` and image tags with
@@ -704,6 +770,9 @@ in `.env` does not rotate the existing database user's password. See the
 [official MongoDB image initialization behavior](https://hub.docker.com/_/mongo).
 
 ### Roll back to a published release
+
+If using Watchtower, stop it and disable its override in `.env` before following
+this procedure; see [persistent rollback](deployment/WATCHTOWER.md#pause-maintenance-and-rollback).
 
 Select the previously recorded successful release SHA. Restore its matching
 Compose/helper-script revision and image tag, then pull the previous images
@@ -755,19 +824,26 @@ release, create the database with the current credentials, and use this
 procedure before admitting user traffic. Moving application images to GHCR
 does not move the database, certificates, `.env`, or backups away from the VPS.
 
-## Add automated VPS deployment later
+## Enable automatic updates with Watchtower
 
-After manual deployment and rollback work, a subsequent stage can use a
-GitHub Actions deployment job to update the VPS after publication. That needs
-VPS SSH credentials, a fixed server/project location, deployment serialization,
-release selection, health checks, and a failure/rollback policy. Keep those
-credentials in a GitHub deployment environment when implementing that stage.
-The workflow in step 1 stops at image publication and requires no VPS access.
+Follow [deployment/WATCHTOWER.md](deployment/WATCHTOWER.md) after initial
+HTTPS, email, backup/restore, and rollback checks pass. It explains the pinned
+Watchtower fork, the production image channel, dedicated GHCR credentials,
+Compose activation, update limits, maintenance, and rollback.
+
+GitHub Actions promotes both `production` tags after both immutable images
+publish successfully. With the optional override enabled, Watchtower polls
+those tags and replaces only the running API, worker, and frontend containers.
+No VPS SSH key or public Watchtower endpoint is needed in GitHub Actions.
+Source/configuration changes and migrations still require manual maintenance.
+Stop Watchtower before backups, restores, manual deployments, or rollback so
+an automatic update cannot overlap those operations.
 
 ## Common problems
 
 | Symptom | Check or action |
 | --- | --- |
+| Watchtower does not update containers | Check its logs, dedicated GHCR credentials, `production` image tags, and the override/labels described in [the Watchtower guide](deployment/WATCHTOWER.md). |
 | `required variable ... is missing a value` | Work from the repository root, create its production `.env`, fill the named value, and run `sudo docker compose config --quiet`. `backend/.env` is not the Compose configuration. |
 | Docker socket `permission denied` | Use `sudo docker ...` as shown. Confirm `sudo docker version` can contact the daemon. |
 | `manifest unknown` or image not found | Set `APP_VERSION` to the exact `sha-<full SHA>` tag published for both images by a successful run, then run `sudo docker compose pull`. |

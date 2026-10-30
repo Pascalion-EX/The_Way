@@ -1,0 +1,84 @@
+# Optional final override, loaded after compose.yaml and compose.override.yaml.
+# Set COMPOSE_FILE in .env as documented in deployment/WATCHTOWER.md.
+x-auto-update: &auto-update
+  com.centurylinklabs.watchtower.enable: "true"
+  com.centurylinklabs.watchtower.scope: the-way
+
+x-production-api: &production-api
+  image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+  labels: *auto-update
+
+services:
+  api:
+    <<: *production-api
+  api2:
+    <<: *production-api
+  worker:
+    <<: *production-api
+  web:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:production
+    labels: *auto-update
+
+  # These tasks run under Compose during bootstrap/maintenance, not Watchtower.
+  indexes:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+  uploads-init:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+
+  watchtower:
+    image: ghcr.io/nicholas-fedor/watchtower:1.23.2@sha256:62fb91130ddb493f869cad7e198fa260dd16c5da293ed092cbd5d8781566f7a6
+    command:
+      - --label-enable
+      - --scope=the-way
+      - --interval=${WATCHTOWER_POLL_INTERVAL:-300}
+      - --rolling-restart
+      # Compose bootstrap dependencies are already satisfied. Linked-container
+      # ordering is incompatible with Watchtower's rolling-restart mode.
+      - --use-compose-depends-on=false
+      - --stop-timeout=45s
+      - --cleanup
+    environment:
+      DOCKER_CONFIG: /registry
+    user: "0:0"
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./deployment/secrets/watchtower
+        target: /registry
+        read_only: true
+        bind:
+          create_host_path: false
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+      com.centurylinklabs.watchtower.scope: the-way
+    networks: [private]
+    depends_on:
+      api:
+        condition: service_healthy
+      api2:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    pids_limit: 128
+    stop_grace_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
