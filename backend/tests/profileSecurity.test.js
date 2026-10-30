@@ -71,6 +71,38 @@ const setup = async (t) => {
   return state;
 };
 
+test("email preferences default to subscribed, persist opt-outs, and can be enabled again", async (t) => {
+  const state = await setup(t);
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.emailUpdatesEnabled, true);
+  const result = await state.request({ emailUpdatesEnabled: false, userId: "another-account" });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.user.emailUpdatesEnabled, false);
+  assert.equal(state.user.emailUpdatesEnabled, false);
+  const [filter, update] = state.update.mock.calls[0].arguments;
+  assert.equal(String(filter._id), userId);
+  assert.deepEqual(update.$unset, { "emailJobs.welcome": "" });
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.emailUpdatesEnabled, false);
+  assert.equal((await state.request({ emailUpdatesEnabled: true })).body.user.emailUpdatesEnabled, true);
+});
+
+test("email preference updates require a boolean and cannot partially apply invalid input", async (t) => {
+  const state = await setup(t);
+  for (const value of ["false", 0, 1, null, [], {}]) {
+    const result = await state.request({ emailUpdatesEnabled: value, name: "Must not be applied" });
+    assert.equal(result.status, 400);
+    assert.equal(state.writes, 0);
+    assert.equal(state.user.name, "Original name");
+  }
+});
+
+test("changing a mailbox while opting out uses a single non-conflicting queue cleanup", async (t) => {
+  const state = await setup(t);
+  const result = await state.request({ email: "changed@example.com", currentPassword: password, emailUpdatesEnabled: false });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.user.emailUpdatesEnabled, false);
+  assert.deepEqual(state.update.mock.calls[0].arguments[1].$unset, { emailJobs: "" });
+});
+
 test("a session alone cannot change email or partially apply profile edits", async (t) => {
   const state = await setup(t);
   const before = clone(state.user);

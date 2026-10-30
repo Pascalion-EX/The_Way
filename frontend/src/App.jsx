@@ -66,7 +66,7 @@ const ProtectedLayout = () => {
 
 const App = () => {
   return (
-    <div className="relative isolate flex min-h-screen flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900 [&:has([data-projector-mode])>footer]:hidden">
+    <div className="app-shell relative isolate flex flex-col bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-900 [&:has([data-projector-mode])>footer]:hidden">
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
         <Waves
           lineColor="#e4b54f7e"
@@ -87,7 +87,7 @@ const App = () => {
         className="!z-[99999]"
       />
 
-      <div className="relative z-10 flex-1">
+      <div className="relative z-10 flex flex-1 flex-col">
       <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center" role="status">Loading page…</div>}>
       <Routes>
         {/* =========================

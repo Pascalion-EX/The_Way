@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import { buildBrandedEmail, EMAIL_LOGO_CID } from "../services/emailTemplate.js";
 import { createEmailJob, processNextEmailJob } from "../services/emailQueue.js";
 import { OTP_TTL_MS } from "../services/otpPolicy.js";
+import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
 
 test("every outgoing email type uses the branded card and embeds the actual logo", () => {
   for (const kind of ["welcome", "verification", "passwordReset", "ban", "camp", "videoRequest"]) {
@@ -61,7 +62,8 @@ test("user-controlled email content is escaped and unsafe links are never clicka
 });
 
 for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
-  test(`queued ${kind} mail gains the template, preserves its text, and leaves Message-ID generation to the mailer`, async () => {
+  test(`queued ${kind} mail gains the template, preserves its text, and leaves Message-ID generation to the mailer`, async (t) => {
+    withEmailEnvironment(t);
     const timestamp = Date.UTC(2026, 9, 21, 12);
     const email = "test@example.invalid";
     const job = createEmailJob({ to: email, subject: "Synthetic subject", text: "Original plain text", expiresAt: timestamp + OTP_TTL_MS });
@@ -78,7 +80,8 @@ for (const kind of ["welcome", "verification", "passwordReset", "ban"]) {
     };
     let sent;
     await processNextEmailJob(kind, { users, now: () => new Date(timestamp + 1), mailer: { async sendMail(message) { sent = message; } } });
-    assert.equal(sent.text, job.text);
+    assert.ok(sent.text.startsWith(`${job.text}\n\n`));
+    assert.match(sent.text, /Unsubscribe from optional emails: https:\/\/way\.example\.org\/api\/email\/unsubscribe\?token=/);
     assert.equal(sent.subject, job.subject);
     assert.equal(Object.hasOwn(sent, "messageId"), false);
     assert.ok(sent.html.includes(`cid:${EMAIL_LOGO_CID}`));

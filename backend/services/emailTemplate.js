@@ -32,9 +32,15 @@ const detailValue = ({ value, link }) => {
   return text.replace(/\r?\n/g, "<br />");
 };
 
-export function buildBrandedEmail({ kind, title, text = "", code, details = [], year = new Date().getUTCFullYear() }) {
+export function buildBrandedEmail({ kind, title, text = "", code, details = [], unsubscribeUrl, year = new Date().getUTCFullYear() }) {
   const content = styles[kind];
   if (!content) throw new Error("Unknown email template");
+  let subscriptionUrl;
+  if (unsubscribeUrl) {
+    const url = new URL(unsubscribeUrl);
+    if (!["http:", "https:"].includes(url.protocol)) throw new Error("Invalid unsubscribe URL");
+    subscriptionUrl = url.href;
+  }
   const hasCode = Boolean(content.codeLabel && /^\d{6}$/.test(String(code)));
   const heading = title || content.title;
   const preheader = content.introduction || heading;
@@ -86,6 +92,7 @@ export function buildBrandedEmail({ kind, title, text = "", code, details = [], 
         <tr><td align="center" style="padding:28px 20px;border-top:1px solid #dfe5f0;">
           <p style="margin:0 0 5px;color:#8a9cba;font-size:12px;line-height:20px;">&copy; ${escapeEmailHtml(year)} The Way. All rights reserved.</p>
           <p style="margin:0;color:#8a9cba;font-size:12px;line-height:20px;">This is an automated email.</p>
+          ${subscriptionUrl ? `<p style="margin:14px 0 0;color:#4c5d78;font-size:12px;line-height:20px;"><a href="${escapeEmailHtml(subscriptionUrl)}" style="color:#4f35ef;text-decoration:underline;">Unsubscribe from optional emails</a><br />Account verification, password resets, and security notices will still be sent.</p>` : ""}
         </td></tr>
       </table>
       <!--[if mso]></td></tr></table><![endif]-->
@@ -95,6 +102,10 @@ export function buildBrandedEmail({ kind, title, text = "", code, details = [], 
 </html>`;
   return {
     html,
+    ...(subscriptionUrl ? {
+      text: `${text}\n\nUnsubscribe from optional emails: ${subscriptionUrl}\nAccount verification, password resets, and security notices will still be sent.`,
+      ...(["welcome", "camp"].includes(kind) ? { list: { unsubscribe: subscriptionUrl } } : {}),
+    } : {}),
     attachments: [{ filename: "thewaylogo.svg", content: logo, contentType: "image/svg+xml", contentDisposition: "inline", cid: EMAIL_LOGO_CID }],
   };
 }

@@ -4,10 +4,10 @@ import Header from "../Components/Header.jsx";
 
 const Home = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
+    <div className="relative flex flex-1 flex-col overflow-hidden text-gray-900 bg-transparent">
 
       {/* Main Content */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center bg-transparent">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center bg-transparent">
                <Navbar />
 
         {/* Mobile spacing only */}

@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     bannedAt: {type:Date, default: null},
     banReason: {type:String, default: ''},
     emailFlagged: {type:Boolean, default: false},
+    emailUpdatesEnabled: {type:Boolean, default: true},
     flaggedEmail: {type:String, default: ''},
     verifyOtp: {type:String, default: ''},
     verifyOtpExpireAt: {type:Number, default: 0},

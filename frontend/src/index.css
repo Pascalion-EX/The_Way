@@ -12,8 +12,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Shared by page scrollbars and scrollable panels. */
+/* Shared layout and scrollbar settings. */
 :root {
+  --app-zoom: 0.8;
   --scrollbar-thumb: rgba(100, 116, 139, 0.38);
   --scrollbar-thumb-hover: rgba(100, 116, 139, 0.62);
   --scrollbar-thumb-active: rgba(100, 116, 139, 0.78);
@@ -319,6 +320,13 @@
     @apply bg-background text-foreground;
     }
   html {
+    zoom: var(--app-zoom);
     @apply font-sans;
     }
+}
+
+/* CSS zoom also scales viewport lengths; keep the shared layout full height. */
+.app-shell {
+  min-height: calc(100vh / var(--app-zoom));
+  min-height: calc(100dvh / var(--app-zoom));
 }

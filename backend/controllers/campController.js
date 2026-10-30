@@ -5,6 +5,8 @@ import transporter from "../config/nodemailer.js";
 import mongoose from "mongoose";
 import { campCardProjection, toCampCard, campSummaryProjection, toCampSummary, toStaffApplicant } from "../services/campResponses.js";
 import { buildBrandedEmail } from "../services/emailTemplate.js";
+import { createUnsubscribeUrl } from "../services/emailSubscriptions.js";
+import { normalizeAuthEmail } from "../services/authEmail.js";
 import { timeOperation } from "../services/performance.js";
 import { getSecrets } from "../config/secrets.js";
 import { readPage, paginationFor } from "../utils/pagination.js";
@@ -591,7 +593,7 @@ export const notifyCampApplicants = async (req, res) => {
 
     const camp = await Camp.findById(id).populate(
       "applicants.user",
-      "email firstName lastName role"
+      "email firstName lastName role emailUpdatesEnabled isBanned"
     );
 
     if (!camp) {
@@ -601,32 +603,43 @@ export const notifyCampApplicants = async (req, res) => {
       });
     }
 
-    const emails = [
-      ...new Set(
-        camp.applicants
-          .map((applicant) => applicant.user?.email)
-          .filter(Boolean)
-      ),
-    ];
-
-    if (emails.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "No participant emails found",
-      });
+    const recipients = new Map();
+    for (const applicant of camp.applicants) {
+      const participant = applicant.user;
+      const email = normalizeAuthEmail(participant?.email);
+      if (email && participant.emailUpdatesEnabled !== false && !participant.isBanned) {
+        recipients.set(email, { _id: participant._id, email });
+      }
     }
-
-    await timeOperation("smtp", () => transporter.sendMail({
-      from: getSecrets().senderEmail,
-      bcc: emails,
-      subject,
-      text: `${camp.title}\n\n${message}`,
-      ...buildBrandedEmail({ kind: "camp", title: camp.title, text: message }),
-    }));
+    const skippedCount = camp.applicants.length - recipients.size;
+    const participants = [...recipients.values()];
+    let sentCount = 0;
+    let failedCount = 0;
+    // Each person needs their own unsubscribe capability. Keep SMTP work
+    // bounded to the transport's two pooled connections and addresses private.
+    for (let offset = 0; offset < participants.length; offset += 2) {
+      const results = await Promise.allSettled(participants.slice(offset, offset + 2).map(async (participant) => {
+        const email = buildBrandedEmail({
+          kind: "camp", title: camp.title, text: message,
+          unsubscribeUrl: createUnsubscribeUrl(participant),
+        });
+        await timeOperation("smtp", () => transporter.sendMail({
+          from: getSecrets().senderEmail, to: participant.email, subject, ...email,
+          text: `${camp.title}\n\n${email.text}`,
+        }));
+      }));
+      sentCount += results.filter((result) => result.status === "fulfilled").length;
+      failedCount += results.filter((result) => result.status === "rejected").length;
+    }
+    if (failedCount) {
+      return res.status(502).json({ success: false, sentCount, failedCount, skippedCount,
+        message: `Notification sent to ${sentCount} participant(s); ${failedCount} email(s) could not be sent.` });
+    }
 
     return res.status(200).json({
       success: true,
-      message: `Notification sent to ${emails.length} participant(s)`,
+      sentCount, skippedCount,
+      message: sentCount ? `Notification sent to ${sentCount} participant(s)` : "No subscribed participant emails found. No emails were sent.",
     });
   } catch (error) {
     return res.status(500).json({

@@ -19,6 +19,7 @@ import videoRequestRouter from "./routes/videoRequestRoutes.js";
 import childProfileRouter from "./routes/childProfileRoutes.js";
 import notificationRouter from "./routes/notificationRoutes.js";
 import attendanceRouter from "./routes/attendanceRoutes.js";
+import emailRouter from "./routes/emailRoutes.js";
 import { startEmailWorker } from "./services/emailQueue.js";
 import transporter from "./config/nodemailer.js";
 import { requestMetrics, startRuntimeMetrics } from "./middleware/requestMetrics.js";
@@ -40,6 +41,8 @@ app.disable("x-powered-by");
 if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 
 app.use(requestMetrics);
+// Public, token-authorized forms work independently of login cookies and CORS.
+app.use("/api/email", emailRouter);
 app.use((req, res, next) => {
   const origin = req.get("origin");
   if (!["GET", "HEAD", "OPTIONS"].includes(req.method) && origin && !allowedOrigins.includes(origin)) {

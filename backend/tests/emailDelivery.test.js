@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { smtpOptions } from "../config/nodemailer.js";
 import { emailErrorDetails } from "../services/emailErrors.js";
 import { createEmailJob, processNextEmailJob } from "../services/emailQueue.js";
+import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
 
 test("SMTP configuration preserves Gmail TLS defaults and requires STARTTLS on port 587", () => {
   const defaults = smtpOptions({});
@@ -54,7 +55,8 @@ test("email errors expose timeout stages without logging mail content or credent
   assert.equal(emailErrorDetails(null), "EMAIL_DELIVERY_FAILED");
 });
 
-test("SMTP timeouts retain the queued job and schedule a retry with safe diagnostic logging", async () => {
+test("SMTP timeouts retain the queued job and schedule a retry with safe diagnostic logging", async (t) => {
+  withEmailEnvironment(t);
   const timestamp = Date.UTC(2026, 9, 23, 12);
   const job = {
     ...createEmailJob({ to: "test@example.invalid", subject: "Synthetic", text: "Private body", expiresAt: timestamp + 600000 }),

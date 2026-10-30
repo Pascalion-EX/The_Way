@@ -14,6 +14,33 @@ content (no delivery): `node backend/scripts/previewEmails.js`. This writes the
 six examples and an index to `/tmp/the-way-email-previews` by default; an optional
 directory argument overrides the output path.
 
+## Email subscriptions
+
+Emails to user accounts include an **Unsubscribe from optional emails** link in
+both HTML and plain text. Opening the link shows a confirmation page without
+requiring login; GET/HEAD requests never change preferences. Confirming the form
+sets `emailUpdatesEnabled=false` and removes any pending welcome job. Welcome
+and trip-update deliveries respect this preference; verification codes,
+password resets, and account security notices continue. Users can subscribe
+again through **Profile → Edit Profile → Email Preferences**.
+
+The public `GET/POST /api/email/unsubscribe` route uses a signed capability
+bound to one account and its current normalized email address. Links expire
+after one year, use a signing key derived separately from authentication, and
+cannot authenticate a user. A changed email address or rotated `JWT_SECRET`
+invalidates old links. `APP_ORIGIN` supplies the public link origin in production;
+standalone development defaults to `http://localhost:4000`.
+
+Optional messages include a `List-Unsubscribe` header. Trip notifications are
+sent individually with distinct links, deduplicated recipients, and at most two
+concurrent SMTP operations. Unsubscribed, banned, deleted, and invalid recipients
+are skipped. Responses report sent/skipped counts and partial SMTP
+failures without exposing addresses. Existing accounts remain subscribed until
+they opt out; no migration or new secret is required. Messages already being
+sent cannot be recalled.
+
+## Queued authentication emails
+
 Registration, verification-code requests, and password-reset requests save email
 jobs inside the user document, in the same database write as the account or OTP.
 The HTTP response confirms persistence, not delivery. No SMTP operation runs in

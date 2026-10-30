@@ -7,6 +7,7 @@ import { normalizeAuthEmail } from "./authEmail.js";
 import { buildBrandedEmail } from "./emailTemplate.js";
 import { emailErrorDetails } from "./emailErrors.js";
 import { getSecrets } from "../config/secrets.js";
+import { createUnsubscribeUrl } from "./emailSubscriptions.js";
 
 export const EMAIL_JOB_KINDS = ["welcome", "verification", "passwordReset", "ban"];
 const LEASE_MS = 5 * 60 * 1000;
@@ -44,7 +45,7 @@ export async function processNextEmailJob(kind, {
       [`${path}.lockedUntil`]: new Date(startedAt.getTime() + LEASE_MS),
     },
     $inc: { [`${path}.attempts`]: 1 },
-  }, { returnDocument: "after" }).select(`emailJobs.${kind} isAccountVerified email isBanned flaggedEmail
+  }, { returnDocument: "after" }).select(`emailJobs.${kind} isAccountVerified email emailUpdatesEnabled isBanned flaggedEmail
     verifyOtp verifyOtpRequestedAt verifyOtpExpireAt verifyOtpAttempts
     resetOtp resetOtpRequestedAt resetOtpExpireAt resetOtpAttempts`);
 
@@ -64,6 +65,7 @@ export async function processNextEmailJob(kind, {
   );
   const recipient = normalizeAuthEmail(job.to);
   if (!recipient || new Date(job.expiresAt).getTime() <= checkedAt || normalizeAuthEmail(user.email) !== recipient || inactiveCode ||
+      (kind === "welcome" && user.emailUpdatesEnabled === false) ||
       (kind === "ban" ? (!user.isBanned || user.flaggedEmail !== recipient) : user.isBanned) ||
       (kind === "verification" && (user.isAccountVerified || !user.verifyOtp)) ||
       (kind === "passwordReset" && !user.resetOtp)) {
@@ -80,6 +82,7 @@ export async function processNextEmailJob(kind, {
       ...buildBrandedEmail({
         kind,
         text: job.text,
+        unsubscribeUrl: createUnsubscribeUrl(user),
         code: prefix ? user[prefix] : undefined,
         year: now().getUTCFullYear(),
       }),

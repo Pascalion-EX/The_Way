@@ -11,6 +11,7 @@ import { queueOtpRequest, OTP_COOLDOWN_MS } from "../services/otpRequests.js";
 import { reserveOtpAttempt, consumeOtpAttempt } from "../services/otpAttempts.js";
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "../services/otpPolicy.js";
 import { processNextEmailJob } from "../services/emailQueue.js";
+import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
 
 const timestamp = 1_800_000_000_000;
 const id = "6ac82222376fb9c75f5b3961";
@@ -256,6 +257,7 @@ for (const kind of ["verification", "passwordReset"]) {
   }
 
   test(`${kind}: the email worker delivers a current code before its deadline`, async (t) => {
+    withEmailEnvironment(t);
     const user = activeUser(kind);
     user.emailJobs[kind] = {
       id: "current-job", status: "queued", attempts: 0,

@@ -38,6 +38,7 @@ const Profile = () => {
       email: "",
       phone: "",
       class: 0,
+      emailUpdatesEnabled: true,
     });
 
   const emailChanged = normalizeAuthEmail(editData.email) !== normalizeAuthEmail(userData?.email);
@@ -138,6 +139,7 @@ const Profile = () => {
   const profileEmail = userData?.email || "";
   const profilePhone = userData?.phone || "";
   const profileClass = userData?.class ?? 0;
+  const profileEmailUpdatesEnabled = userData?.emailUpdatesEnabled !== false;
 
   useEffect(() => {
     setEditData({
@@ -145,8 +147,9 @@ const Profile = () => {
       email: profileEmail,
       phone: profilePhone,
       class: profileClass,
+      emailUpdatesEnabled: profileEmailUpdatesEnabled,
     });
-  }, [profileName, profileEmail, profilePhone, profileClass]);
+  }, [profileName, profileEmail, profilePhone, profileClass, profileEmailUpdatesEnabled]);
 
   // ======================================================
   // ROLE BADGE STYLE
@@ -235,6 +238,7 @@ const Profile = () => {
       email: userData?.email || "",
       phone: userData?.phone || "",
       class: userData?.class ?? 0,
+      emailUpdatesEnabled: userData?.emailUpdatesEnabled !== false,
     });
 
     setIsEditing(false);
@@ -867,6 +871,30 @@ const Profile = () => {
               {/* ==================================== */}
               {/* ACTIONS */}
               {/* ==================================== */}
+
+              <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Email Preferences</h2>
+                {isEditing ? (
+                  <label className="flex items-start gap-3 text-sm font-medium text-gray-900">
+                    <input
+                      type="checkbox"
+                      checked={editData.emailUpdatesEnabled}
+                      onChange={(event) => setEditData((previous) => ({ ...previous, emailUpdatesEnabled: event.target.checked }))}
+                      disabled={loading}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 accent-indigo-600"
+                    />
+                    Receive optional welcome and trip-update emails
+                  </label>
+                ) : (
+                  <p className="text-sm font-medium text-gray-900">
+                    Optional emails: {profileEmailUpdatesEnabled ? "Subscribed" : "Unsubscribed"}
+                  </p>
+                )}
+                <p className="mt-2 text-sm text-gray-500">
+                  Account verification, password resets, and security notices will still be sent.
+                  You can change this preference by editing your profile.
+                </p>
+              </div>
 
               <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <h2 className="mb-4 text-xl font-semibold text-gray-900">

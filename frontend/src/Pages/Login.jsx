@@ -111,7 +111,7 @@ const roleOptions = [
   };
 
   return (
-  <div className="relative isolate flex min-h-screen flex-col overflow-x-hidden text-gray-900 bg-transparent">
+  <div className="relative isolate flex flex-1 flex-col overflow-x-hidden text-gray-900 bg-transparent">
     <Navbar />
 
     <div className="grid flex-1 grid-cols-1 lg:grid-cols-2">

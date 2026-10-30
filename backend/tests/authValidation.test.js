@@ -8,6 +8,7 @@ import { register, login, sendResetOtp, resetPassword } from "../controllers/aut
 import { updateProfile } from "../controllers/userController.js";
 import { findUserByAuthEmail } from "../services/authIdentity.js";
 import { createEmailJob, processNextEmailJob } from "../services/emailQueue.js";
+import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
 import { queueOtpRequest } from "../services/otpRequests.js";
 import { normalizeAuthEmail, newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
 
@@ -237,7 +238,8 @@ test("email-job construction and OTP queueing reject unsafe legacy destinations"
   }
 });
 
-test("the worker canonicalizes legacy single mailboxes into exactly one SMTP recipient", async () => {
+test("the worker canonicalizes legacy single mailboxes into exactly one SMTP recipient", async (t) => {
+  withEmailEnvironment(t);
   const raw = " Legacy@Example.COM ";
   const transport = nodemailer.createTransport({ streamTransport: true, buffer: true });
   let envelope;

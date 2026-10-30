@@ -21,6 +21,7 @@ export const getUserData = async (req, res) => {
         isAccountVerified: user.isAccountVerified,
         role: user.role,
         email: user.email,
+        emailUpdatesEnabled: user.emailUpdatesEnabled !== false,
         phone: user.phone,
         class: user.class,
         verificationEmailQueued: Boolean(user.emailJobs?.verification),
@@ -44,6 +45,12 @@ export const updateProfile = async (req, res) => {
     const userClass = req.body.class;
 
     const updateData = {};
+    if (Object.hasOwn(req.body, "emailUpdatesEnabled")) {
+      if (typeof req.body.emailUpdatesEnabled !== "boolean") {
+        return res.status(400).json({ success: false, message: "Email preference must be enabled or disabled" });
+      }
+      updateData.emailUpdatesEnabled = req.body.emailUpdatesEnabled;
+    }
 
     if (Object.hasOwn(req.body, "avatarId")) {
       if (!isValidAvatarId(req.body.avatarId)) {
@@ -124,10 +131,13 @@ export const updateProfile = async (req, res) => {
       }
       update.$unset = { emailJobs: "" };
     }
+    if (!emailChanged && updateData.emailUpdatesEnabled === false) {
+      update.$unset = { "emailJobs.welcome": "" };
+    }
 
     const user = await userModel
       .findOneAndUpdate(filter, update, { returnDocument: "after", runValidators: true })
-      .select("name email phone class role isAccountVerified avatarId");
+      .select("name email phone class role isAccountVerified avatarId emailUpdatesEnabled");
 
     if (!user) {
       return res.status(emailChanged ? 409 : 404).json({

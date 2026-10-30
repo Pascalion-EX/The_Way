@@ -469,9 +469,16 @@ Supported profile update fields currently include:
   "name": "Name",
   "email": "email@example.com",
   "phone": "01234567890",
-  "class": 5
+  "class": 5,
+  "emailUpdatesEnabled": true
 }
 ```
+
+Users can disable optional welcome and trip-update emails in their profile or
+through the unsubscribe link in account emails. Verification, password-reset,
+and security emails continue. The public `GET /api/email/unsubscribe?token=...`
+link opens a confirmation page; submitting its form saves the opt-out without
+requiring login. See [email subscription behavior](backend/services/EMAIL_QUEUE.md#email-subscriptions).
 
 ### Admin API
 
