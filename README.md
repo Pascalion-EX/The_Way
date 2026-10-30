@@ -194,6 +194,7 @@ Authorized administrators can:
 - View total lesson count from the API
 - View counts by role
 - View registered users
+- Filter users by role and class, separately or together
 - See account verification status
 - See user class/year information
 - Delete users

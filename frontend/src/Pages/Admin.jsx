@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import { CalendarPlus } from "lucide-react";
 import { hasProtectedAccountRole } from "../../../shared/accountProtection.mjs";
 
+const userRoles = ["pascal", "admin", "pamela", "leader", "parent", "unAssigned"];
+
 const Admin = () => {
   const { backendUrl, userData, getUserData } = useContext(AppContent);
 
@@ -15,6 +17,15 @@ const Admin = () => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [generatingCalendar, setGeneratingCalendar] = useState(false);
+  const [roleFilter, setRoleFilter] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+
+  const filteredUsers = users.filter((user) => {
+    const roles = Array.isArray(user.role) ? user.role : [user.role];
+    const matchesRole = !roleFilter || roles.includes(roleFilter);
+    const matchesClass = classFilter === "" || Number(user.class ?? 0) === Number(classFilter);
+    return matchesRole && matchesClass;
+  });
 
   const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
@@ -319,6 +330,54 @@ const Admin = () => {
                 </div>
               </div>
 
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end">
+                <label htmlFor="admin-role-filter" className="flex-1 text-sm font-semibold text-gray-700">
+                  Filter by role
+                  <select
+                    id="admin-role-filter"
+                    value={roleFilter}
+                    onChange={(event) => setRoleFilter(event.target.value)}
+                    className="mt-2 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All roles</option>
+                    {userRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {role === "unAssigned" ? "Unassigned" : role.charAt(0).toUpperCase() + role.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label htmlFor="admin-class-filter" className="flex-1 text-sm font-semibold text-gray-700">
+                  Filter by class
+                  <select
+                    id="admin-class-filter"
+                    value={classFilter}
+                    onChange={(event) => setClassFilter(event.target.value)}
+                    className="mt-2 block w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-normal outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All classes</option>
+                    <option value="0">No class</option>
+                    {Array.from({ length: 12 }, (_, index) => index + 1).map((userClass) => (
+                      <option key={userClass} value={userClass}>Class {userClass}</option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRoleFilter("");
+                    setClassFilter("");
+                  }}
+                  disabled={!roleFilter && classFilter === ""}
+                  className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Clear filters
+                </button>
+              </div>
+              <p role="status" className="mb-4 text-sm text-gray-500">
+                Showing {filteredUsers.length} of {users.length} users
+              </p>
+
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[850px] border-collapse">
                   <thead>
@@ -333,8 +392,8 @@ const Admin = () => {
                   </thead>
 
                   <tbody>
-                    {users.length > 0 ? (
-                      users.map((user) => (
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user) => (
                         <tr
                           key={user._id}
                           className="border-b border-gray-100 text-sm text-gray-700 transition hover:bg-gray-50"
@@ -402,7 +461,7 @@ const Admin = () => {
                           colSpan="6"
                           className="px-4 py-8 text-center text-gray-500"
                         >
-                          No users found.
+                          {roleFilter || classFilter !== "" ? "No users match the selected filters." : "No users found."}
                         </td>
                       </tr>
                     )}
@@ -493,7 +552,6 @@ const UserRoleEditor = ({ user, onSave, canEditAllRoles = false }) => {
   const [editing, setEditing] = useState(false);
   const [selectedRoles, setSelectedRoles] = useState([]);
   const [saving, setSaving] = useState(false);
-  const roles = ["pascal", "admin", "pamela", "leader", "parent", "unAssigned"];
 
   if (hasProtectedAccountRole(user.role) && !canEditAllRoles) {
     return <p className="mt-2 text-xs text-gray-500">Roles locked for this protected account.</p>;
@@ -537,7 +595,7 @@ const UserRoleEditor = ({ user, onSave, canEditAllRoles = false }) => {
       <fieldset disabled={saving}>
         <legend className="mb-2 text-xs font-semibold">Assign roles</legend>
         <div className="grid grid-cols-2 gap-2">
-          {roles.map((role) => (
+          {userRoles.map((role) => (
             <label key={role} className="flex items-center gap-2 text-xs capitalize">
               <input type="checkbox" checked={selectedRoles.includes(role)} onChange={() => toggleRole(role)} />
               {role === "unAssigned" ? "Unassigned" : role}
