@@ -4,7 +4,6 @@ x-auto-update: &auto-update
 
 x-ghcr-api: &ghcr-api
   image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:${APP_VERSION:-production}
-  build: !reset null
 
 x-updated-api: &updated-api
   <<: *ghcr-api
@@ -12,28 +11,37 @@ x-updated-api: &updated-api
 
 x-ghcr-web: &ghcr-web
   image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:${APP_VERSION:-production}
-  build: !reset null
   labels: *auto-update
-  ports: !reset []
 
+# Older Compose versions ignore !reset tags inherited through YAML anchors.
+# Keep resets directly on each service; share image references and labels.
 services:
   api:
     <<: *updated-api
+    build: !reset null
 
   api2:
     <<: *updated-api
+    build: !reset null
 
   worker:
     <<: *updated-api
+    build: !reset null
 
   indexes:
     <<: *ghcr-api
+    build: !reset null
 
   uploads-init:
     <<: *ghcr-api
+    build: !reset null
 
   web:
     <<: *ghcr-web
+    build: !reset null
+    ports: !reset []
 
   web2:
     <<: *ghcr-web
+    build: !reset null
+    ports: !reset []

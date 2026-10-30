@@ -44,6 +44,7 @@ function checkApplications(services, owner, version) {
   for (const name of ["db", "traefik", "backup", "indexes", "uploads-init"]) {
     assert.equal(services[name].labels[enabled], "false", name);
   }
+  for (const name of ["indexes", "uploads-init"]) assert.equal(services[name].build, undefined, name);
   assert.equal(services.db.image, "mongo:8.0");
   assert.equal(services.traefik.image, "traefik:v3.7.16");
   for (const name of ["web", "web2"]) {

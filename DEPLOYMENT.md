@@ -87,7 +87,9 @@ jobs:
           npm ci --prefix frontend
 
       - name: Run backend and frontend tests
-        run: npm test
+        run: |
+          docker compose version
+          npm test
 
       - name: Lint frontend
         run: npm run lint --prefix frontend
@@ -216,7 +218,6 @@ x-auto-update: &auto-update
 
 x-ghcr-api: &ghcr-api
   image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:${APP_VERSION:-production}
-  build: !reset null
 
 x-updated-api: &updated-api
   <<: *ghcr-api
@@ -224,31 +225,40 @@ x-updated-api: &updated-api
 
 x-ghcr-web: &ghcr-web
   image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:${APP_VERSION:-production}
-  build: !reset null
   labels: *auto-update
-  ports: !reset []
 
 services:
   api:
     <<: *updated-api
+    build: !reset null
   api2:
     <<: *updated-api
+    build: !reset null
   worker:
     <<: *updated-api
+    build: !reset null
   indexes:
     <<: *ghcr-api
+    build: !reset null
   uploads-init:
     <<: *ghcr-api
+    build: !reset null
   web:
     <<: *ghcr-web
+    build: !reset null
+    ports: !reset []
   web2:
     <<: *ghcr-web
+    build: !reset null
+    ports: !reset []
 ```
 
 Docker Compose loads this override automatically with `compose.yaml`. The
 override changes application images and removes their inherited build
-definitions. Existing environment settings, health checks, networking, volumes,
-resource limits, and startup dependencies stay in the base configuration.
+definitions. Keep `!reset` tags directly on each service: some Compose v2
+versions ignore tags inherited through YAML anchors. Existing environment
+settings, health checks, networking, volumes, resource limits, and startup
+dependencies stay in the base configuration.
 MongoDB and backup tools continue using `mongo:8.0`. Both frontend replicas
 use the same release tag and shared asset volume. The five application
 services have Watchtower enable/scope labels; MongoDB, Traefik, backups,

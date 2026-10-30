@@ -35,7 +35,9 @@ jobs:
           npm ci --prefix frontend
 
       - name: Run backend and frontend tests
-        run: npm test
+        run: |
+          docker compose version
+          npm test
 
       - name: Lint frontend
         run: npm run lint --prefix frontend
