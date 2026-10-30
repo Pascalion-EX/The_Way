@@ -21,3 +21,37 @@ services:
   web:
     image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
     build: !reset null
+    environment:
+      SITE_ADDRESS: ":80"
+      API_UPSTREAMS: "api:4000 api2:4000"
+    ports: !reset []
+
+  web2:
+    extends:
+      file: compose.build.yaml
+      service: web
+
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
+    build: !reset null
+
+    environment:
+      SITE_ADDRESS: ":80"
+      API_UPSTREAMS: "api:4000 api2:4000"
+
+    ports: !reset []
+
+    volumes:
+      - uploads_data:/srv/uploads:ro
+
+    networks:
+      - private
+
+    depends_on:
+      uploads-init:
+        condition: service_completed_successfully
+
+    restart: unless-stopped
+
+    mem_limit: 256m
+    cpus: 0.25
+    pids_limit: 128

@@ -9,7 +9,7 @@ http:
       service: api
       middlewares: [security-headers, image-body-limit]
       tls:
-        certResolver: letsencrypt
+        certResolver: le
     api:
       rule: 'Host(`{{ env "DOMAIN" }}`) && (Path(`/api`) || PathPrefix(`/api/`) || Path(`/health/live`) || Path(`/health/ready`))'
       priority: 100
@@ -17,7 +17,7 @@ http:
       service: api
       middlewares: [security-headers, api-body-limit]
       tls:
-        certResolver: letsencrypt
+        certResolver: le
     frontend:
       rule: 'Host(`{{ env "DOMAIN" }}`)'
       priority: 1
@@ -25,7 +25,7 @@ http:
       service: frontend
       middlewares: [security-headers]
       tls:
-        certResolver: letsencrypt
+        certResolver: le
 
   services:
     api:
@@ -44,6 +44,7 @@ http:
       loadBalancer:
         servers:
           - url: http://web:80
+          - url: http://web2:80
         healthCheck:
           path: /health/frontend
           interval: 15s
