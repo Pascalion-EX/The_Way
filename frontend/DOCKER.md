@@ -68,7 +68,7 @@ That value is public and baked into the bundle. Changing a container's environme
 
 `frontend/Caddyfile` provides React Router fallback for direct page reloads, compression, one-year immutable caching for hashed `/assets/` files, and revalidation for HTML and other public files. Both replicas follow the same release channel and mount `frontend_assets`. The volume retains hashed assets from earlier releases so open tabs can load lazy pages after Watchtower replaces the image. The image entrypoint publishes its new assets before starting Caddy and expires unused files after `ASSET_RETENTION_DAYS` (default 30, configurable from 1 to 365). HTML comes from the current image and revalidates on every request; only the asset directory persists. Missing assets return 404 with `Cache-Control: no-store`.
 
-A `vite:preloadError` handler refreshes an online tab at most once per entry bundle, using session storage to prevent reload loops. If storage is blocked, the browser is offline, or the failure persists, an error boundary provides a reload button. Existing browsers loaded before this release need a hard refresh once after the corrected release is deployed. See [Vite’s load-error handling](https://vite.dev/guide/build.html#load-error-handling).
+A `vite:preloadError` handler refreshes an online tab at most once per entry bundle, using session storage to prevent reload loops. If storage is blocked, the browser is offline, or the failure persists, an error boundary provides a reload button. Tabs whose assets were already lost before the migration may need a hard refresh after the corrected release is deployed. See [Vite’s load-error handling](https://vite.dev/guide/build.html#load-error-handling).
 
 The root [Compose setup](../DOCKER.md) includes database initialization, runtime environment configuration, index creation, and backup tools. It builds this image with an empty `VITE_BACKEND_URL` and passes no backend credentials to the frontend.
 
@@ -86,27 +86,26 @@ sudo docker compose stop watchtower
 ```
 
 Check out the corrected source/configuration and select matching published
-images using the normal [deployment procedure](../DEPLOYMENT.md). While the
-old web container is still running, preserve its available assets, pull the
-corrected images, and seed the new volume before recreating services:
+images using the normal [deployment procedure](../DEPLOYMENT.md). While both
+old frontend containers are still running, pull the corrected images, preserve
+their available assets, and seed the new volume before recreating services:
 
 ```bash
-asset_backup=$(mktemp -d)
-sudo docker compose cp web:/srv/assets/. "$asset_backup/"
-if [ -n "$(sudo docker compose ps -q web2)" ]; then
-  sudo docker compose cp web2:/srv/assets/. "$asset_backup/"
-fi
 sudo docker compose config --quiet
 sudo docker compose pull
-sudo docker compose run --rm --no-deps --entrypoint sh \
-  --volume "$asset_backup:/seed:ro" web -c 'cp -R /seed/. /srv/assets/'
+sudo sh deployment/preserve-frontend-assets.sh
 sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
 curl --fail https://YOUR-DOMAIN/health/frontend
 ```
 
 Use the dedicated `docker --config deployment/secrets/watchtower compose pull`
-command if that is where your private GHCR login is stored. Copying the old
-assets cannot restore a file already missing from the old container; the
+command if that is where your private GHCR login is stored. The preservation
+script snapshots each running replica separately and prints the backup
+directory. It aborts if a snapshot fails, excludes private manifests and
+unfinished files from the shared cache, and leaves existing cached assets
+intact. Keep the snapshots until deployment checks pass. Run this helper only
+for the migration; later releases retain their assets in the shared volume.
+Copying the old assets cannot restore a file already missing from the old container; the
 corrected complete release and a hard refresh restore navigation for those
 clients. Keep the `frontend_assets` volume on future updates, and retain these
 files for the whole configured grace period.

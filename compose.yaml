@@ -6,6 +6,9 @@ x-logging: &logging
     max-size: "10m"
     max-file: "3"
 
+x-no-auto-update: &no-auto-update
+  com.centurylinklabs.watchtower.enable: "false"
+
 x-app-env: &app-env
   NODE_ENV: production
   PORT: "4000"
@@ -59,6 +62,7 @@ x-api: &api
 services:
   db:
     image: mongo:8.0
+    labels: *no-auto-update
     command: [mongod, --bind_ip_all, --wiredTigerCacheSizeGB, "1.25", --quiet]
     environment:
       MONGO_INITDB_ROOT_USERNAME: kerolosafam_db_user
@@ -102,6 +106,7 @@ services:
 
   uploads-init:
     <<: *api
+    labels: *no-auto-update
     user: "0:0"
     command: [node, -e, "const fs=require('node:fs'); fs.mkdirSync('/app/uploads',{recursive:true}); fs.chmodSync('/app/uploads',0o755); fs.chownSync('/app/uploads',1000,1000)"]
     environment:
@@ -132,6 +137,7 @@ services:
 
   traefik:
     image: traefik:v3.7.16
+    labels: *no-auto-update
     command:
       - --entrypoints.web.address=:80
       - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -207,6 +213,7 @@ services:
 
   indexes:
     <<: *api
+    labels: *no-auto-update
     command: [node, scripts/createIndexes.js]
     restart: "no"
     healthcheck:
@@ -214,6 +221,7 @@ services:
 
   backup:
     image: mongo:8.0
+    labels: *no-auto-update
     profiles: [tools]
     entrypoint: [sh, /scripts/backup-container.sh]
     environment:

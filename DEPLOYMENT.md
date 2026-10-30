@@ -210,35 +210,54 @@ References: [publishing Docker images with GitHub Actions](https://docs.github.c
 Create `compose.override.yaml` beside `compose.yaml` with this content:
 
 ```yaml
+x-auto-update: &auto-update
+  com.centurylinklabs.watchtower.enable: "true"
+  com.centurylinklabs.watchtower.scope: the-way
+
 x-ghcr-api: &ghcr-api
-  image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
+  image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:${APP_VERSION:-production}
   build: !reset null
+
+x-updated-api: &updated-api
+  <<: *ghcr-api
+  labels: *auto-update
+
+x-ghcr-web: &ghcr-web
+  image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:${APP_VERSION:-production}
+  build: !reset null
+  labels: *auto-update
+  ports: !reset []
 
 services:
   api:
-    <<: *ghcr-api
+    <<: *updated-api
   api2:
-    <<: *ghcr-api
+    <<: *updated-api
   worker:
-    <<: *ghcr-api
+    <<: *updated-api
   indexes:
     <<: *ghcr-api
   uploads-init:
     <<: *ghcr-api
   web:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
-    build: !reset null
+    <<: *ghcr-web
+  web2:
+    <<: *ghcr-web
 ```
 
 Docker Compose loads this override automatically with `compose.yaml`. The
 override changes application images and removes their inherited build
 definitions. Existing environment settings, health checks, networking, volumes,
 resource limits, and startup dependencies stay in the base configuration.
-MongoDB and backup tools continue using `mongo:8.0`.
+MongoDB and backup tools continue using `mongo:8.0`. Both frontend replicas
+use the same release tag and shared asset volume. The five application
+services have Watchtower enable/scope labels; MongoDB, Traefik, backups,
+and setup jobs explicitly disable automatic updates in the base file.
 
-Add `GHCR_OWNER=` to `.env.example`, and replace its existing `APP_VERSION=local`
-line with `APP_VERSION=`. Leave the secret placeholders empty. Actual namespace
-and release values are filled in on the VPS in step 8.
+The supplied `.env.example` defaults to `GHCR_OWNER=pascalion-ex` and
+`APP_VERSION=production`. Leave the secret placeholders empty. For the manual
+deployment below, fill in the published SHA tag on the VPS in step 8. For
+automatic updates, use `production` and the [Watchtower override](deployment/WATCHTOWER.md).
 
 Use a current Compose plugin supporting `!reset`. Docker documents
 [automatic override loading](https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/)

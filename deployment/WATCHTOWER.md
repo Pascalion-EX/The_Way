@@ -34,6 +34,9 @@ WATCHTOWER_POLL_INTERVAL=300
 ```
 
 Keep the existing `DOMAIN`, `GHCR_OWNER`, and other production settings.
+This repository defaults `GHCR_OWNER` to `pascalion-ex`; use that lowercase
+namespace for `ghcr.io/pascalion-ex/the-way-web:production` and
+`ghcr.io/pascalion-ex/the-way-api:production`.
 `COMPOSE_FILE` makes normal Compose commands load the Watchtower override.
 The override explicitly selects `production` images for application services
 and the two setup jobs. A commit tag does not change when a new commit is
@@ -82,6 +85,20 @@ curl --fail https://YOUR-DOMAIN/health/frontend
 curl --fail https://YOUR-DOMAIN/health/ready
 ```
 
+Check the configuration actually applied to all five running containers:
+
+```bash
+sudo docker inspect --format '{{.Name}} {{.Config.Image}} enabled={{index .Config.Labels "com.centurylinklabs.watchtower.enable"}} scope={{index .Config.Labels "com.centurylinklabs.watchtower.scope"}}' \
+  $(sudo docker compose ps -q web web2 api api2 worker)
+```
+
+Both frontends must show `the-way-web:production`, both APIs and the worker
+must show `the-way-api:production`, and all five must show `enabled=true`
+and `scope=the-way`. The production override shares each image/label definition
+between replicas. MongoDB and Traefik have explicit `enable=false` labels;
+setup jobs and backups are also disabled. Recreate containers with Compose
+after changing labels or mounts; restarting them keeps their old settings.
+
 Watchtower needs access to `/var/run/docker.sock` to recreate containers. That
 grants control of the Docker host even with a read-only socket bind mount.
 The service exposes no HTTP API or public port, uses explicit application
@@ -99,8 +116,10 @@ The asset volume is separate from `uploads_data` and database storage.
 When upgrading a deployment created before this volume existed, follow the
 [one-time migration](../frontend/DOCKER.md#one-time-migration-for-existing-deployments).
 Stop Watchtower, preserve old assets, update source/images, and recreate the
-web service with Compose before resuming updates. Watchtower cannot add this
-mount merely by pulling a newer frontend image.
+web services with Compose before resuming updates. The migration helper
+`sudo sh deployment/preserve-frontend-assets.sh` snapshots both running
+replicas and seeds the shared volume after the new image is pulled.
+Watchtower cannot add this mount merely by pulling a newer frontend image.
 
 ## Update behavior and limits
 

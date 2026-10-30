@@ -1,16 +1,30 @@
+x-auto-update: &auto-update
+  com.centurylinklabs.watchtower.enable: "true"
+  com.centurylinklabs.watchtower.scope: the-way
+
 x-ghcr-api: &ghcr-api
-  image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
+  image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:${APP_VERSION:-production}
   build: !reset null
+
+x-updated-api: &updated-api
+  <<: *ghcr-api
+  labels: *auto-update
+
+x-ghcr-web: &ghcr-web
+  image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:${APP_VERSION:-production}
+  build: !reset null
+  labels: *auto-update
+  ports: !reset []
 
 services:
   api:
-    <<: *ghcr-api
+    <<: *updated-api
 
   api2:
-    <<: *ghcr-api
+    <<: *updated-api
 
   worker:
-    <<: *ghcr-api
+    <<: *updated-api
 
   indexes:
     <<: *ghcr-api
@@ -19,40 +33,7 @@ services:
     <<: *ghcr-api
 
   web:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
-    build: !reset null
-    environment:
-      SITE_ADDRESS: ":80"
-      API_UPSTREAMS: "api:4000 api2:4000"
-    ports: !reset []
+    <<: *ghcr-web
 
   web2:
-    extends:
-      file: compose.build.yaml
-      service: web
-
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:${APP_VERSION:?Set APP_VERSION to a published SHA tag}
-    build: !reset null
-
-    environment:
-      SITE_ADDRESS: ":80"
-      API_UPSTREAMS: "api:4000 api2:4000"
-
-    ports: !reset []
-
-    volumes:
-      - uploads_data:/srv/uploads:ro
-      - frontend_assets:/srv/assets
-
-    networks:
-      - private
-
-    depends_on:
-      uploads-init:
-        condition: service_completed_successfully
-
-    restart: unless-stopped
-
-    mem_limit: 256m
-    cpus: 0.25
-    pids_limit: 128
+    <<: *ghcr-web

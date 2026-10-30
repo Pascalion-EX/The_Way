@@ -34,8 +34,10 @@ command above while preparing the project locally.
 ## Configure on the VPS
 
 Complete the workflow and registry-override setup in the deployment guide first.
-That setup adds `GHCR_OWNER` and a published `sha-<full commit SHA>` value for
-`APP_VERSION` to the following application configuration.
+The production override defaults to `GHCR_OWNER=pascalion-ex` and
+`APP_VERSION=production` for both frontends, both APIs, the worker, and setup
+jobs. Set `APP_VERSION=sha-<full commit SHA>` for an immutable manual release.
+The Watchtower override always selects `production`.
 
 ```bash
 cp .env.example .env
@@ -160,6 +162,9 @@ job promotes their `production` tags. `compose.watchtower.yaml` watches only
 `api`, `api2`, `worker`, `web`, and `web2`, and uses the maintained Nicholas Fedor fork
 pinned by version and image digest. Follow its activation instructions after
 initial deployment checks. Named data volumes stay mounted across updates.
+The production override already labels all five application services with
+`com.centurylinklabs.watchtower.enable=true` and scope `the-way`. MongoDB,
+Traefik, backups, and setup jobs explicitly set the enable label to `false`.
 Keep immutable SHA releases for rollback. Host configuration and migrations
 still require manual deployment.
 

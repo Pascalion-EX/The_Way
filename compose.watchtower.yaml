@@ -5,7 +5,7 @@ x-auto-update: &auto-update
   com.centurylinklabs.watchtower.scope: the-way
 
 x-production-api: &production-api
-  image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+  image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:production
   labels: *auto-update
 
 services:
@@ -16,17 +16,17 @@ services:
   worker:
     <<: *production-api
   web:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:production
+    image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:production
     labels: *auto-update
   web2:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:production
+    image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-web:production
     labels: *auto-update
 
   # These tasks run under Compose during bootstrap/maintenance, not Watchtower.
   indexes:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+    image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:production
   uploads-init:
-    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-api:production
+    image: ghcr.io/${GHCR_OWNER:-pascalion-ex}/the-way-api:production
 
   watchtower:
     image: ghcr.io/nicholas-fedor/watchtower:1.23.2@sha256:62fb91130ddb493f869cad7e198fa260dd16c5da293ed092cbd5d8781566f7a6
