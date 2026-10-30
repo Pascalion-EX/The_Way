@@ -18,6 +18,7 @@ const secret = "test-only-camp-privacy-secret";
 const objectId = (id) => new mongoose.Types.ObjectId(id);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const summaryKeys = ["_id", "title", "name", "body", "TripType", "image", "years", "createdAt", "updatedAt", "applicantCount", "hasApplied"].sort();
+const cardKeys = ["_id", "title", "name", "image", "hasApplied"].sort();
 const projection = (record, fields) => !fields ? record :
   Object.fromEntries(Object.entries(record).filter(([key]) =>
     Object.values(fields).includes(0) ? fields[key] !== 0 : key === "_id" || fields[key] === 1));
@@ -64,8 +65,8 @@ function setup(t) {
   t.mock.method(Camp.collection, "aggregate", (pipeline) => {
     state.pipelines.push(pipeline);
     const fields = pipeline.at(-1).$project;
-    assert.deepEqual(Object.keys(fields).sort(), summaryKeys, "Only public metadata and computed membership may leave MongoDB");
-    assert.deepEqual(fields.applicantCount, { $size: { $ifNull: ["$applicants", []] } });
+    assert.deepEqual(Object.keys(fields).sort(), pipeline[0].$match._id ? summaryKeys : cardKeys, "Lists contain cards; details include public content");
+    if (fields.applicantCount) assert.deepEqual(fields.applicantCount, { $size: { $ifNull: ["$applicants", []] } });
     assert.equal(String(fields.hasApplied.$in[0]), userId, "Only the authenticated viewer's status may be computed");
     assert.deepEqual(fields.hasApplied.$in[1], { $ifNull: ["$applicants.user", []] });
     const match = pipeline[0].$match;
@@ -76,7 +77,7 @@ function setup(t) {
     // Emulate just the projected MongoDB result; document the DB-I/O boundary.
     const records = matches ? [{
       ...projection(camp, fields),
-      applicantCount: camp.applicants?.length || 0,
+      ...(fields.applicantCount ? { applicantCount: camp.applicants?.length || 0 } : {}),
       hasApplied: camp.applicants?.some((applicant) => String(applicant.user) === userId) || false,
     }] : [];
     return { toArray: async () => records };
@@ -140,6 +141,13 @@ const assertSummary = (camp, count = 1, applied = false) => {
   }
 };
 
+const assertCard = (camp, applied = false) => {
+  assert.deepEqual(Object.keys(camp).sort(), cardKeys);
+  assert.equal(camp.title, "Trip");
+  assert.equal(camp.hasApplied, applied);
+  assert.equal(JSON.stringify(camp).includes("Public description"), false);
+};
+
 test("unrelated members receive only counts and their own status from camp lists and details", async (t) => {
   const state = setup(t);
   for (const role of ["parent", "unAssigned", "admin", "leader", "pascal", "pamela"]) {
@@ -148,7 +156,8 @@ test("unrelated members receive only counts and their own status from camp lists
     const detail = await state.request("GET", `/${campId}?userId=${otherId}&populate=createdBy`);
     assert.equal(list.status, 200);
     assert.equal(detail.status, 200);
-    assertSummary(list.body.camps[0]);
+    assertCard(list.body.camps[0]);
+    assert.equal(detail.body.camp.body, "Public description");
     assertSummary(detail.body.camp);
     assert.equal(detail.headers.get("cache-control"), "private, no-store");
   }
@@ -161,9 +170,9 @@ test("registration status handles the viewer's membership, no applicants, and le
   state.camp.applicants.push({ user: objectId(userId), appliedAt: new Date() });
   assertSummary((await state.request("GET", `/${campId}`)).body.camp, 2, true);
   state.camp.applicants = [];
-  assertSummary((await state.request()).body.camps[0], 0, false);
+  assertCard((await state.request()).body.camps[0]);
   delete state.camp.applicants;
-  assertSummary((await state.request()).body.camps[0], 0, false);
+  assertCard((await state.request()).body.camps[0]);
 });
 
 test("applying and withdrawing return safe updated summaries while retaining other applications", async (t) => {

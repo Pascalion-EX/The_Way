@@ -18,6 +18,9 @@ services:
   web:
     image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:production
     labels: *auto-update
+  web2:
+    image: ghcr.io/${GHCR_OWNER:?Set GHCR_OWNER in .env}/the-way-web:production
+    labels: *auto-update
 
   # These tasks run under Compose during bootstrap/maintenance, not Watchtower.
   indexes:
@@ -63,6 +66,8 @@ services:
       api2:
         condition: service_healthy
       web:
+        condition: service_healthy
+      web2:
         condition: service_healthy
       worker:
         condition: service_started

@@ -722,6 +722,15 @@ establish that the server can support 1,000 concurrent active users. Measure
 that separately with representative load in an isolated environment; do not
 run the synthetic load-test seeder against the live database.
 
+## Frontend asset cache migration
+
+If the stack predates the `frontend_assets` volume, follow the
+[one-time asset migration](frontend/DOCKER.md#one-time-migration-for-existing-deployments)
+when deploying this release. It preserves available previous chunks, attaches
+the asset volume through Compose, and prevents open tabs from requesting
+files deleted by a frontend replacement. Publish and deploy matching images
+and source configuration; pause Watchtower while changing mounts.
+
 ## Deploy a later update
 
 If Watchtower is enabled, stop it before this manual procedure. For ordinary

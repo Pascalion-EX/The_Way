@@ -3,7 +3,7 @@ import Camp from "../models/campsModel.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import mongoose from "mongoose";
-import { campSummaryProjection, toCampSummary, toStaffApplicant } from "../services/campResponses.js";
+import { campCardProjection, toCampCard, campSummaryProjection, toCampSummary, toStaffApplicant } from "../services/campResponses.js";
 import { buildBrandedEmail } from "../services/emailTemplate.js";
 import { timeOperation } from "../services/performance.js";
 import { getSecrets } from "../config/secrets.js";
@@ -169,12 +169,12 @@ export const getAllCamps = async (req, res) => {
         { $limit: pagination.pageSize },
       );
     }
-    pipeline.push({ $project: campSummaryProjection(req.userId) });
+    pipeline.push({ $project: campCardProjection(req.userId) });
     const camps = await Camp.aggregate(pipeline);
 
     return res.status(200).json({
       success: true,
-      camps: camps.map((camp) => toCampSummary(camp, req.userId)),
+      camps: camps.map(toCampCard),
       pagination,
     });
   } catch (error) {

@@ -35,10 +35,17 @@
 	}
 
 	# Hashed Vite assets are immutable. Missing assets return 404, not HTML.
+	@privateAssets path_regexp privateAssets ^/assets/(.*/)?\.
+	handle @privateAssets {
+		header Cache-Control "no-store"
+		respond 404
+	}
 	handle /assets/* {
 		root * /srv
 		header Cache-Control "public, max-age=31536000, immutable"
-		file_server
+		file_server {
+			hide .asset-manifest .manifest.*
+		}
 	}
 
 	# Let direct links/reloads such as /lessons/ID reach React Router.
@@ -47,6 +54,12 @@
 		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
+	}
+
+	# A failed chunk request must not be cached as immutable for a year.
+	handle_errors {
+		header Cache-Control "no-store"
+		respond "{err.status_code} {err.status_text}" {err.status_code}
 	}
 }
 

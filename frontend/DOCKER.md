@@ -28,7 +28,7 @@ The supplied [Compose stack](../DOCKER.md) publishes only Traefik on TCP 80/443
 and UDP 443 for HTTP/3. Traefik handles HTTPS certificates and redirects, routes
 `/api`, `/api/*`, `/health/live`, and `/health/ready` directly to `api:4000` and
 `api2:4000`, and balances requests across healthy API containers. Other paths
-go to Caddy at `web:80` over the private Docker network. Caddy also serves
+go to Caddy at `web:80` and `web2:80` over the private Docker network. Caddy also serves
 uploaded images at `/uploads/` from its read-only mount of `uploads_data`;
 missing uploads return 404 instead of React HTML.
 
@@ -66,8 +66,51 @@ That value is public and baked into the bundle. Changing a container's environme
 
 ## Routing and caching
 
-`frontend/Caddyfile` provides React Router fallback for direct page reloads, compression, one-year immutable caching for hashed `/assets/` files, and revalidation for HTML and other public files. Missing hashed assets return 404. Keep previous hashed assets available across releases or provide a controlled refresh path for already-open browsers as part of the later deployment workflow.
+`frontend/Caddyfile` provides React Router fallback for direct page reloads, compression, one-year immutable caching for hashed `/assets/` files, and revalidation for HTML and other public files. Both replicas follow the same release channel and mount `frontend_assets`. The volume retains hashed assets from earlier releases so open tabs can load lazy pages after Watchtower replaces the image. The image entrypoint publishes its new assets before starting Caddy and expires unused files after `ASSET_RETENTION_DAYS` (default 30, configurable from 1 to 365). HTML comes from the current image and revalidates on every request; only the asset directory persists. Missing assets return 404 with `Cache-Control: no-store`.
+
+A `vite:preloadError` handler refreshes an online tab at most once per entry bundle, using session storage to prevent reload loops. If storage is blocked, the browser is offline, or the failure persists, an error boundary provides a reload button. Existing browsers loaded before this release need a hard refresh once after the corrected release is deployed. See [Vite’s load-error handling](https://vite.dev/guide/build.html#load-error-handling).
 
 The root [Compose setup](../DOCKER.md) includes database initialization, runtime environment configuration, index creation, and backup tools. It builds this image with an empty `VITE_BACKEND_URL` and passes no backend credentials to the frontend.
 
 References: [Vite static deployment](https://vite.dev/guide/static-deploy.html), [Caddy routing](https://caddyserver.com/docs/caddyfile/directives/handle), and [Traefik services](https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/).
+
+
+## One-time migration for existing deployments
+
+The asset volume is a Compose change. Watchtower replaces images with the
+existing container configuration, so an image update alone cannot attach it.
+If Watchtower is enabled, stop it before publishing/applying this release:
+
+```bash
+sudo docker compose stop watchtower
+```
+
+Check out the corrected source/configuration and select matching published
+images using the normal [deployment procedure](../DEPLOYMENT.md). While the
+old web container is still running, preserve its available assets, pull the
+corrected images, and seed the new volume before recreating services:
+
+```bash
+asset_backup=$(mktemp -d)
+sudo docker compose cp web:/srv/assets/. "$asset_backup/"
+if [ -n "$(sudo docker compose ps -q web2)" ]; then
+  sudo docker compose cp web2:/srv/assets/. "$asset_backup/"
+fi
+sudo docker compose config --quiet
+sudo docker compose pull
+sudo docker compose run --rm --no-deps --entrypoint sh \
+  --volume "$asset_backup:/seed:ro" web -c 'cp -R /seed/. /srv/assets/'
+sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
+curl --fail https://YOUR-DOMAIN/health/frontend
+```
+
+Use the dedicated `docker --config deployment/secrets/watchtower compose pull`
+command if that is where your private GHCR login is stored. Copying the old
+assets cannot restore a file already missing from the old container; the
+corrected complete release and a hard refresh restore navigation for those
+clients. Keep the `frontend_assets` volume on future updates, and retain these
+files for the whole configured grace period.
+
+After public health and browser navigation checks pass, resume Watchtower if
+it was previously enabled. Do not delete the running container’s assets or
+mount a persistent volume over all of `/srv`, which would retain stale HTML.

@@ -2,7 +2,6 @@ import ContentImage from "../Components/ContentImage.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import {
-  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
@@ -13,37 +12,24 @@ import Navbar from "@/Components/Navbar.jsx";
 
 const ActivitiesViewer = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
 
   const { backendUrl } = useContext(AppContent);
 
-  const passedActivity = location.state?.activity;
-
-  const [activity, setActivity] = useState(
-    passedActivity || null
-  );
-
-  const [loading, setLoading] = useState(
-    !passedActivity
-  );
+  const [activity, setActivity] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   /*
   |--------------------------------------------------------------------------
   | Fetch Activity
   |--------------------------------------------------------------------------
   |
-  | The activity can arrive through navigation state.
-  |
-  | If the user refreshes the page, navigation state disappears,
-  | so we load the activity again from the backend.
+  | Cards contain only names and images. Load the full activity by ID.
   |
   */
 
   useEffect(() => {
     const fetchActivity = async () => {
-      if (passedActivity) return;
-
       try {
         setLoading(true);
 
@@ -69,7 +55,7 @@ const ActivitiesViewer = () => {
     };
 
     fetchActivity();
-  }, [passedActivity, id, backendUrl]);
+  }, [id, backendUrl]);
 
   /*
   |--------------------------------------------------------------------------

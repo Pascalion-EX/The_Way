@@ -1,3 +1,4 @@
+import { namedCardFields, toContentCard } from "../services/contentCards.js";
 import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import activitiesModel from "../models/activitiesModel.js";
@@ -203,17 +204,14 @@ export const getAllActivities = async (
     const { items: activities, pagination } = await paginateQuery(
       activitiesModel
         .find(filter)
-        .populate(
-          "createdBy",
-          "name email role"
-        )
+        .select(namedCardFields)
         .sort({
           createdAt: -1, _id: -1,
-        }), page);
+        }).lean(), page);
 
     return res.status(200).json({
       success: true,
-      activities,
+      activities: activities.map((activity) => toContentCard(activity, namedCardFields)),
       pagination,
     });
   } catch (error) {

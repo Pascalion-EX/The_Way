@@ -82,15 +82,6 @@ const ChantCard = ({ chant, refreshChants }) => {
     }
   };
 
-  const getPreviewLyrics = () => {
-    return (
-      chant.lyrics?.english ||
-      chant.lyrics?.arabic ||
-      chant.lyrics?.coptic ||
-      "No lyrics available"
-    );
-  };
-
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col">
       <div
@@ -119,15 +110,7 @@ const ChantCard = ({ chant, refreshChants }) => {
             <h2 className="text-xl font-bold text-gray-900 line-clamp-2">
               {chant.title}
             </h2>
-
-            <span className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full whitespace-nowrap">
-              {chant.category}
-            </span>
           </div>
-
-          <p className="text-gray-600 mt-3 line-clamp-3 whitespace-pre-line">
-            {getPreviewLyrics()}
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2 mt-5">

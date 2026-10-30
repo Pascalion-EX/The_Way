@@ -1,3 +1,4 @@
+import { lessonCardFields, toContentCard } from "../services/contentCards.js";
 import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
@@ -253,17 +254,15 @@ export const getLessons = async (req, res) => {
 
     const { items: lessons, pagination } = await paginateQuery(lessonModel
       .find(filter)
+      .select(lessonCardFields)
       .sort({
         createdAt: -1, _id: -1,
       })
-      .populate(
-        "createdBy",
-        "name email role"
-      ), page);
+      .lean(), page);
 
     return res.status(200).json({
       success: true,
-      lessons,
+      lessons: lessons.map((lesson) => toContentCard(lesson, lessonCardFields)),
       pagination,
     });
   } catch (error) {

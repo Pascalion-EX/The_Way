@@ -1,6 +1,6 @@
 import ContentImage from "../Components/ContentImage.jsx";
 import React, { useContext, useEffect, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
@@ -31,12 +31,11 @@ import Navbar from "@/Components/Navbar.jsx";
 
 const CampDetails = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { id } = useParams();
   const { backendUrl } = useContext(AppContent);
 
-  const [camp, setCamp] = useState(location.state?.camp || null);
-  const [loading, setLoading] = useState(!location.state?.camp);
+  const [camp, setCamp] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCamp = async () => {
@@ -57,10 +56,10 @@ const CampDetails = () => {
       }
     };
 
-    if (!camp && id) {
+    if (id) {
       fetchCamp();
     }
-  }, [backendUrl, id, camp]);
+  }, [backendUrl, id]);
 
   const renderYears = () => {
     if (!Array.isArray(camp?.years) || camp.years.length === 0) {

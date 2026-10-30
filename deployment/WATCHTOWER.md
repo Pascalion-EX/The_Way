@@ -6,7 +6,7 @@ Push to main → tests + lint + build → publish both sha-<commit> images
 ```
 
 GitHub Actions builds release images. Watchtower on the VPS polls GHCR every
-300 seconds and updates `api`, `api2`, `worker`, and `web`. MongoDB, Traefik,
+300 seconds and updates `api`, `api2`, `worker`, `web`, and `web2`. MongoDB, Traefik,
 backups, setup jobs, and Watchtower itself are not selected. The original
 [containrrr project was archived](https://github.com/containrrr/watchtower/discussions/2135);
 this setup pins the [Nicholas Fedor fork](https://github.com/nicholas-fedor/watchtower/releases/tag/v1.23.2)
@@ -87,6 +87,21 @@ grants control of the Docker host even with a read-only socket bind mount.
 The service exposes no HTTP API or public port, uses explicit application
 labels and scope, and cannot update itself under this configuration.
 
+## Frontend asset retention
+
+Both Caddy replicas use the same `production` image channel and Watchtower
+labels. Each image copies its build’s hashed files into `frontend_assets` before
+serving the new HTML. Prior assets remain for `ASSET_RETENTION_DAYS` (default
+30), so tabs opened before an update can still load lazy pages. Missing assets
+return non-cacheable 404s, and the client has a bounded refresh/recovery path.
+The asset volume is separate from `uploads_data` and database storage.
+
+When upgrading a deployment created before this volume existed, follow the
+[one-time migration](../frontend/DOCKER.md#one-time-migration-for-existing-deployments).
+Stop Watchtower, preserve old assets, update source/images, and recreate the
+web service with Compose before resuming updates. Watchtower cannot add this
+mount merely by pulling a newer frontend image.
+
 ## Update behavior and limits
 
 After the next successful main release, wait at least one polling interval and
@@ -97,8 +112,9 @@ The fork's [rolling mode](https://watchtower.nickfedor.com/v1.23.2/configuration
 replaces containers one at a time and waits for configured health checks. We
 disable Compose dependency ordering in Watchtower because its linked-container
 mode conflicts with rolling updates. Compose still handles dependencies at
-bootstrap. The worker has no HTTP healthcheck. A single Caddy/worker container
-can briefly interrupt frontend/email service while restarting. This is not a
+bootstrap. The worker has no HTTP healthcheck. Both Caddy replicas update one at a time and share assets so a page
+and its lazy chunks can be served by different replicas. The single worker
+can briefly interrupt email processing while restarting. This is not a
 zero-downtime deployment or automatic rollback system; a healthcheck timeout
 can allow the updater to continue after logging a warning.
 

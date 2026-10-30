@@ -69,21 +69,11 @@ const Activities = () => {
   };
 
   const handleViewActivity = (activity) => {
-    navigate(`/activities/${activity._id}`, {
-      state: { activity },
-    });
+    navigate(`/activities/${activity._id}`);
   };
 
   const handleEditActivity = (activity) => {
-    navigate(`/activities/${activity._id}/edit`, {
-      state: { activity },
-    });
-  };
-
-  const getPreviewText = (text = "", maxLength = 80) => {
-    if (!text) return "No explanation available.";
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}...`;
+    navigate(`/activities/${activity._id}/edit`);
   };
 
   return (
@@ -193,12 +183,6 @@ const Activities = () => {
                           <h3 className="break-words text-xl font-semibold text-gray-900 sm:text-2xl">
                             {activity.name}
                           </h3>
-
-                          <p className="mt-1 text-sm text-gray-500">
-                            {activity.materials
-                              ? `Materials: ${activity.materials}`
-                              : "No materials listed"}
-                          </p>
                         </div>
 
                         {canManageActivities && (
@@ -213,10 +197,6 @@ const Activities = () => {
                           </button>
                         )}
                       </div>
-
-                      <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-700">
-                        {getPreviewText(activity.explanation)}
-                      </p>
 
                       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
                         <button

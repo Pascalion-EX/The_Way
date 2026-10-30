@@ -66,22 +66,12 @@ const Games = () => {
     }
   };
 
-const handleViewGame = (game) => {
-  navigate("/games/view", {
-    state: { game },
-  });
-};
-
-  const handleEditGame = (game) => {
-    navigate(`/games/${game._id}/edit`, {
-      state: { game },
-    });
+  const handleViewGame = (game) => {
+    navigate(`/games/${game._id}`);
   };
 
-  const getPreviewText = (text = "", maxLength = 80) => {
-    if (!text) return "No description available.";
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}...`;
+  const handleEditGame = (game) => {
+    navigate(`/games/${game._id}/edit`);
   };
 
   return (
@@ -195,7 +185,7 @@ const handleViewGame = (game) => {
                       {/* Image */}
                       <ContentImage
                         src={game.image}
-                        alt={game.title}
+                        alt={game.name}
                         className="h-40 w-full object-cover sm:h-48 lg:h-56"
                       />
 
@@ -204,12 +194,8 @@ const handleViewGame = (game) => {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
                             <h3 className="break-words text-xl font-semibold text-gray-900 sm:text-2xl">
-                              {game.title}
+                              {game.name}
                             </h3>
-
-                            <p className="mt-1 text-sm text-gray-500">
-                              {game.name} · Year {game.year}
-                            </p>
                           </div>
 
                           {canManageGames && (
@@ -222,10 +208,6 @@ const handleViewGame = (game) => {
                             </button>
                           )}
                         </div>
-
-                        <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-700">
-                          {getPreviewText(game.description || game.body)}
-                        </p>
 
                         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
                           <button

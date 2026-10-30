@@ -140,12 +140,24 @@ After changing runtime credentials, recreate the affected services with
 container environment. Image build/start and HTTPS still need to be verified
 on a Docker-enabled host with the actual domain and SMTP account.
 
+## Frontend assets during deployment
+
+Both Caddy replicas use the same `frontend_assets` volume for hashed JavaScript, CSS, and other
+Vite assets. The new image publishes its assets before Caddy starts; files
+from previous builds remain available for 30 days by default. Set
+`ASSET_RETENTION_DAYS` (1–365) to change the grace period. HTML stays inside the
+current image and uses `Cache-Control: no-cache`. Missing files use `no-store`.
+
+For an existing stack, apply the [one-time asset-volume migration](frontend/DOCKER.md#one-time-migration-for-existing-deployments)
+before resuming Watchtower. A current image must be deployed with matching
+Compose settings; Watchtower does not add new volume mounts on its own.
+
 ## Automatic image updates
 
 The optional [Watchtower integration](deployment/WATCHTOWER.md) connects the
 GitHub Actions publisher to the VPS. After both tested images publish, a final
 job promotes their `production` tags. `compose.watchtower.yaml` watches only
-`api`, `api2`, `worker`, and `web`, and uses the maintained Nicholas Fedor fork
+`api`, `api2`, `worker`, `web`, and `web2`, and uses the maintained Nicholas Fedor fork
 pinned by version and image digest. Follow its activation instructions after
 initial deployment checks. Named data volumes stay mounted across updates.
 Keep immutable SHA releases for rollback. Host configuration and migrations
@@ -166,7 +178,8 @@ Git and image builds. In Compose, `uploads_data` persists at `/app/uploads` in
 both APIs. Caddy mounts the same volume read-only at `/srv/uploads` and serves
 `/uploads/<generated-name>.webp` without React fallback. Uploaded content images
 are publicly accessible at their generated URLs. Certificate and database
-volumes remain separate. Keep all three volumes across updates.
+volumes remain separate. Keep all three data volumes across updates. The separate `frontend_assets`
+cache retains hashed frontend files for open browser tabs across replacements.
 
 Publish matching backend and frontend images with these Compose changes. The
 `uploads-init` service uses the backend image and initializes permissions

@@ -42,6 +42,7 @@ services:
 
     volumes:
       - uploads_data:/srv/uploads:ro
+      - frontend_assets:/srv/assets
 
     networks:
       - private

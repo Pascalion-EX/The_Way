@@ -1053,8 +1053,8 @@ sudo docker compose up -d --no-build --pull never --wait --wait-timeout 300
 
 For automatic delivery after the first successful deployment, enable
 [Watchtower with GitHub Actions](deployment/WATCHTOWER.md). The workflow promotes
-tested images to `production`; Watchtower updates the four application
-containers while preserving persistent volumes.
+tested images to `production`; Watchtower updates both API containers, the worker, and both frontend
+replicas while preserving persistent volumes.
 
 See the [Compose guide](DOCKER.md) for environment variables, health checks,
 backups, and recovery. Compose injects credentials at runtime, and

@@ -160,6 +160,8 @@ services:
     depends_on:
       web:
         condition: service_healthy
+      web2:
+        condition: service_healthy
       api:
         condition: service_healthy
       api2:
@@ -181,12 +183,15 @@ services:
       retries: 3
       start_period: 15s
 
-  web:
+  web: &web
     extends:
       file: compose.build.yaml
       service: web
+    environment:
+      ASSET_RETENTION_DAYS: ${ASSET_RETENTION_DAYS:-30}
     volumes:
       - uploads_data:/srv/uploads:ro
+      - frontend_assets:/srv/assets
     depends_on:
       uploads-init:
         condition: service_completed_successfully
@@ -196,6 +201,9 @@ services:
     cpus: 0.25
     pids_limit: 128
     logging: *logging
+
+  web2:
+    <<: *web
 
   indexes:
     <<: *api
@@ -233,3 +241,4 @@ volumes:
   mongo_data:
   traefik_data:
   uploads_data:
+  frontend_assets:

@@ -215,6 +215,11 @@ const App = () => {
             />
 
             <Route
+              path="/games/:id"
+              element={<GameViewer />}
+            />
+
+            <Route
               path="/create-game"
               element={<CreateGame />}
             />

@@ -147,10 +147,7 @@ const Lessons = () => {
     lesson
   ) => {
     navigate(
-      `/lessons/${lesson._id}`,
-      {
-        state: { lesson },
-      }
+      `/lessons/${lesson._id}`
     );
   };
 
@@ -158,87 +155,8 @@ const Lessons = () => {
     lesson
   ) => {
     navigate(
-      `/lessons/${lesson._id}/edit`,
-      {
-        state: { lesson },
-      }
+      `/lessons/${lesson._id}/edit`
     );
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | Preview Helpers
-  |--------------------------------------------------------------------------
-  */
-
-  const getPreviewText = (
-    lesson,
-    maxLength = 110
-  ) => {
-    let text = "";
-
-    /*
-    |--------------------------------------------------------------------------
-    | New modular lessons
-    |--------------------------------------------------------------------------
-    */
-
-    if (
-      Array.isArray(
-        lesson?.partitions
-      ) &&
-      lesson.partitions.length > 0
-    ) {
-      const firstPartition =
-        lesson.partitions[0];
-
-      text =
-        firstPartition?.body || "";
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Old lessons
-    |--------------------------------------------------------------------------
-    */
-
-    if (!text && lesson?.body) {
-      text = lesson.body;
-    }
-
-    if (!text) {
-      return "No preview available.";
-    }
-
-    if (
-      text.length <= maxLength
-    ) {
-      return text;
-    }
-
-    return `${text.slice(
-      0,
-      maxLength
-    )}...`;
-  };
-
-  const getPartitionCount = (
-    lesson
-  ) => {
-    if (
-      Array.isArray(
-        lesson?.partitions
-      ) &&
-      lesson.partitions.length > 0
-    ) {
-      return lesson.partitions.length;
-    }
-
-    if (lesson?.body) {
-      return 1;
-    }
-
-    return 0;
   };
 
   /*
@@ -382,11 +300,6 @@ const Lessons = () => {
                 <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                   {lessons.map(
                     (lesson) => {
-                      const partitionCount =
-                        getPartitionCount(
-                          lesson
-                        );
-
                       return (
                         <article
                           key={
@@ -422,10 +335,6 @@ const Lessons = () => {
                                 <p className="mt-1 text-sm text-gray-500">
                                   {
                                     lesson.name
-                                  }{" "}
-                                  · Year{" "}
-                                  {
-                                    lesson.year
                                   }
                                 </p>
                               </div>
@@ -444,40 +353,6 @@ const Lessons = () => {
                                 </button>
                               )}
                             </div>
-
-                            {/* Partition count */}
-
-                            <div className="mt-4 flex flex-wrap gap-2">
-                              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                                {
-                                  partitionCount
-                                }{" "}
-                                {partitionCount ===
-                                1
-                                  ? "partition"
-                                  : "partitions"}
-                              </span>
-
-                              {lesson.activity && (
-                                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                                  Activity
-                                </span>
-                              )}
-
-                              {lesson.video && (
-                                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                                  Video
-                                </span>
-                              )}
-                            </div>
-
-                            {/* Preview */}
-
-                            <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-700">
-                              {getPreviewText(
-                                lesson
-                              )}
-                            </p>
 
                             {/* Actions */}
 

@@ -1,15 +1,43 @@
 import ContentImage from "../Components/ContentImage.jsx";
 import ContentVideo from "../Components/ContentVideo.jsx";
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { AppContent } from "../Context/AppContent.js";
+import axios from "../utils/axios";
 import { jsPDF } from "jspdf";
 import Navbar from "../Components/Navbar.jsx";
 
 const GameViewer = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
+  // Support older links while new cards use a refreshable URL containing the ID.
+  const id = params.id || location.state?.game?._id;
+  const { backendUrl } = useContext(AppContent);
+  const [game, setGame] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const game = location.state?.game;
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchGame = async () => {
+      setLoading(true);
+      setGame(null);
+      setError("");
+      try {
+        if (!id) throw new Error("Open the game again from the games page.");
+        const { data } = await axios.get(`${backendUrl}/api/games/${id}`, { signal: controller.signal });
+        if (!data.success || !data.game) throw new Error(data.message || "Game not found");
+        if (!controller.signal.aborted) setGame(data.game);
+      } catch (failure) {
+        if (!controller.signal.aborted) setError(failure.response?.data?.message || failure.message);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    fetchGame();
+    return () => controller.abort();
+  }, [backendUrl, id]);
 
   const [downloading, setDownloading] = useState(false);
 
@@ -118,7 +146,7 @@ const GameViewer = () => {
     }
   };
 
-  if (!game) {
+  if (loading || !game) {
     return (
       <div className="relative min-h-screen overflow-x-hidden text-gray-900 bg-transparent">
 
@@ -142,11 +170,11 @@ const GameViewer = () => {
               </p>
 
               <h1 className="mt-4 text-3xl font-semibold leading-tight text-gray-900 sm:text-4xl">
-                Game not found
+                {loading ? "Loading game..." : "Game not found"}
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-600 sm:text-base">
-                Open the game again from the games page.
+                {loading ? "Please wait while the game loads." : error}
               </p>
             </div>
           </div>

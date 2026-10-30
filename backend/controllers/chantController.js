@@ -1,3 +1,4 @@
+import { chantCardFields, toContentCard } from "../services/contentCards.js";
 import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
@@ -150,21 +151,16 @@ export const getAllChants = async (req, res) => {
 
     const { items: chants, pagination } = await paginateQuery(chantModel
       .find(query)
-      .populate("createdBy", "name email role")
+      .select({ _id: 1, title: 1, image: 1,
+        isFavorite: { $in: [userId ? new mongoose.Types.ObjectId(userId) : null, { $ifNull: ["$favorites", []] }] },
+      })
       .sort({ createdAt: -1, _id: -1 })
       .lean(), page);
 
     const chantsWithFavoriteStatus = chants.map((chant) => {
-      const isFavorite = userId
-        ? chant.favorites?.some(
-            (favoriteUserId) =>
-              favoriteUserId.toString() === userId.toString()
-          )
-        : false;
-
       return {
-        ...chant,
-        isFavorite,
+        ...toContentCard(chant, chantCardFields),
+        isFavorite: chant.isFavorite === true,
       };
     });
 

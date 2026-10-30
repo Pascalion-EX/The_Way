@@ -1,6 +1,17 @@
 import mongoose from "mongoose";
 
 const CAMP_FIELDS = ["_id", "title", "name", "body", "TripType", "image", "years", "createdAt", "updatedAt"];
+const CARD_FIELDS = ["_id", "title", "name", "image"];
+
+export const campCardProjection = (userId) => ({
+  ...Object.fromEntries(CARD_FIELDS.map((field) => [field, 1])),
+  hasApplied: { $in: [new mongoose.Types.ObjectId(userId), { $ifNull: ["$applicants.user", []] }] },
+});
+
+export const toCampCard = (camp) => ({
+  ...Object.fromEntries(CARD_FIELDS.filter((field) => camp[field] !== undefined).map((field) => [field, camp[field]])),
+  hasApplied: camp.hasApplied === true,
+});
 
 // Compute membership metadata in MongoDB without returning the roster to the
 // application on member reads. Keep this projection inclusive as fields grow.

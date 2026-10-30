@@ -1,3 +1,4 @@
+import { namedCardFields, toContentCard } from "../services/contentCards.js";
 import { readPage, paginateQuery } from "../utils/pagination.js";
 import { denyAccess } from "../services/accessDenials.js";
 import mongoose from "mongoose";
@@ -103,12 +104,12 @@ export const getAllGames = async (req, res) => {
     }
     const { items: games, pagination } = await paginateQuery(gamesModel
       .find(filter)
-      .populate("createdBy", "name email role")
-      .sort({ createdAt: -1, _id: -1 }), page);
+      .select(namedCardFields)
+      .sort({ createdAt: -1, _id: -1 }).lean(), page);
 
     return res.status(200).json({
       success: true,
-      games,
+      games: games.map((game) => toContentCard(game, namedCardFields)),
       pagination,
     });
   } catch (error) {

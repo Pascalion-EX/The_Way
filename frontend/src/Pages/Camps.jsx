@@ -176,7 +176,7 @@ const Camp = () => {
 
         setCamps((prevCamps) =>
           prevCamps.map((camp) =>
-            camp._id === selectedCamp._id ? data.camp || camp : camp
+            camp._id === selectedCamp._id ? { ...camp, hasApplied: data.camp?.hasApplied === true } : camp
           )
         );
 
@@ -207,7 +207,7 @@ const Camp = () => {
         toast.success(data.message || "Application withdrawn");
 
         setCamps((prevCamps) =>
-          prevCamps.map((camp) => (camp._id === campId ? data.camp || camp : camp))
+          prevCamps.map((camp) => (camp._id === campId ? { ...camp, hasApplied: data.camp?.hasApplied === true } : camp))
         );
       } else {
         toast.error(data.message || "Failed to withdraw");
@@ -248,11 +248,6 @@ const Camp = () => {
     } finally {
       setDeletingCampId(null);
     }
-  };
-
-  const getPreviewText = (text = "", maxLength = 120) => {
-    if (text.length <= maxLength) return text;
-    return `${text.slice(0, maxLength)}...`;
   };
 
   const openNotifyModal = (camp) => {
@@ -430,56 +425,17 @@ const handleNotifySubmit = async (e) => {
                               <p className="mt-1 text-sm text-gray-500">
                                 {camp.name || "Camp Team"}
                               </p>
-
-                              {camp.TripType && (
-                                <span className="mt-3 inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                                  {camp.TripType}
-                                </span>
-                              )}
                             </div>
 
                             <button
                               type="button"
                               onClick={() =>
-                                navigate(`/camps/${camp._id}`, {
-                                  state: { camp },
-                                })
+                                navigate(`/camps/${camp._id}`)
                               }
                               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                             >
                               View
                             </button>
-                          </div>
-
-                          <p className="mt-4 text-sm leading-6 text-gray-700 whitespace-pre-line">
-                            {getPreviewText(camp.body)}
-                          </p>
-
-                          <div className="mt-5">
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                              Available years
-                            </p>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {Array.isArray(camp.years) &&
-                              camp.years.length > 0 ? (
-                                camp.years
-                                  .slice()
-                                  .sort((a, b) => a - b)
-                                  .map((year) => (
-                                    <span
-                                      key={year}
-                                      className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700"
-                                    >
-                                      Year {year}
-                                    </span>
-                                  ))
-                              ) : (
-                                <span className="text-sm text-gray-500">
-                                  No years assigned
-                                </span>
-                              )}
-                            </div>
                           </div>
 
                           <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
