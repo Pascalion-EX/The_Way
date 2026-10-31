@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+export const MAX_RESIZED_IMAGE_BYTES = 1024 * 1024;
 export const UPLOADED_IMAGE_NAME = /^[a-f0-9]{64}\.webp$/;
 export const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export const uploadsDirectory = () => resolve(process.env.UPLOADS_DIR ||
@@ -35,14 +36,29 @@ export async function saveUploadedImage(data, type, directory = uploadsDirectory
 
   let output;
   try {
+    const deadline = performance.now() + 10_000;
     const image = sharp(data, { limitInputPixels: 20_000_000, failOn: "warning" });
     const metadata = await image.metadata();
     if ((metadata.pages || 1) > 1) throw new Error("Animated images are not supported");
     // Decode and re-encode rather than publishing client bytes or filenames.
     // This also strips metadata and bounds the stored image dimensions.
-    output = await image.rotate().resize({
-      width: 2560, height: 2560, fit: "inside", withoutEnlargement: true,
-    }).webp({ quality: 85 }).timeout({ seconds: 10 }).toBuffer();
+    let dimension = 2560;
+    while (true) {
+      const seconds = Math.ceil((deadline - performance.now()) / 1000);
+      if (seconds <= 0) throw new Error("Image processing timed out");
+      const result = await image.clone().rotate().resize({
+        width: dimension, height: dimension, fit: "inside", withoutEnlargement: true,
+      }).webp({ quality: 85 }).timeout({ seconds }).toBuffer({ resolveWithObject: true });
+      output = result.data;
+      if (output.length <= MAX_RESIZED_IMAGE_BYTES) break;
+
+      // Retry from the original image at a smaller size, keeping WebP quality.
+      // Check the actual bytes each time; dimensions alone cannot ensure 1 MB.
+      const currentDimension = Math.max(result.info.width, result.info.height);
+      if (currentDimension <= 1) throw new Error("Image exceeds the stored size limit");
+      const scale = Math.min(0.9, Math.sqrt(MAX_RESIZED_IMAGE_BYTES / output.length) * 0.9);
+      dimension = Math.max(1, Math.floor(currentDimension * scale));
+    }
   } catch {
     throw new ImageUploadError("This image could not be read. Choose a still JPEG, PNG, or WebP image up to 20 megapixels.");
   }

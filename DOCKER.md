@@ -177,6 +177,7 @@ verified staff account and shares a 60-upload hourly allowance per account
 across both API containers. JPEG, PNG, and still WebP images up to 5 MB and
 20 megapixels are decoded, stripped of metadata, resized to fit 2560 × 2560,
 and saved as WebP using [Sharp](https://sharp.pixelplumbing.com/api-output/).
+Images are resized further when necessary so each saved file is at most 1 MB.
 
 The local `uploads/` folder is created automatically and its files stay out of
 Git and image builds. In Compose, `uploads_data` persists at `/app/uploads` in

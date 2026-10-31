@@ -10,7 +10,7 @@ import sharp from "sharp";
 import User from "../models/userModel.js";
 import Counters from "../models/authRateLimitModel.js";
 import { issueAuthToken } from "../services/authTokens.js";
-import { MAX_IMAGE_BYTES, saveUploadedImage } from "../services/imageUploads.js";
+import { MAX_IMAGE_BYTES, MAX_RESIZED_IMAGE_BYTES, saveUploadedImage } from "../services/imageUploads.js";
 import { createUploadRouter, createUploadedImagesRouter } from "../routes/uploadRoutes.js";
 
 const userId = "6ab26b08171afea3091f04b3";
@@ -161,6 +161,40 @@ test("oversized dimensions are bounded and image metadata is stripped", async (t
   }).webp().toBuffer();
   assert.equal((await sharp(animation).metadata()).pages, 2);
   assert.equal((await state.upload(animation, { type: "image/webp" })).status, 400);
+});
+
+test("detailed images are resized to at most 1 MB before publication", async (t) => {
+  const state = await setup(t);
+  const width = 2000;
+  const pixels = Buffer.alloc(width * width * 3);
+  let seed = 123456789;
+  for (let i = 0; i < pixels.length; i++) {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    pixels[i] = seed & 255;
+  }
+  const original = await sharp(pixels, { raw: { width, height: width, channels: 3 } })
+    .withMetadata().jpeg({ quality: 95 }).toBuffer();
+  assert.ok(original.length > MAX_RESIZED_IMAGE_BYTES);
+  assert.ok(original.length < MAX_IMAGE_BYTES, "the larger original remains a valid upload");
+  const unbounded = await sharp(original).webp({ quality: 85 }).toBuffer();
+  assert.ok(unbounded.length > MAX_RESIZED_IMAGE_BYTES, "dimensions alone would exceed the limit");
+
+  const result = await state.upload(original, { type: "image/jpeg" });
+  assert.equal(result.status, 201);
+  const response = await fetch(state.urls[1] + result.body.url);
+  assert.equal(response.status, 200);
+  const output = Buffer.from(await response.arrayBuffer());
+  assert.ok(output.length <= 1024 * 1024, "the published file must not exceed 1 MB");
+  assert.equal(result.body.size, output.length);
+  assert.equal((await stat(join(state.directory, basename(result.body.url)))).size, output.length);
+  const metadata = await sharp(output).metadata();
+  assert.equal(metadata.format, "webp");
+  assert.equal(metadata.exif, undefined);
+  assert.ok(metadata.width < width);
+  assert.equal(metadata.width, metadata.height);
+  assert.deepEqual(await readdir(state.directory), [basename(result.body.url)]);
 });
 
 test("concurrent uploads deduplicate atomically across workers without temporary or partial public files", async (t) => {
