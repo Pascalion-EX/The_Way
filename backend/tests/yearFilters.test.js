@@ -10,6 +10,7 @@ function setup(t) {
   t.after(() => mongoose.set("sanitizeFilter", previousSanitizer));
   const filters = [];
   // Keep real Mongoose sanitization and casting; replace only collection I/O.
+  t.mock.method(Lesson.collection, "distinct", async () => []);
   t.mock.method(Lesson.collection, "find", (filter) => {
     filters.push(filter);
     return { toArray: async () => [] };

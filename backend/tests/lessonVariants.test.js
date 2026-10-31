@@ -15,6 +15,22 @@ const unrelatedId = "6ab26af3171afea3091f04ae";
 const objectId = (id) => new mongoose.Types.ObjectId(id);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
+function matchesLesson(lesson, filter) {
+  return Object.entries(filter).every(([field, condition]) => {
+    if (field === "$and") return condition.every((part) => matchesLesson(lesson, part));
+    if (field === "$or") return condition.some((part) => matchesLesson(lesson, part));
+    const values = field.startsWith("partitions.")
+      ? lesson.partitions.map((partition) => partition[field.split(".")[1]])
+      : [lesson[field]];
+    if (condition?.$regex !== undefined) {
+      return values.some((value) => new RegExp(condition.$regex, condition.$options).test(value || ""));
+    }
+    if (condition?.$in) return values.some((value) => condition.$in.some((id) => String(id) === String(value)));
+    if (condition && Object.hasOwn(condition, "$ne")) return values.every((value) => value != condition.$ne);
+    return values.some((value) => condition == null ? value == null : String(value) === String(condition));
+  });
+}
+
 function setup(t) {
   const previousSecret = process.env.JWT_SECRET;
   const previousSanitizer = mongoose.get("sanitizeFilter");
@@ -50,21 +66,23 @@ function setup(t) {
     state.lessons.set(String(document._id), document);
     return { acknowledged: true, insertedId: document._id };
   });
+  t.mock.method(Lesson.collection, "distinct", async (field, filter) => {
+    assert.equal(field, "variantGroup");
+    return [...new Map([...state.lessons.values()]
+      .filter((lesson) => matchesLesson(lesson, filter))
+      .map((lesson) => [String(lesson.variantGroup), lesson.variantGroup])).values()];
+  });
+  t.mock.method(Lesson.collection, "countDocuments", async (filter) =>
+    [...state.lessons.values()].filter((lesson) => matchesLesson(lesson, filter)).length
+  );
   t.mock.method(Lesson.collection, "find", (filter, options) => {
     state.filters.push(filter);
     if (Object.hasOwn(filter, "variantGroup")) {
       assert.equal(filter.variantGroup, null);
-      return { toArray: async () => [...state.lessons.values()].filter((lesson) =>
-        lesson.variantGroup == null &&
-        (!filter.year || lesson.year === filter.year) &&
-        (!filter.$or || filter.$or.some((condition) => {
-          const [field, match] = Object.entries(condition)[0];
-          const values = field.startsWith("partitions.")
-            ? lesson.partitions.map((partition) => partition[field.split(".")[1]])
-            : [lesson[field]];
-          return values.some((value) => new RegExp(match.$regex, match.$options).test(value || ""));
-        }))
-      ) };
+      return { toArray: async () => [...state.lessons.values()]
+        .filter((lesson) => matchesLesson(lesson, filter))
+        .sort((a, b) => Number(b.createdAt) - Number(a.createdAt) || String(b._id).localeCompare(String(a._id)))
+        .slice(options.skip || 0, (options.skip || 0) + (options.limit || state.lessons.size)) };
     }
     const groupId = String(filter.$or[0]._id);
     assert.equal(String(filter.$or[1].variantGroup), groupId);
@@ -154,7 +172,7 @@ test("variants cannot copy unsafe legacy video URLs and normalize supported sour
   assert.equal(result.body.lesson.video, "https://www.youtube.com/embed/M7lc1UVf-VE");
 });
 
-test("lesson lists hide variants, including during searches and year filtering, while the dropdown retains them", async (t) => {
+test("lesson lists keep one card per original while the dropdown retains every variant", async (t) => {
   const state = setup(t);
   // Both legacy originals (missing field) and new originals (null) remain listed.
   state.lessons.get(unrelatedId).variantGroup = null;
@@ -172,6 +190,64 @@ test("lesson lists hide variants, including during searches and year filtering, 
   assert.equal(detail.body.variants.length, 3);
   assert.ok(detail.body.variants.some(({ _id }) => _id === first._id));
   assert.equal((await state.request("GET", first._id)).status, 200);
+});
+
+test("year filters include an original when its variants match the requested age group", async (t) => {
+  const state = setup(t);
+  state.lessons.get(unrelatedId).variantGroup = null;
+  const first = (await state.create("Year 7 group")).body.lesson;
+  const updated = await state.request("PUT", first._id, { ...first, year: 7 });
+  assert.equal(updated.status, 200);
+  const second = (await state.create("Another year 7 group", first._id)).body.lesson;
+  assert.equal(second.year, 7);
+
+  for (const path of ["?year=7", "?year=7&search=church", "?year=7&page=1"]) {
+    const result = await state.request("GET", path);
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.lessons.map(({ _id }) => _id), [lessonId]);
+    if (path.includes("page=")) {
+      assert.deepEqual(result.body.pagination, { page: 1, pageSize: 6, totalItems: 1, totalPages: 1 });
+    }
+  }
+  for (const path of ["?year=8", "?year=7&search=Unrelated"]) {
+    const result = await state.request("GET", path);
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.lessons, []);
+  }
+  for (const path of ["", "?year=0", "?year=3"]) {
+    const result = await state.request("GET", path);
+    assert.deepEqual(result.body.lessons.map(({ _id }) => _id), [lessonId, unrelatedId]);
+  }
+
+  assert.equal((await state.request("DELETE", first._id)).status, 200);
+  assert.deepEqual((await state.request("GET", "?year=7")).body.lessons.map(({ _id }) => _id), [lessonId]);
+  assert.equal((await state.request("DELETE", second._id)).status, 200);
+  assert.deepEqual((await state.request("GET", "?year=7")).body.lessons, []);
+});
+
+test("variant age matches paginate original lessons without duplicate cards or counts", async (t) => {
+  const state = setup(t);
+  state.lessons.delete(unrelatedId);
+  const original = state.lessons.get(lessonId);
+  const originals = [original, ...Array.from({ length: 6 }, () => ({ ...original, _id: new mongoose.Types.ObjectId() }))];
+  for (const lesson of originals) {
+    state.lessons.set(String(lesson._id), lesson);
+    for (const name of ["First year 7 group", "Second year 7 group"]) {
+      const variant = (await state.create(name, String(lesson._id))).body.lesson;
+      state.lessons.get(variant._id).year = 7;
+    }
+  }
+  const first = await state.request("GET", "?year=7&page=1");
+  const second = await state.request("GET", "?year=7&page=2");
+  assert.equal(first.status, 200);
+  assert.equal(second.status, 200);
+  assert.equal(first.body.lessons.length, 6);
+  assert.equal(second.body.lessons.length, 1);
+  assert.deepEqual(first.body.pagination, { page: 1, pageSize: 6, totalItems: 7, totalPages: 2 });
+  assert.deepEqual(second.body.pagination, { page: 2, pageSize: 6, totalItems: 7, totalPages: 2 });
+  const ids = [...first.body.lessons, ...second.body.lessons].map(({ _id }) => _id);
+  assert.equal(new Set(ids).size, 7);
+  assert.deepEqual(ids.sort(), originals.map(({ _id }) => String(_id)).sort());
 });
 
 test("copies made from variants stay in one group and use the selected variant's content", async (t) => {

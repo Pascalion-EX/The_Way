@@ -1,4 +1,4 @@
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 export function readPage(value) {
   if (value === undefined) return null;

@@ -36,7 +36,7 @@ const cases = [
 
 for (const entry of cases) {
   test(`${entry.name} lists return small cards and fetch complete content by ID`, async (t) => {
-    const records = Array.from({ length: 6 }, (_, index) => ({
+    const records = Array.from({ length: 7 }, (_, index) => ({
       _id: new mongoose.Types.ObjectId(), title: `Title ${index}`, name: `Name ${index}`,
       image: `/uploads/${"a".repeat(64)}.webp`, year: 3, body: content,
       partitions: [{ title: "Introduction", body: content }], explanation: content, materials: content,
@@ -73,12 +73,12 @@ for (const entry of cases) {
     for (const query of [{}, { page: "1" }, { page: "2", search: "content" }]) {
       const result = await request(entry.list, query);
       const cards = result[entry.name];
-      assert.equal(cards.length, query.page === "2" ? 1 : query.page ? 5 : 6);
+      assert.equal(cards.length, query.page === "2" ? 1 : query.page ? 6 : 7);
       for (const card of cards) assert.deepEqual(Object.keys(card).sort(), [...entry.fields].sort());
       assert.ok(JSON.stringify(result).length < 2500, "Large content must not be included in cards");
       assert.equal(populationReads, 0, "Card requests do not load author records");
       if (query.page) {
-        assert.deepEqual(result.pagination, { page: Number(query.page), pageSize: 5, totalItems: 6, totalPages: 2 });
+        assert.deepEqual(result.pagination, { page: Number(query.page), pageSize: 6, totalItems: 7, totalPages: 2 });
       }
     }
     if (entry.model !== Chant) {

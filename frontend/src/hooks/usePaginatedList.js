@@ -6,7 +6,7 @@ export default function usePaginatedList({ url, dataKey, initialFilters = {}, de
   const [selection, setSelection] = useState({ page: 1, filters: initialFilters });
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({ page: 1, pageSize: 5, totalItems: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 6, totalItems: 0, totalPages: 1 });
   const [revision, setRevision] = useState(0);
   const requestUrl = `${url}?${new URLSearchParams({ ...selection.filters, page: selection.page })}`;
 

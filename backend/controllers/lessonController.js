@@ -215,7 +215,7 @@ export const getLessons = async (req, res) => {
     }
 
     // A null match includes older originals where variantGroup is absent.
-    // Copies are available through their lesson's variant dropdown only.
+    // Keep one card per lesson; copies remain in the variant dropdown.
     const filter = { variantGroup: null };
 
     /*
@@ -225,7 +225,21 @@ export const getLessons = async (req, res) => {
     */
 
     if (Number(year) > 0) {
-      filter.year = Number(year);
+      const selectedYear = Number(year);
+      const variantGroups = await lessonModel.distinct("variantGroup", {
+        year: selectedYear,
+        variantGroup: mongoose.trusted({ $ne: null }),
+      });
+
+      if (variantGroups.length) {
+        // Keep this separate from the text-search $or so both filters apply.
+        filter.$and = [{ $or: [
+          { year: selectedYear },
+          { _id: mongoose.trusted({ $in: variantGroups }) },
+        ] }];
+      } else {
+        filter.year = selectedYear;
+      }
     }
 
     /*
