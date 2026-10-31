@@ -330,3 +330,11 @@
   min-height: calc(100vh / var(--app-zoom));
   min-height: calc(100dvh / var(--app-zoom));
 }
+
+/* FullCalendar measures zoomed pixel widths, then applies them inside the
+   zoomed layout again. Override those inline widths to fill the month view. */
+.fc .fc-daygrid .fc-col-header,
+.fc .fc-daygrid .fc-daygrid-body,
+.fc .fc-daygrid .fc-scrollgrid-sync-table {
+  width: 100% !important;
+}
