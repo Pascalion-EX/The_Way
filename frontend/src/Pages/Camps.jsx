@@ -305,10 +305,10 @@ const handleNotifySubmit = async (e) => {
 };
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-gray-900 bg-transparent">
+    <div className="relative isolate min-h-screen text-gray-900 bg-transparent">
       <Navbar/>
-      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] bg-transparent">
-        <div className="relative hidden lg:block">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
+        <div className="relative hidden overflow-hidden lg:block">
 
           <div className="relative z-10 flex h-full items-center justify-center px-12">
             <div className="max-w-md">
@@ -323,40 +323,28 @@ const handleNotifySubmit = async (e) => {
           </div>
         </div>
 
-        <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
-          <div className="mx-auto w-full max-w-5xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                  Trips & Camps
-                </h1>
-                <p className="mt-3 text-sm text-gray-500">
-                  Search trips, outings, filter by year, and apply based on your role.
-                </p>
-              </div>
-
-              {canCreateCamp && (
-                <button
-                  type="button"
-                  onClick={() => navigate("/create-camp")}
-                 className="h-12 rounded-xl bg-black px-6 text-sm font-medium text-white transition hover:bg-gray-800 shadow-md"
-                >
-                  Create Trip
-                </button>
-              )}
+        <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-38 xl:px-16">
+          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                Trips & Camps
+              </h1>
+              <p className="mt-2 text-sm leading-6 text-gray-500 sm:text-base">
+                Search trips, outings, filter by year, and apply based on your role.
+              </p>
             </div>
 
-            <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
                 type="text"
                 placeholder="Search by title, leader, type, body, or year"
-                className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 md:col-span-2"
+                className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 md:col-span-2"
                 value={search}
                 onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
               />
 
               <select
-                className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 aria-label="Filter by year"
                 value={yearFilter}
                 onChange={(e) => setFilters((previous) => ({ ...previous, year: e.target.value }))}
@@ -370,35 +358,41 @@ const handleNotifySubmit = async (e) => {
               </select>
 
               <select
-                className="h-12 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                 value={sortOrder}
                 onChange={(e) => setFilters((previous) => ({ ...previous, sortOrder: e.target.value }))}
               >
                 <option value="asc">Sort by year: Low to high</option>
                 <option value="desc">Sort by year: High to low</option>
               </select>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={clearFilters}
-                className="h-11 rounded-xl border border-gray-300 px-5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                className="h-12 w-full rounded-xl border border-gray-300 px-5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
               >
                 Clear
               </button>
 
+              {canCreateCamp && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/create-camp")}
+                  className="h-12 w-full rounded-xl bg-black px-6 text-sm font-medium text-white shadow-md transition hover:bg-gray-800 md:col-span-2 xl:col-span-1"
+                >
+                  Create Trip
+                </button>
+              )}
             </div>
 
-            <div className="mt-10">
+            <div className="mt-8 sm:mt-10">
               {loading ? (
                 <p className="text-sm text-gray-500">Loading trips...</p>
               ) : camps.length === 0 ? (
-                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-sm text-gray-600">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 sm:p-6">
                   No trips found.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
                   {camps.map((camp) => {
                     const applied = hasApplied(camp);
 
@@ -411,11 +405,11 @@ const handleNotifySubmit = async (e) => {
                           <ContentImage
                             src={camp.image}
                             alt={camp.title}
-                            className="h-56 w-full object-cover"
+                            className="h-40 w-full object-cover sm:h-48 lg:h-56"
                           />
                         )}
 
-                        <div className="p-6">
+                        <div className="p-4 sm:p-6">
                           <div className="flex items-start justify-between gap-4">
                             <div>
                               <h3 className="text-2xl font-semibold text-gray-900">

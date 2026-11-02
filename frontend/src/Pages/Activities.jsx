@@ -77,7 +77,7 @@ const Activities = () => {
   };
 
   return (
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
+    <div className="relative isolate grid min-h-screen grid-cols-1 text-gray-900 lg:grid-cols-2 bg-transparent">
       {/* Desktop Visual Section */}
       <div className="relative hidden overflow-hidden lg:block">
 
@@ -97,7 +97,7 @@ const Activities = () => {
       <Navbar />
 
       {/* Main Content */}
-      <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 sm:pt-38 lg:px-16 lg:pt-28 lg:pb-28">
+      <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-38 xl:px-16">
         <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
           {/* Header */}
           <div>

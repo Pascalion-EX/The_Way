@@ -153,7 +153,7 @@ const CreateGame = () => {
         <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
           <DesktopVisual />
 
-          <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 lg:px-16 lg:pb-28 lg:pt-28">
+          <main className="min-w-0 flex items-start justify-center px-4 pb-10 pt-40 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
             <div className="w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
               <h1 className="break-words text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Create Game
@@ -186,8 +186,8 @@ const CreateGame = () => {
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
         <DesktopVisual />
 
-        <main className="min-w-0 px-4 pb-10 pt-40 sm:px-8 lg:px-16 lg:pb-28 lg:pt-28">
-          <div className="w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
+        <main className="min-w-0 px-4 pb-12 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-36 xl:px-16">
+          <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
             <div className="mb-6 sm:mb-8">
               <h1 className="break-words text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Create Game
@@ -201,7 +201,7 @@ const CreateGame = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 lg:border-0 lg:p-0 lg:shadow-none"
+              className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
             >
               <div className="grid grid-cols-1 gap-5">
                 <div>

@@ -170,7 +170,7 @@ const CreateActivities = () => {
         <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
           <DesktopVisual />
 
-          <main className="min-w-0 flex items-center justify-center px-4 pb-10 pt-40 sm:px-8 lg:px-16">
+          <main className="min-w-0 flex items-start justify-center px-4 pb-10 pt-40 sm:px-8 lg:min-h-screen lg:items-center lg:px-16 lg:py-24">
             <div className="w-full max-w-3xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
               <h1 className="text-3xl font-semibold text-gray-900">
                 Create Activity
@@ -203,7 +203,7 @@ const CreateActivities = () => {
 
         <main className="min-w-0 px-4 pb-12 pt-40 sm:px-8 lg:px-12 lg:pb-28 lg:pt-36 xl:px-16">
           <div className="mx-auto w-full max-w-4xl rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8">
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl">
                 Create Activity
               </h1>
@@ -216,16 +216,16 @@ const CreateActivities = () => {
 
             <form
               onSubmit={handleSubmit}
-              className="space-y-6"
+              className="space-y-8"
             >
               {/* Basic Info */}
 
-              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
+              <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
                 <h2 className="text-xl font-semibold text-gray-900">
                   Activity information
                 </h2>
 
-                <div className="mt-6 space-y-5">
+                <div className="mt-5 space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
                       Activity name
@@ -273,7 +273,7 @@ const CreateActivities = () => {
 
               {/* Materials */}
 
-              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
+              <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
                 <label className="text-lg font-semibold text-gray-900">
                   Materials
                 </label>
@@ -300,7 +300,7 @@ const CreateActivities = () => {
 
               {/* Explanation */}
 
-              <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7">
+              <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
                 <label className="text-lg font-semibold text-gray-900">
                   Activity Explanation
                 </label>
