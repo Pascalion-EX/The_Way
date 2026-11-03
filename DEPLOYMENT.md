@@ -681,6 +681,12 @@ exists. Manage later role changes through the admin dashboard.
 
 ## 13. Create a backup and copy it off the VPS
 
+For automated ZIP uploads to Google Drive, follow the
+[Google Drive backup setup](deployment/GOOGLE_DRIVE_BACKUPS.md). Its script
+handles the maintenance interval, restarts services, uploads and verifies the
+ZIP, and retains a local copy if the upload fails. The manual procedure below
+remains available for local archives and copying them over SSH.
+
 If Watchtower is enabled, run `sudo docker compose stop watchtower` first.
 Resume it only after backup/recovery and application health checks succeed.
 

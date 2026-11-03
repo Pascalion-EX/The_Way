@@ -196,6 +196,12 @@ uploads remain stored; review references before pruning files.
 
 ## Backup and recovery
 
+For a ZIP uploaded to Google Drive, use
+[`deployment/backup-to-gdrive.sh`](deployment/backup-to-gdrive.sh).
+The [Google Drive backup guide](deployment/GOOGLE_DRIVE_BACKUPS.md) covers
+authentication, daily scheduling, upload retries, and recovery. The script
+handles the pause in writes and restarts services before uploading.
+
 When using automatic updates, stop Watchtower before backup/recovery with
 `docker compose stop watchtower`, and resume it only after successful startup
 and health checks. See the [maintenance procedure](deployment/WATCHTOWER.md#pause-maintenance-and-rollback).
