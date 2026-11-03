@@ -11,12 +11,15 @@ import { createEmailJob, processNextEmailJob } from "../services/emailQueue.js";
 import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
 import { queueOtpRequest } from "../services/otpRequests.js";
 import { normalizeAuthEmail, newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 const id = "6ab26b08171afea3091f04b3";
 const goodPassword = "amber river sky"; // Exactly 15 characters.
 const ascii72 = `${goodPassword} ${"x".repeat(56)}`;
 const unicode72 = `${"🔒".repeat(17)}Abcd`;
-const signup = (password, email = "test@example.com") => ({ name: "Test", email, password, role: "parent" });
+const signup = (password, email = "test@example.com") => ({
+  name: "Test", email, password, role: "parent", acceptedTerms: true, termsVersion: TERMS_VERSION,
+});
 const response = () => ({
   statusCode: 200,
   status(code) { this.statusCode = code; return this; },
@@ -117,6 +120,59 @@ test("registration stores one normalized mailbox and hashes the exact supplied s
   assert.equal(saved[0].emailJobs.verification.to, saved[0].email);
   assert.equal(await bcrypt.compare(password, saved[0].password), true);
   assert.equal(await bcrypt.compare(password.trim(), saved[0].password), false);
+});
+
+test("registration rejects missing, unchecked, and non-boolean terms acceptance before account work", async (t) => {
+  denyIo(t);
+  for (const acceptedTerms of [undefined, null, false, "true", "false", 0, 1, {}, [], [true]]) {
+    const res = response();
+    await register({ body: { ...signup(goodPassword), acceptedTerms } }, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.code, "TERMS_ACCEPTANCE_REQUIRED");
+    assert.equal(res.body.success, false);
+    assert.equal(res.token, undefined);
+  }
+});
+
+test("registration rejects missing, malformed, and stale terms versions even with checked acceptance", async (t) => {
+  denyIo(t);
+  for (const termsVersion of [undefined, null, "", "2000-01-01", "2999-01-01", 1, {}, [TERMS_VERSION]]) {
+    const res = response();
+    await register({ body: { ...signup(goodPassword), termsVersion } }, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.code, "TERMS_VERSION_MISMATCH");
+    assert.equal(res.body.success, false);
+    assert.equal(res.token, undefined);
+  }
+});
+
+test("registration persists the current terms and a server timestamp, ignoring a client-supplied acceptance date", async (t) => {
+  secret(t);
+  t.mock.method(User, "findOne", async () => null);
+  t.mock.method(bcrypt, "hash", async () => "synthetic-password-hash");
+  let saved;
+  t.mock.method(User.prototype, "save", async function () {
+    await this.validate();
+    saved = this;
+    return this;
+  });
+  const before = new Date().getTime();
+  const res = response();
+  await register({ body: { ...signup(goodPassword), termsAcceptedAt: "2000-01-01T00:00:00.000Z" } }, res);
+  const after = new Date().getTime();
+  assert.equal(res.body.success, true);
+  assert.ok(res.token);
+  assert.equal(saved.termsVersion, TERMS_VERSION);
+  assert.ok(saved.termsAcceptedAt instanceof Date);
+  assert.ok(saved.termsAcceptedAt.getTime() >= before && saved.termsAcceptedAt.getTime() <= after);
+  assert.equal(saved.get("acceptedTerms"), undefined, "Only server-recorded agreement metadata is stored");
+});
+
+test("accounts without agreement metadata are not silently marked as having accepted terms", async () => {
+  const legacy = new User({ name: "Existing user", email: "existing@example.com", password: "existing-hash" });
+  await legacy.validate();
+  assert.equal(legacy.termsAcceptedAt, null);
+  assert.equal(legacy.termsVersion, "");
 });
 
 test("registration and reset accept 72-byte secrets without modifying or truncating them", async (t) => {

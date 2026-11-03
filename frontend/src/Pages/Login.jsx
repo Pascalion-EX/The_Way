@@ -1,9 +1,10 @@
 import React, { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { normalizeAuthEmail, newPasswordError, passwordInputError, PASSWORD_HINT, PASSWORD_MIN_CHARACTERS } from "../../../shared/authValidation.mjs";
+import { TERMS_VERSION } from "../../../shared/termsOfService.mjs";
 
 import Navbar from "@/Components/Navbar.jsx";
 import { Phone } from "lucide-react";
@@ -32,13 +33,14 @@ const DesktopVisual = () => (
 const Login = () => {
   const navigate = useNavigate();
 
-  const { backendUrl, setIsLoggedin, getUserData } = useContext(AppContent);
+  const { backendUrl, isLoggedin, authLoading, userData, setIsLoggedin, getUserData, getAuthState } = useContext(AppContent);
 
   const [state, setState] = useState("Login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [role, setRole] = useState("");
   const [roleOpen, setRoleOpen] = useState(false);
 
@@ -52,7 +54,7 @@ const roleOptions = [
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
-    if (loading) return;
+    if (loading || authLoading || isLoggedin) return;
 
     if (!normalizeAuthEmail(email)) {
       toast.error("Enter one valid email address");
@@ -61,6 +63,10 @@ const roleOptions = [
     const passwordError = state === "Sign Up" ? newPasswordError(password) : passwordInputError(password);
     if (passwordError) {
       toast.error(passwordError);
+      return;
+    }
+    if (state === "Sign Up" && !acceptedTerms) {
+      toast.error("You must accept the Terms of Service to create an account.");
       return;
     }
 
@@ -75,6 +81,8 @@ const roleOptions = [
           password,
           phone,
           role,
+          acceptedTerms,
+          termsVersion: TERMS_VERSION,
         });
 
         if (data.success) {
@@ -101,6 +109,14 @@ const roleOptions = [
         }
       }
     } catch (error) {
+      if (error.response?.data?.code === "ALREADY_AUTHENTICATED") {
+        // Another tab may have signed in after this form was opened.
+        await getAuthState();
+        return;
+      }
+      if (error.response?.data?.code === "TERMS_VERSION_MISMATCH") {
+        setAcceptedTerms(false);
+      }
       // The shared response handler already displays the ban notification.
       if (error.response?.data?.code !== "ACCOUNT_BANNED") {
         toast.error(error.response?.data?.message || error.message);
@@ -109,6 +125,18 @@ const roleOptions = [
       setLoading(false);
     }
   };
+
+  // Restore the cookie-backed session before allowing another sign-in.
+  if (authLoading || (isLoggedin && !userData)) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center" role="status">
+        Checking your session…
+      </div>
+    );
+  }
+  if (isLoggedin) {
+    return <Navigate to={userData.isAccountVerified ? "/" : "/email-verify"} replace />;
+  }
 
   return (
   <div className="relative isolate flex flex-1 flex-col overflow-x-hidden text-gray-900 bg-transparent">
@@ -511,9 +539,38 @@ const roleOptions = [
                 </div>
               )}
 
+              {state === "Sign Up" && (
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <input
+                      id="signup-terms"
+                      name="acceptedTerms"
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(event) => setAcceptedTerms(event.target.checked)}
+                      required
+                      disabled={loading}
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 accent-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    />
+                    <label htmlFor="signup-terms" className="text-sm leading-6 text-gray-700">
+                      I agree to the{" "}
+                      <Link to="/terms-of-service" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline underline-offset-4 hover:text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Terms of Service<span className="sr-only"> (opens in a new tab)</span>
+                      </Link>.
+                    </label>
+                  </div>
+                  <p className="mt-2 pl-7 text-xs leading-5 text-gray-600">
+                    Learn how we handle your information in our{" "}
+                    <Link to="/privacy-policy" target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-600 underline underline-offset-4 hover:text-indigo-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                      Privacy Policy<span className="sr-only"> (opens in a new tab)</span>
+                    </Link>.
+                  </p>
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (state === "Sign Up" && !acceptedTerms)}
                 className="h-12 w-full rounded-xl bg-indigo-600 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading
@@ -532,9 +589,10 @@ const roleOptions = [
                   Don&apos;t have an account?{" "}
                   <button
                     type="button"
-                    onClick={() =>
-                      setState("Sign Up")
-                    }
+                    onClick={() => {
+                      setAcceptedTerms(false);
+                      setState("Sign Up");
+                    }}
                     className="font-medium text-indigo-600 hover:underline"
                   >
                     Register
@@ -545,9 +603,10 @@ const roleOptions = [
                   Already have an account?{" "}
                   <button
                     type="button"
-                    onClick={() =>
-                      setState("Login")
-                    }
+                    onClick={() => {
+                      setAcceptedTerms(false);
+                      setState("Login");
+                    }}
                     className="font-medium text-indigo-600 hover:underline"
                   >
                     Login

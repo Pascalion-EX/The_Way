@@ -12,6 +12,7 @@ import { reserveOtpAttempt, consumeOtpAttempt } from "../services/otpAttempts.js
 import { OTP_TTL_MS, OTP_MAX_ATTEMPTS, otpPrefix } from "../services/otpPolicy.js";
 import { processNextEmailJob } from "../services/emailQueue.js";
 import { withEmailEnvironment } from "./helpers/emailEnvironment.js";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 const timestamp = 1_800_000_000_000;
 const id = "6ac82222376fb9c75f5b3961";
@@ -291,7 +292,7 @@ test("registration codes and their delivery jobs both use the ten-minute policy"
   let saved;
   t.mock.method(userModel.prototype, "save", async function () { saved = this; return this; });
   const res = { ...createResponse(), cookie() {} };
-  await register({ body: { name: "Test", email: "test@example.com", password: "test-only-signup-password", role: "parent" } }, res);
+  await register({ body: { name: "Test", email: "test@example.com", password: "test-only-signup-password", role: "parent", acceptedTerms: true, termsVersion: TERMS_VERSION } }, res);
   assert.equal(res.body.success, true);
   assert.equal(saved.verifyOtpExpireAt, timestamp + OTP_TTL_MS);
   assert.equal(saved.verifyOtpAttempts, 0);

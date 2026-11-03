@@ -21,15 +21,18 @@ export const AppContextProvider = ({ children }) => {
         `${backendUrl}/api/user/data`
       );
 
-      if (data.success) {
+      if (data.success && data.userData) {
         setUserData(data.userData);
+        setIsLoggedin(true);
         return data.userData;
       }
 
       setUserData(null);
+      setIsLoggedin(false);
       return null;
     } catch (error) {
       setUserData(null);
+      setIsLoggedin(false);
 
       // Avoid showing an error toast for normal authentication failures
       if (error.response?.status !== 401) {
@@ -46,8 +49,7 @@ export const AppContextProvider = ({ children }) => {
   const getAuthState = useCallback(async () => {
     try {
       // This endpoint already verifies the cookie and returns the profile.
-      const user = await getUserData();
-      setIsLoggedin(Boolean(user));
+      return await getUserData();
     } finally {
       setAuthLoading(false);
     }

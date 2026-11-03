@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { register, login, logout } from "../controllers/authController.js";
 import { authenticateUser } from "../middleware/userAuth.js";
 import userModel from "../models/userModel.js";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 // Use Express's real cookie serialization without opening a network listener.
 const createResponse = () => {
@@ -37,7 +38,10 @@ for (const { name, environment, override, secure, sameSite } of [
     else delete process.env.AUTH_COOKIE_SECURE;
     process.env.JWT_SECRET = "test-only-cookie-secret";
 
-    const credentials = { name: "Test User", email: "test@example.com", password: "test-only-cookie-password", role: "parent" };
+    const credentials = {
+      name: "Test User", email: "test@example.com", password: "test-only-cookie-password", role: "parent",
+      acceptedTerms: true, termsVersion: TERMS_VERSION,
+    };
     const user = { _id: "6ab26b08171afea3091f04b3", tokenVersion: 0, password: await bcrypt.hash(credentials.password, 4) };
     const find = t.mock.method(userModel, "findOne", async () => null);
     t.mock.method(userModel, "findById", () => ({ select: async () => user }));

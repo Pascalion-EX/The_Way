@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
         message: 'A valid single email address is required',
     }},
     password: {type:String, required: true},
+    // Legacy accounts have no recorded agreement; never backfill acceptance.
+    termsAcceptedAt: {type:Date, default: null},
+    termsVersion: {type:String, default: ""},
     tokenVersion: {type:Number, default: 0, min: 0, validate: Number.isSafeInteger},
     accessDeniedCount: {type:Number, default: 0, min: 0, max: 3, validate: Number.isInteger},
     isBanned: {type:Boolean, default: false},

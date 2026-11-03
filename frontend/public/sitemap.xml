@@ -3,4 +3,10 @@
   <url>
     <loc>https://theway-service.com/login</loc>
   </url>
+  <url>
+    <loc>https://theway-service.com/privacy-policy</loc>
+  </url>
+  <url>
+    <loc>https://theway-service.com/terms-of-service</loc>
+  </url>
 </urlset>

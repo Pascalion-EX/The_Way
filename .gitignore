@@ -11,6 +11,7 @@ shared/*
 !shared/avatarPresets.mjs
 !shared/videoUrls.mjs
 !shared/authValidation.mjs
+!shared/termsOfService.mjs
 !shared/accountProtection.mjs
 deployment/secrets/
 deployment/backups/

@@ -7,6 +7,8 @@ import {
 } from "react-router-dom";
 
 const Login = lazy(() => import("./Pages/Login"));
+const PrivacyPolicy = lazy(() => import("./Pages/PrivacyPolicy.jsx"));
+const TermsOfService = lazy(() => import("./Pages/TermsOfService.jsx"));
 const Home = lazy(() => import("./Pages/Home"));
 const Calendar = lazy(() => import("./Pages/Calendar.jsx"));
 const Lessons = lazy(() => import("./Pages/Lessons"));
@@ -95,6 +97,8 @@ const App = () => {
         ========================== */}
 
         <Route path="/login" element={<Login />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
 
         <Route element={<ProtectedRoute requireVerified={false} />}>
           <Route path="/email-verify" element={<EmailVerify />} />

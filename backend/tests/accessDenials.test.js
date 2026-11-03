@@ -14,6 +14,7 @@ import { issueAuthToken } from "../services/authTokens.js";
 import { login, register, sendResetOtp, resetPassword } from "../controllers/authController.js";
 import { createEmailJob, processNextEmailJob } from "../services/emailQueue.js";
 import { pageAccessRoles, canAccessPage } from "../../shared/pageAccess.mjs";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 const userId = "6ab26b08171afea3091f04b3";
 const otherId = "6ac82222376fb9c75f5b3961";
@@ -210,7 +211,7 @@ test("banned accounts cannot queue password recovery, reset credentials or re-re
     assert.equal(res.body.code, "ACCOUNT_BANNED");
   }
   const res = response();
-  await register({ body: { name: "Viewer", email: state.user.email, password, role: "parent", isBanned: false } }, res);
+  await register({ body: { name: "Viewer", email: state.user.email, password, role: "parent", isBanned: false, acceptedTerms: true, termsVersion: TERMS_VERSION } }, res);
   assert.equal(res.body.success, false);
   assert.equal(res.cookieIssued, undefined);
   assert.equal(state.writes.length, writes);

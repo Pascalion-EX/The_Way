@@ -14,12 +14,15 @@ import { normalizeAuthEmail } from "../services/authEmail.js";
 import { authIpKey, createAuthRateLimit } from "../middleware/authRateLimit.js";
 import { register, login } from "../controllers/authController.js";
 import { processNextEmailJob } from "../services/emailQueue.js";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 const userId = "6ab26b08171afea3091f04b3";
 const ip = (index) => `198.18.${index >> 8}.${index & 255}`;
-const signup = (email) => ({ name: "Test", email, password: "test-only-signup-password", role: "parent" });
+const signup = (email) => ({
+  name: "Test", email, password: "test-only-signup-password", role: "parent", acceptedTerms: true, termsVersion: TERMS_VERSION,
+});
 const response = () => ({
   statusCode: 200, headers: {},
   status(code) { this.statusCode = code; return this; },
@@ -82,6 +85,26 @@ const assertLimited = (result, code = "AUTH_RATE_LIMITED") => {
   assert.equal(Number(result.headers.get("retry-after")), result.body.retryAfter);
   assert.ok(result.body.retryAfter > 0);
 };
+
+for (const verified of [true, false]) {
+  test(`an active session cannot be replaced by login or registration (verified: ${verified})`, async (t) => {
+    const state = setup(t);
+    state.lookup.mock.mockImplementation(async (filter) => {
+      assert.equal(String(filter._id), userId, "An active session must be checked before another account's credentials");
+      return { _id: userId, tokenVersion: 0, isAccountVerified: verified };
+    });
+    for (const route of ["login", "register"]) {
+      const result = await state.request(route, signup("another@example.com"), ip(1), state.token);
+      assert.equal(result.status, 409);
+      assert.equal(result.body.code, "ALREADY_AUTHENTICATED");
+      assert.equal(result.body.redirectTo, verified ? "/" : "/email-verify");
+      assert.equal(result.headers.get("set-cookie"), undefined, "The current session cookie must remain intact");
+    }
+    assert.equal(state.saved.length, 0);
+    assert.equal(state.hash.mock.callCount(), 0);
+    assert.equal(state.compare.mock.callCount(), 0);
+  });
+}
 
 for (const exists of [true, false]) {
   test(`login caps concurrent guesses across IPs and email variants (account exists: ${exists})`, async (t) => {

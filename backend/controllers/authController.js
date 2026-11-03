@@ -11,6 +11,7 @@ import { issueAuthToken, verifyAuthToken } from "../services/authTokens.js";
 import { normalizeAuthEmail } from "../services/authEmail.js";
 import { findUserByAuthEmail } from "../services/authIdentity.js";
 import { newPasswordError, passwordInputError } from "../../shared/authValidation.mjs";
+import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 import { sendBannedResponse } from "../services/accessDenials.js";
 import { getSecrets } from "../config/secrets.js";
 
@@ -24,7 +25,7 @@ export const checkAuth = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email: suppliedEmail, password, phone, role } = req.body || {};
+  const { name, email: suppliedEmail, password, phone, role, acceptedTerms, termsVersion } = req.body || {};
   const email = normalizeAuthEmail(suppliedEmail);
   if (typeof name !== "string" || !name.trim() || name.length > 200) {
     return res.status(400).json({ success: false, message: "A valid name is required" });
@@ -35,6 +36,18 @@ export const register = async (req, res) => {
   const passwordError = newPasswordError(password);
   if (passwordError) {
     return res.status(400).json({ success: false, code: "INVALID_PASSWORD", message: passwordError });
+  }
+  if (acceptedTerms !== true) {
+    return res.status(400).json({
+      success: false, code: "TERMS_ACCEPTANCE_REQUIRED",
+      message: "You must accept the Terms of Service to create an account.",
+    });
+  }
+  if (termsVersion !== TERMS_VERSION) {
+    return res.status(400).json({
+      success: false, code: "TERMS_VERSION_MISMATCH",
+      message: "The Terms of Service have changed. Reload this page, then review and accept the current terms.",
+    });
   }
   if (role != "parent" && role != "unAssigned"){
     return res.json({success: false, message: "Welcome to the honeypot"});
@@ -52,6 +65,7 @@ export const register = async (req, res) => {
     const otpExpiresAt = otpRequestedAt + OTP_TTL_MS;
     const user = new userModel({
       name, email, password: hashedpassword, phone, role,
+      termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION,
       verifyOtp: otp, verifyOtpExpireAt: otpExpiresAt,
       verifyOtpRequestedAt: otpRequestedAt,
       verifyOtpAttempts: 0, verifyOtpGeneration: randomUUID(),

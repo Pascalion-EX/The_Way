@@ -3,6 +3,33 @@ import { verifyAuthToken } from "../services/authTokens.js";
 import { sendBannedResponse } from "../services/accessDenials.js";
 import { getRequestIdentity, setRequestIdentity } from "../services/requestIdentity.js";
 
+export const requireLoggedOut = async (req, res, next) => {
+  if (!req.cookies?.token) return next();
+
+  try {
+    const claims = verifyAuthToken(req.cookies.token);
+    if (!claims) return next();
+
+    // Recheck the stored session version rather than trusting a cookie's
+    // presence: expired, revoked, and deleted-account sessions can sign in.
+    const user = await userModel.findById(claims.id).select("tokenVersion isBanned isAccountVerified");
+    if (!user || user.tokenVersion !== claims.tokenVersion) return next();
+    if (user.isBanned) return sendBannedResponse(res);
+
+    return res.status(409).json({
+      success: false,
+      code: "ALREADY_AUTHENTICATED",
+      message: "You are already signed in. Log out before signing in to another account.",
+      redirectTo: user.isAccountVerified ? "/" : "/email-verify",
+    });
+  } catch (error) {
+    if (["TokenExpiredError", "JsonWebTokenError", "NotBeforeError"].includes(error.name)) {
+      return next();
+    }
+    return res.status(500).json({ success: false, message: "Unable to check your current session. Please try again." });
+  }
+};
+
 export const authenticateUser = async (req, res, next) => {
   try {
     const token = req.cookies?.token;

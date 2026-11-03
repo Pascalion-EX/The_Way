@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import { login, logout } from "../controllers/authController.js";
-import { authenticateUser } from "../middleware/userAuth.js";
+import { authenticateUser, requireLoggedOut } from "../middleware/userAuth.js";
 
 const userId = "6ab26b08171afea3091f04b3";
 const password = "test-only-password";
@@ -64,6 +64,12 @@ const setup = async (t, version = 0) => {
     await authenticateUser(req, res, () => { admitted = true; });
     return { admitted, req, res };
   };
+  state.guest = async (token) => {
+    const res = response();
+    let admitted = false;
+    await requireLoggedOut({ cookies: { token } }, res, () => { admitted = true; });
+    return { admitted, res };
+  };
   state.logout = async (token) => {
     const res = response();
     await logout({ cookies: { token }, body: { userId: "6ac82222376fb9c75f5b3961" } }, res);
@@ -82,6 +88,10 @@ test("logout immediately revokes every copied token, while a fresh login works i
   const state = await setup(t);
   const token = await state.login();
   assert.equal((await state.authenticate(token)).admitted, true);
+  const blocked = await state.guest(token);
+  assert.equal(blocked.admitted, false);
+  assert.equal(blocked.res.statusCode, 409);
+  assert.equal(blocked.res.body.code, "ALREADY_AUTHENTICATED");
   const claims = jwt.verify(token, secret);
   assert.equal(claims.exp - claims.iat, 172800);
   const result = await state.logout(token);
@@ -91,6 +101,7 @@ test("logout immediately revokes every copied token, while a fresh login works i
   assert.equal(replay.admitted, false);
   assert.equal(replay.res.statusCode, 401);
   assert.equal(replay.req.userId, undefined);
+  assert.equal((await state.guest(token)).admitted, true, "Logout must permit a fresh sign-in, even with an old cookie");
   const fresh = await state.login();
   assert.equal(jwt.verify(fresh, secret).tokenVersion, 1);
   assert.equal((await state.authenticate(fresh)).admitted, true);
@@ -134,6 +145,7 @@ test("legacy, malformed, expired, and forged JWTs cannot authenticate or revoke 
     jwt.sign({ id: userId, tokenVersion: 0 }, secret, { algorithm: "HS384" }),
   ];
   for (const token of tokens) {
+    assert.equal((await state.guest(token)).admitted, true, "Invalid or expired cookies cannot lock out fresh sign-ins");
     const result = await state.authenticate(token);
     assert.equal(result.admitted, false);
     assert.equal(result.res.statusCode, 401);
@@ -152,6 +164,10 @@ test("deleted accounts and database outages fail closed; failed revocation must 
   assert.equal(auth.admitted, false);
   assert.equal(auth.res.statusCode, 500);
   assert.equal(auth.res.body.message, "Authentication failed.");
+  const guest = await state.guest(token);
+  assert.equal(guest.admitted, false);
+  assert.equal(guest.res.statusCode, 500);
+  assert.equal(JSON.stringify(guest.res.body).includes("Private"), false);
   state.lookupError = false;
   state.writeError = true;
   const result = await state.logout(token);
@@ -162,4 +178,5 @@ test("deleted accounts and database outages fail closed; failed revocation must 
   state.writeError = false;
   state.user = null;
   assert.equal((await state.authenticate(token)).res.statusCode, 401);
+  assert.equal((await state.guest(token)).admitted, true);
 });

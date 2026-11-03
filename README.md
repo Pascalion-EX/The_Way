@@ -416,15 +416,35 @@ Base path: `/api/auth`
 | POST | `/send-reset-otp` | No | Email password reset OTP |
 | POST | `/reset-password` | No | Reset password using OTP |
 
+The login page restores the current session before showing its form and
+redirects signed-in users to the home page (or email verification when needed).
+Login and registration requests with a valid active session return HTTP 409
+with `ALREADY_AUTHENTICATED`; log out before changing accounts. Expired or
+revoked cookies do not prevent a fresh sign-in. The existing persistent
+sign-in cookie lasts up to two days.
+
 #### Register Body
 
 ```json
 {
   "name": "User Name",
   "email": "user@example.com",
-  "password": "password"
+  "password": "a unique account passphrase",
+  "phone": "01234567890",
+  "role": "parent",
+  "acceptedTerms": true,
+  "termsVersion": "2026-11-03"
 }
 ```
+
+Registration requires explicit acceptance of the current public
+[`/terms-of-service`](https://theway-service.com/terms-of-service) page.
+The API rejects missing or non-boolean acceptance and missing or stale versions
+before creating an account. It records `termsAcceptedAt` using the server clock
+and `termsVersion` with the new user. Existing accounts are not marked as having
+accepted these terms and can continue to log in. Update
+[`shared/termsOfService.mjs`](shared/termsOfService.mjs) and the page together when
+the sign-up terms change; deploy matching frontend and backend versions.
 
 #### Login Body
 
