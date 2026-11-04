@@ -325,8 +325,9 @@
     }
 }
 
-/* CSS zoom also scales viewport lengths; keep the shared layout full height. */
-.app-shell {
+/* CSS zoom also scales viewport lengths; keep the layout and projector full height. */
+.app-shell,
+[data-projector-mode] {
   min-height: calc(100vh / var(--app-zoom));
   min-height: calc(100dvh / var(--app-zoom));
 }

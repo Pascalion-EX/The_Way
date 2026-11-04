@@ -124,3 +124,28 @@ The ZIP contains a matching `.archive.gz` and `.uploads.tar.gz`. Use the
 extracted database archive with the existing
 [recovery procedure](../DEPLOYMENT.md#recover-from-a-database-backup).
 Test recovery in an isolated environment before relying on the schedule.
+
+## Troubleshooting MongoDB tools configuration
+
+If the config helper reports `TypeError: String.prototype.trim called on null
+or undefined`, update `deployment/mongo-tools-config.js`. Some mongosh versions
+mis-handle optional-chained method calls such as `password?.trim()`; see
+[MongoDB issue MONGOSH-2136](https://jira.mongodb.org/browse/MONGOSH-2136).
+The helper validates the password without that expression and writes the
+original value unchanged. Do not trim or replace the database password to
+work around this shell error.
+
+Check the helper on the VPS without connecting to MongoDB or printing its
+generated credentials:
+
+```bash
+sudo docker compose --profile tools run --rm --no-deps -T \
+  -e MONGO_TOOLS_CONFIG=/tmp/backup-test.json \
+  --entrypoint mongosh backup \
+  --nodb --quiet --norc --file /scripts/mongo-tools-config.js
+```
+
+A successful run exits without an error; the temporary container and its
+config disappear when it exits. JavaScript belongs in the `.js` file, rather
+than directly at a Bash prompt. Bash can interpret `!` as history expansion
+and report `event not found` when a JavaScript statement is pasted there.
