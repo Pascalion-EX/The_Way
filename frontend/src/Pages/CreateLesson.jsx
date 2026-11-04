@@ -1,4 +1,5 @@
 import ImageUpload from "../Components/ImageUpload.jsx";
+import LessonImportUploader from "../Components/LessonImportUploader.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, { useContext, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,7 @@ const CreateLesson = () => {
   const { backendUrl, userData } = useContext(AppContent);
 
   const [imageUploading, setImageUploading] = useState(false);
+  const [documentImporting, setDocumentImporting] = useState(false);
   const [title, setTitle] = useState("");
   const [name, setName] = useState("");
   const [year, setYear] = useState("");
@@ -140,6 +142,11 @@ const CreateLesson = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (documentImporting) {
+      toast.error("Please wait for the document to finish importing.");
+      return;
+    }
 
     if (imageUploading) {
       toast.error("Please wait for the image to finish uploading.");
@@ -267,6 +274,16 @@ const CreateLesson = () => {
                 titles and body text.
               </p>
             </div>
+
+            <LessonImportUploader
+              disabled={isSubmitting || imageUploading}
+              hasExistingContent={Boolean(title.trim() || partitions.some((partition) => partition.title.trim() || partition.body.trim()))}
+              onImportingChange={setDocumentImporting}
+              onImported={(draft) => {
+                setTitle(draft.title);
+                setPartitions(draft.partitions);
+              }}
+            />
 
             <form
               onSubmit={handleSubmit}
@@ -500,7 +517,7 @@ const CreateLesson = () => {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
-                  disabled={isSubmitting || imageUploading}
+                  disabled={isSubmitting || imageUploading || documentImporting}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting

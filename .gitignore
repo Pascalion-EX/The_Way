@@ -13,6 +13,7 @@ shared/*
 !shared/authValidation.mjs
 !shared/termsOfService.mjs
 !shared/accountProtection.mjs
+!shared/lessonImport.mjs
 deployment/secrets/
 deployment/backups/
 frontend/dist/

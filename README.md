@@ -90,6 +90,11 @@ Selected curriculum are retained in the URL as `?curriculum=<id>`.
 - Optional video and activity fields
 - Creator information stored with each lesson
 
+Create Lesson can import DOCX, PDF, HTML, or text into an editable title and
+partitions. The image, name, and year are still required before saving.
+See [lesson import behavior and API](backend/LESSON_IMPORT.md) for heading
+detection, upload limits, and supported document formats.
+
 ### Games
 
 - View service games
@@ -518,6 +523,7 @@ Base path: `/api/lessons`
 | GET | `/` | Yes | List lessons |
 | GET | `/:lessonId` | Yes | Get lesson by ID |
 | POST | `/` | Yes + role check | Create lesson |
+| POST | `/import` | Verified lesson creator | Convert a document into an editable draft |
 | PUT | `/:lessonid` | Yes + role check | Update lesson |
 | DELETE | `/:lessonId` | Yes + role check | Delete lesson |
 

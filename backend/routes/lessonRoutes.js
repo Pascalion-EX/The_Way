@@ -1,6 +1,8 @@
 import express from "express";
 import userAuth from "../middleware/userAuth.js";
 import validateVideoUrl from "../middleware/validateVideoUrl.js";
+import { requireLessonImporterRole, lessonImportRateLimit, uploadLessonDocument } from "../middleware/lessonImport.js";
+import { importLessonDocument } from "../controllers/lessonImportController.js";
 import {
   createLesson,
   getLessons,
@@ -11,6 +13,8 @@ import {
 } from "../controllers/lessonController.js";
 
 const lessonRouter = express.Router();
+
+lessonRouter.post("/import", userAuth, requireLessonImporterRole, lessonImportRateLimit, uploadLessonDocument, importLessonDocument);
 
 lessonRouter.get("/",userAuth, getLessons);
 lessonRouter.get("/:lessonId",userAuth,  getLessonById);
