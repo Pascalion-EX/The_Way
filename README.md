@@ -1218,7 +1218,7 @@ The current project already includes several useful security practices:
 - Ten-minute OTP expiry, five-attempt budgets, and atomic one-time consumption
 - Shared database-backed IP, account, and global limits for login, registration, and OTP operations
 - Shared recipient/IP/global email quotas and single-mailbox validation
-- Shared registration/reset password policy: at least 15 characters, common-password screening, and an explicit bcrypt byte limit
+- Shared registration/reset password policy: at least 12 characters, common-password screening, and an explicit bcrypt byte limit
 - Generic invalid-login response to reduce account enumeration during login
 - Mongoose `sanitizeFilter` / `strictQuery` usage in parts of the backend
 - Sensitive user fields excluded from admin dashboard queries

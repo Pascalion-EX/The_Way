@@ -14,8 +14,8 @@ import { normalizeAuthEmail, newPasswordError, passwordInputError } from "../../
 import { TERMS_VERSION } from "../../shared/termsOfService.mjs";
 
 const id = "6ab26b08171afea3091f04b3";
-const goodPassword = "amber river sky"; // Exactly 15 characters.
-const ascii72 = `${goodPassword} ${"x".repeat(56)}`;
+const goodPassword = "amber clouds"; // Exactly 12 characters.
+const ascii72 = `${goodPassword} ${"x".repeat(59)}`;
 const unicode72 = `${"🔒".repeat(17)}Abcd`;
 const signup = (password, email = "test@example.com") => ({
   name: "Test", email, password, role: "parent", acceptedTerms: true, termsVersion: TERMS_VERSION,
@@ -76,7 +76,7 @@ test("registration, login, recovery, reset, and profile edits reject unsafe mail
 test("new passwords reject short, common, predictable, malformed, and oversized secrets before hashing or OTP reservation", async (t) => {
   denyIo(t);
   for (const password of [
-    undefined, null, {}, [], 123, "", "x", "short-password", "x".repeat(14), "🔒".repeat(8),
+    undefined, null, {}, [], 123, "", "x", "short-words", "x".repeat(11), "🔒".repeat(8),
     "PasswordPassword1!", "password123456789", "correcthorsebatterystaple", "1234567890123456",
     "abcdefghijklmnop", "abcd".repeat(5), " ".repeat(20), `${ascii72}x`, `${unicode72}x`,
     `${goodPassword}\u0000`, `${goodPassword}\uD800`,
@@ -94,13 +94,14 @@ test("new passwords reject short, common, predictable, malformed, and oversized 
 });
 
 test("password policy counts Unicode code points and enforces the UTF-8 byte boundary", () => {
-  assert.equal([...goodPassword].length, 15);
+  assert.equal([...goodPassword].length, 12);
   assert.equal(Buffer.byteLength(ascii72), 72);
   assert.equal(Buffer.byteLength(unicode72), 72);
-  for (const password of [goodPassword, ascii72, unicode72, "🔒".repeat(14) + "A", "نافذة نهر وسماء مشرقة", `  ${goodPassword}  `]) {
+  for (const password of [goodPassword, ascii72, unicode72, "🔒".repeat(11) + "A", "نافذة نهر وسماء مشرقة", `  ${goodPassword}  `]) {
     assert.equal(newPasswordError(password), null);
   }
-  assert.match(newPasswordError("🔒".repeat(8)), /15 characters/);
+  assert.match(newPasswordError(goodPassword.slice(0, -1)), /12 characters/);
+  assert.match(newPasswordError("🔒".repeat(8)), /12 characters/);
   assert.match(newPasswordError(`${unicode72}x`), /72 UTF-8 bytes/);
   assert.equal(passwordInputError("x"), null, "Legacy verification does not apply new-password strength rules");
 });
@@ -204,7 +205,7 @@ test("accounts without agreement metadata are not silently marked as having acce
   assert.equal(legacy.termsVersion, "");
 });
 
-test("registration and reset accept 72-byte secrets without modifying or truncating them", async (t) => {
+test("registration and reset accept 12-character and 72-byte secrets without modifying or truncating them", async (t) => {
   secret(t);
   const previousSanitizer = mongoose.get("sanitizeFilter");
   mongoose.set("sanitizeFilter", true);
@@ -222,7 +223,7 @@ test("registration and reset accept 72-byte secrets without modifying or truncat
       resetOtpExpireAt: Date.now() + 600_000, resetOtpRequestedAt: Date.now(), resetOtpAttempts: 1,
     };
   });
-  for (const password of [ascii72, unicode72]) {
+  for (const password of [goodPassword, ascii72, unicode72]) {
     lookup.mock.mockImplementation(async () => null);
     const registered = response();
     await register({ body: signup(password) }, registered);
@@ -232,8 +233,8 @@ test("registration and reset accept 72-byte secrets without modifying or truncat
     await resetPassword({ body: { email: " TEST@Example.COM ", otp: "123456", newPassword: password } }, reset);
     assert.equal(reset.body.success, true);
   }
-  assert.deepEqual(hash.mock.calls.map((call) => call.arguments[0]), [ascii72, ascii72, unicode72, unicode72]);
-  assert.equal(changes.length, 2);
+  assert.deepEqual(hash.mock.calls.map((call) => call.arguments[0]), [goodPassword, goodPassword, ascii72, ascii72, unicode72, unicode72]);
+  assert.equal(changes.length, 3);
 });
 
 test("legacy short passwords still authenticate, while overlong login inputs never reach bcrypt", async (t) => {

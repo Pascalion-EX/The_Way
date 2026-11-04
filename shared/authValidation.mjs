@@ -1,6 +1,6 @@
-export const PASSWORD_MIN_CHARACTERS = 15;
+export const PASSWORD_MIN_CHARACTERS = 12;
 export const PASSWORD_MAX_BYTES = 72;
-export const PASSWORD_HINT = "Use at least 15 characters and a unique passphrase. Spaces and Unicode are welcome.";
+export const PASSWORD_HINT = `Use at least ${PASSWORD_MIN_CHARACTERS} characters and a unique passphrase. Spaces and Unicode are welcome.`;
 
 // A local baseline blocklist; no passwords are sent to an external service.
 const commonPasswords = new Set([
@@ -41,7 +41,7 @@ export const passwordInputError = (password) => {
 export const newPasswordError = (password) => {
   const inputError = passwordInputError(password);
   if (inputError) return inputError;
-  if ([...password].length < PASSWORD_MIN_CHARACTERS) return "Password must contain at least 15 characters";
+  if ([...password].length < PASSWORD_MIN_CHARACTERS) return `Password must contain at least ${PASSWORD_MIN_CHARACTERS} characters`;
   // Fold only for screening. Never trim, normalize, or otherwise change the
   // actual secret supplied to the password hasher or verifier.
   const screened = password.normalize("NFKC").trim().toLowerCase();
