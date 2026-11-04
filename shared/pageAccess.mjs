@@ -1,5 +1,6 @@
 const STAFF = ["admin", "leader", "pascal", "pamela"];
-const CHILD_PROFILE_ROLES = ["pascal", "pamela"];
+const CHILD_PROFILE_MANAGERS = ["pascal", "pamela"];
+const CHILD_PROFILE_ROLES = [...CHILD_PROFILE_MANAGERS, "parent"];
 const restrictedPages = [
   [/^\/admin\/?$/i, ["admin", "pascal", "pamela"]],
   [/^\/activities\/year-1-3\/?$/i, STAFF, canAccessYearOneToThreeActivities],
@@ -14,6 +15,11 @@ const restrictedPages = [
 export function canAccessChildrenProfiles(role) {
   const roles = Array.isArray(role) ? role : [role];
   return roles.some((value) => CHILD_PROFILE_ROLES.includes(value));
+}
+
+export function canManageChildrenProfiles(role) {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.some((value) => CHILD_PROFILE_MANAGERS.includes(value));
 }
 
 export function canAccessYearOneToThreeActivities(role, assignedClass) {

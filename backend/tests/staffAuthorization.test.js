@@ -145,23 +145,25 @@ test("every child alias, attendance route, and notification mutation rejects una
       _id: objectId(userId), role: identity.role || ["admin"], isAccountVerified: identity.verified ?? true,
     };
     for (const route of protectedRoutes) {
+      const isChildProfile = /^\/api\/(children|childProfile)(\/|$)/.test(route.path);
+      if (identity.name === "verified parent" && isChildProfile && ["GET", "POST"].includes(route.method)) continue;
       const result = await request(app, route, identity.token);
       assert.equal(result.status, identity.status, `${identity.name}: ${route.method} ${route.path}`);
       assert.equal(result.body.success, false);
       if (identity.name === "unverified staff") assert.equal(result.body.code, "EMAIL_VERIFICATION_REQUIRED");
       if (["default verified user", "verified parent", "empty role", "unknown role"].includes(identity.name)) {
-        assert.equal(result.body.code, "STAFF_ACCESS_REQUIRED");
+        assert.equal(result.body.code, isChildProfile ? "CHILD_PROFILE_ACCESS_REQUIRED" : "STAFF_ACCESS_REQUIRED");
       }
       assert.equal(state.businessCalls, 0, "Denied requests must not read or write protected documents");
     }
   }
 });
 
-test("child profiles require Pascal or Pamela while other staff routes retain all four staff roles", async (t) => {
+test("child profile management requires Pascal or Pamela while other staff routes retain all four staff roles", async (t) => {
   const state = stubDatabase(t);
   const app = createApp();
   for (const role of ["admin", "leader", "pascal", "pamela"]) {
-    state.user.role = ["parent", role];
+    state.user.role = [role];
     for (const route of protectedRoutes) {
       const before = state.businessCalls;
       const result = await request(app, route, state.token);

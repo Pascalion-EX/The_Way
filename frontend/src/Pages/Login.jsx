@@ -39,6 +39,7 @@ const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [job, setJob] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [role, setRole] = useState("");
@@ -80,6 +81,7 @@ const roleOptions = [
           email,
           password,
           phone,
+          ...(role === "parent" ? { job: job.trim() } : {}),
           role,
           acceptedTerms,
           termsVersion: TERMS_VERSION,
@@ -525,6 +527,27 @@ const roleOptions = [
     )}
   </div>
 )}
+              {state === "Sign Up" && role === "parent" && (
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    id="job-input"
+                    name="job"
+                    autoComplete="organization-title"
+                    maxLength={200}
+                    placeholder=" "
+                    value={job}
+                    onChange={(event) => setJob(event.target.value)}
+                    className="peer h-12 w-full rounded-xl border border-gray-300 bg-transparent px-4 pb-1 pt-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <label
+                    htmlFor="job-input"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-white px-1 text-sm text-gray-500 transition-all duration-200 peer-focus:left-3 peer-focus:top-0 peer-focus:text-xs peer-focus:text-indigo-500 peer-not-placeholder-shown:left-3 peer-not-placeholder-shown:top-0 peer-not-placeholder-shown:text-xs"
+                  >
+                    Job / occupation (optional)
+                  </label>
+                </div>
+              )}
               {state === "Login" && (
                 <div className="flex justify-end">
                   <button

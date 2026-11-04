@@ -174,6 +174,12 @@ const ResetPassword = () => {
                   : "Enter the OTP sent to your email and choose a new password."}
               </p>
 
+              {step !== 1 && (
+                <p id="otp-email-hint" className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+                  Can’t find the OTP email? Check your <strong>Junk or Spam</strong> folder.
+                </p>
+              )}
+
               {step === 1 ? (
                 <form onSubmit={sendOtpHandler} className="mt-8 space-y-4">
                   <input
@@ -211,6 +217,7 @@ const ResetPassword = () => {
                     type="text"
                     inputMode="numeric"
                     placeholder="OTP"
+                    aria-describedby="otp-email-hint"
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}

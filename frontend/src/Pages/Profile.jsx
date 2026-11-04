@@ -37,6 +37,7 @@ const Profile = () => {
       name: "",
       email: "",
       phone: "",
+      job: "",
       class: 0,
       emailUpdatesEnabled: true,
     });
@@ -138,6 +139,7 @@ const Profile = () => {
   const profileName = userData?.name || "";
   const profileEmail = userData?.email || "";
   const profilePhone = userData?.phone || "";
+  const profileJob = userData?.job || "";
   const profileClass = userData?.class ?? 0;
   const profileEmailUpdatesEnabled = userData?.emailUpdatesEnabled !== false;
 
@@ -146,10 +148,11 @@ const Profile = () => {
       name: profileName,
       email: profileEmail,
       phone: profilePhone,
+      job: profileJob,
       class: profileClass,
       emailUpdatesEnabled: profileEmailUpdatesEnabled,
     });
-  }, [profileName, profileEmail, profilePhone, profileClass, profileEmailUpdatesEnabled]);
+  }, [profileName, profileEmail, profilePhone, profileJob, profileClass, profileEmailUpdatesEnabled]);
 
   // ======================================================
   // ROLE BADGE STYLE
@@ -237,6 +240,7 @@ const Profile = () => {
       name: userData?.name || "",
       email: userData?.email || "",
       phone: userData?.phone || "",
+      job: userData?.job || "",
       class: userData?.class ?? 0,
       emailUpdatesEnabled: userData?.emailUpdatesEnabled !== false,
     });
@@ -834,6 +838,27 @@ const Profile = () => {
                       </p>
                     )}
                   </div>
+
+                  {userRoles.includes("parent") && (
+                    <div>
+                      <label htmlFor="profile-job" className="text-sm text-gray-500">Job / occupation</label>
+                      {isEditing ? (
+                        <input
+                          id="profile-job"
+                          type="text"
+                          name="job"
+                          autoComplete="organization-title"
+                          maxLength={200}
+                          value={editData.job}
+                          onChange={handleChange}
+                          placeholder="Job or occupation (optional)"
+                          className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <p className="mt-1 font-medium text-gray-900">{profileJob || "Not provided"}</p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Class */}
 

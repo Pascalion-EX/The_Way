@@ -35,6 +35,7 @@ export const createChildProfile = async (req, res) => {
     }
 
     const childProfile = await childProfilemodel.create({
+      createdBy: req.userId,
       name,
       grade,
       firstParent,
@@ -68,7 +69,7 @@ export const createChildProfile = async (req, res) => {
 export const getAllChildProfiles = async (req, res) => {
   try {
     const children = await childProfilemodel
-      .find()
+      .find(req.childProfileFilter)
       .sort({ grade: 1, name: 1 });
 
     return res.status(200).json({
@@ -93,7 +94,7 @@ export const getChildProfileById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const childProfile = await childProfilemodel.findById(id);
+    const childProfile = await childProfilemodel.findOne({ ...req.childProfileFilter, _id: id });
 
     if (!childProfile) {
       return res.status(404).json({
@@ -133,7 +134,7 @@ export const getChildrenByGrade = async (req, res) => {
     }
 
     const children = await childProfilemodel
-      .find({ grade: gradeNumber })
+      .find({ ...req.childProfileFilter, grade: gradeNumber })
       .sort({ name: 1 });
 
     return res.status(200).json({

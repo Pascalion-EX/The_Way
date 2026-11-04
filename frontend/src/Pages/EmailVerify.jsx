@@ -139,11 +139,16 @@ const EmailVerify = () => {
               Verify {userData?.email || "your email"} to use the site. {otpSent ? "Your verification email is on its way. Delivery retries automatically if needed." : "Request a code below."} Enter the 6-digit OTP when it arrives.
             </p>
 
+            <p id="otp-email-hint" className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              Can’t find the OTP email? Check your <strong>Junk or Spam</strong> folder.
+            </p>
+
             <form onSubmit={handleVerify} className="mt-8 flex flex-col gap-4">
               <input
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                aria-describedby="otp-email-hint"
                 pattern="[0-9]{6}"
                 maxLength={6}
                 required

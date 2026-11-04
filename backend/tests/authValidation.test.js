@@ -122,6 +122,35 @@ test("registration stores one normalized mailbox and hashes the exact supplied s
   assert.equal(await bcrypt.compare(password.trim(), saved[0].password), false);
 });
 
+test("parent registration stores a trimmed optional job and other registrations omit it", async (t) => {
+  secret(t);
+  t.mock.method(User, "findOne", async () => null);
+  t.mock.method(bcrypt, "hash", async () => "test-only-hash");
+  const saved = [];
+  t.mock.method(User.prototype, "save", async function () { saved.push(this); return this; });
+  for (const [role, job, expected] of [
+    ["parent", "  Teacher  ", "Teacher"],
+    ["parent", undefined, ""],
+    ["parent", "", ""],
+    ["unAssigned", "Teacher", ""],
+  ]) {
+    const res = response();
+    await register({ body: { ...signup(goodPassword), role, job } }, res);
+    assert.equal(res.body.success, true);
+    assert.equal(saved.at(-1).job, expected);
+  }
+});
+
+test("registration rejects invalid jobs before database work or password hashing", async (t) => {
+  denyIo(t);
+  for (const job of [null, 123, {}, [], { $ne: null }, "x".repeat(201)]) {
+    const res = response();
+    await register({ body: { ...signup(goodPassword), job } }, res);
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.success, false);
+  }
+});
+
 test("registration rejects missing, unchecked, and non-boolean terms acceptance before account work", async (t) => {
   denyIo(t);
   for (const acceptedTerms of [undefined, null, false, "true", "false", 0, 1, {}, [], [true]]) {

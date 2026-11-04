@@ -265,8 +265,8 @@ test("page permissions preserve admin/staff distinctions and cover create and ed
   }
   for (const page of ["/childrenProfile", "/CHILDRENPROFILE/", "/%63hildrenProfile"]) {
     assert.ok(pageAccessRoles(page), page);
-    for (const role of ["admin", "leader", "parent", "unAssigned"]) assert.equal(canAccessPage(page, role), false, `${page}: ${role}`);
-    for (const role of ["pamela", "pascal"]) assert.equal(canAccessPage(page, ["admin", role]), true, `${page}: ${role}`);
+    for (const role of ["admin", "leader", "unAssigned"]) assert.equal(canAccessPage(page, role), false, `${page}: ${role}`);
+    for (const role of ["parent", "pamela", "pascal"]) assert.equal(canAccessPage(page, ["admin", role]), true, `${page}: ${role}`);
   }
   assert.equal(pageAccessRoles("/profile"), null);
 });

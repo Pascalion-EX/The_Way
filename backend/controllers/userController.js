@@ -23,6 +23,7 @@ export const getUserData = async (req, res) => {
         email: user.email,
         emailUpdatesEnabled: user.emailUpdatesEnabled !== false,
         phone: user.phone,
+        job: user.job || "",
         class: user.class,
         verificationEmailQueued: Boolean(user.emailJobs?.verification),
         otpResendAvailableAt: user.verifyOtpRequestedAt ? user.verifyOtpRequestedAt + 60_000 : 0,
@@ -41,7 +42,7 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: "Profile data is required" });
     }
 
-    const { name, email, phone, currentPassword } = req.body;
+    const { name, email, phone, job, currentPassword } = req.body;
     const userClass = req.body.class;
 
     const updateData = {};
@@ -61,6 +62,12 @@ export const updateProfile = async (req, res) => {
 
     if (name !== undefined) updateData.name = name;
     if (phone !== undefined) updateData.phone = phone;
+    if (job !== undefined) {
+      if (typeof job !== "string" || job.length > 200) {
+        return res.status(400).json({ success: false, message: "Job must be text of up to 200 characters" });
+      }
+      updateData.job = job.trim();
+    }
     if (userClass !== undefined) {
       const normalizedClass = typeof userClass === "string" && userClass.trim() !== "" ? Number(userClass) : userClass;
       if (!Number.isInteger(normalizedClass) || normalizedClass < 0 || normalizedClass > 12) {
@@ -137,7 +144,7 @@ export const updateProfile = async (req, res) => {
 
     const user = await userModel
       .findOneAndUpdate(filter, update, { returnDocument: "after", runValidators: true })
-      .select("name email phone class role isAccountVerified avatarId emailUpdatesEnabled");
+      .select("name email phone job class role isAccountVerified avatarId emailUpdatesEnabled");
 
     if (!user) {
       return res.status(emailChanged ? 409 : 404).json({

@@ -25,7 +25,7 @@ export const checkAuth = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  const { name, email: suppliedEmail, password, phone, role, acceptedTerms, termsVersion } = req.body || {};
+  const { name, email: suppliedEmail, password, phone, job, role, acceptedTerms, termsVersion } = req.body || {};
   const email = normalizeAuthEmail(suppliedEmail);
   if (typeof name !== "string" || !name.trim() || name.length > 200) {
     return res.status(400).json({ success: false, message: "A valid name is required" });
@@ -52,6 +52,9 @@ export const register = async (req, res) => {
   if (role != "parent" && role != "unAssigned"){
     return res.json({success: false, message: "Welcome to the honeypot"});
   }
+  if (job !== undefined && (typeof job !== "string" || job.length > 200)) {
+    return res.status(400).json({ success: false, message: "Job must be text of up to 200 characters" });
+  }
   try {
     const existinguser = await findUserByAuthEmail(suppliedEmail);
     if (existinguser) {
@@ -65,6 +68,7 @@ export const register = async (req, res) => {
     const otpExpiresAt = otpRequestedAt + OTP_TTL_MS;
     const user = new userModel({
       name, email, password: hashedpassword, phone, role,
+      job: role === "parent" ? (job || "").trim() : "",
       termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION,
       verifyOtp: otp, verifyOtpExpireAt: otpExpiresAt,
       verifyOtpRequestedAt: otpRequestedAt,

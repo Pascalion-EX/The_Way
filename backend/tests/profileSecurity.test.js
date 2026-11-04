@@ -71,6 +71,27 @@ const setup = async (t) => {
   return state;
 };
 
+test("jobs default to empty, persist trimmed updates, and can be cleared", async (t) => {
+  const state = await setup(t);
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.job, "");
+  const updated = await state.request({ job: "  Teacher  ", userId: "another-account" });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.user.job, "Teacher");
+  assert.equal(state.user.job, "Teacher");
+  assert.equal((await state.request(undefined, undefined, "GET")).body.userData.job, "Teacher");
+  assert.equal((await state.request({ job: "" })).body.user.job, "");
+});
+
+test("invalid jobs cannot partially update a profile", async (t) => {
+  const state = await setup(t);
+  for (const job of [null, 123, {}, [], { $ne: null }, "x".repeat(201)]) {
+    const result = await state.request({ job, name: "Must not be applied" });
+    assert.equal(result.status, 400);
+    assert.equal(state.writes, 0);
+    assert.equal(state.user.name, "Original name");
+  }
+});
+
 test("email preferences default to subscribed, persist opt-outs, and can be enabled again", async (t) => {
   const state = await setup(t);
   assert.equal((await state.request(undefined, undefined, "GET")).body.userData.emailUpdatesEnabled, true);

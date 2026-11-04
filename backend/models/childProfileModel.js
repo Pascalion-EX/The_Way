@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const childProfileschema = new mongoose.Schema(
     {
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "user",
+            default: null,
+            immutable: true,
+        },
         name :{
             type: String,
             required: true,
@@ -58,5 +64,6 @@ const childProfileschema = new mongoose.Schema(
     }
 )
 childProfileschema.index({ grade: 1, name: 1 });
+childProfileschema.index({ createdBy: 1, grade: 1, name: 1 });
 const childProfilemodel = mongoose.models.childProfile || mongoose.model("childprofile",childProfileschema);
 export default childProfilemodel;

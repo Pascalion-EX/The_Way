@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema({
     resetOtpGeneration: {type:String, default: ''},
     class: {type: Number, default: 0, min: 0, max: 12, validate: Number.isInteger},
     phone: {type: String, default: ''},
+    job: {type: String, trim: true, maxlength: 200, default: ''},
     role: {type: [String], enum: ['pascal','admin','leader','parent', 'pamela' ,'unAssigned'],default:['unAssigned']},
     emailJobs: {
         welcome: emailJobSchema,

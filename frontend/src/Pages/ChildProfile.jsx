@@ -19,7 +19,7 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar.jsx";
-import { canAccessChildrenProfiles } from "../../../shared/pageAccess.mjs";
+import { canAccessChildrenProfiles, canManageChildrenProfiles } from "../../../shared/pageAccess.mjs";
 
 // ======================================================
 // EMPTY FORM
@@ -70,7 +70,8 @@ const ChildProfiles = () => {
   // PERMISSIONS
   // ======================================================
 
-  const canManage = canAccessChildrenProfiles(userData?.role);
+  const canCreate = canAccessChildrenProfiles(userData?.role);
+  const canManage = canManageChildrenProfiles(userData?.role);
 
   // ======================================================
   // FETCH CHILDREN
@@ -132,8 +133,14 @@ const ChildProfiles = () => {
   // ======================================================
 
   const openCreateForm = () => {
+    if (!canCreate) return;
     setEditingChild(null);
-    setForm(emptyForm);
+    setForm(canManage ? emptyForm : {
+      ...emptyForm,
+      firstParent: userData?.name || "",
+      firstParentNumber: userData?.phone || "",
+      firstParentJob: userData?.job || "",
+    });
     setFormOpen(true);
   };
 
@@ -142,6 +149,7 @@ const ChildProfiles = () => {
   // ======================================================
 
   const openEditForm = (child) => {
+    if (!canManage) return;
     setEditingChild(child);
 
     setForm({
@@ -180,6 +188,8 @@ const ChildProfiles = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!canCreate || (editingChild && !canManage)) return;
 
     if (!form.name.trim()) {
       toast.error("Child name is required.");
@@ -265,7 +275,9 @@ const ChildProfiles = () => {
 
       toast.success(data.message);
 
-      closeForm();
+      setFormOpen(false);
+      setEditingChild(null);
+      setForm(emptyForm);
 
       await fetchChildren();
     } catch (error) {
@@ -288,6 +300,7 @@ const ChildProfiles = () => {
   // ======================================================
 
   const handleDelete = async (child) => {
+    if (!canManage) return;
     const confirmed = window.confirm(
       `Are you sure you want to delete ${child.name}?`
     );
@@ -476,14 +489,13 @@ const ChildProfiles = () => {
                     sm:text-base
                   "
                 >
-                  Manage children,
-                  grades, parents,
-                  contact information
-                  and important details.
+                  {canManage
+                    ? "Manage children, grades, parents, contact information and important details."
+                    : "Add and view your children's profiles. Contact the service team to update or remove a profile."}
                 </p>
               </div>
 
-              {canManage && (
+              {canCreate && (
                 <button
                   onClick={
                     openCreateForm
