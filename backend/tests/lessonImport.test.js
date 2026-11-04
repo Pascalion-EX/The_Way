@@ -124,6 +124,8 @@ test("the real import route accepts Word, PDF, HTML, and text and saves only thr
   let imported;
   for (const [name, buffer] of [
     ["faith.docx", lessonDocx()], ["faith.pdf", lessonPdf()],
+    // A valid PDF above the old production proxy's 100 KB JSON allowance.
+    ["large-faith.pdf", lessonPdf(["INTRODUCTION", "God loves us.", " ".repeat(150_000)])],
     ["faith.html", "<h1>Faith</h1><p>God loves us.</p>"], ["faith.txt", "God loves us."],
   ]) {
     imported = await state.upload(buffer, name);

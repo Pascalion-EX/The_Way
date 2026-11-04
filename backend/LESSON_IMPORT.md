@@ -48,6 +48,19 @@ The backend dependencies and lockfile include `multer`, `mammoth`, `cheerio`, an
 `pdf-parse`; normal `npm ci --prefix backend` installs them. The existing Docker
 build copies the importer and shared file policy automatically.
 
+Production Traefik gives `POST /api/lessons/import` a separate upload allowance
+of 10 MiB plus 64 KiB for multipart overhead. Other JSON API routes retain their
+100 KB proxy limit. The document allowance stays in memory because the Traefik
+container uses a read-only filesystem. Keep the proxy allowance in sync with
+`MAX_LESSON_DOCUMENT_BYTES` when changing the file size policy.
+
+After deploying a change to this allowance, also update
+`deployment/traefik/dynamic.yml` on the production host. It is mounted from the
+host, so publishing or updating application images alone does not replace it.
+Traefik watches the directory and reloads the configuration automatically.
+The browser ends import requests after 90 seconds and displays a retry message
+if the network or server does not finish responding.
+
 Validation:
 
 ```sh

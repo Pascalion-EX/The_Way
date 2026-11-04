@@ -7,6 +7,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import { createServer } from "vite";
 import { lessonDocumentFileError, MAX_LESSON_DOCUMENT_BYTES } from "../../shared/lessonImport.mjs";
+import axios from "../src/utils/axios.js";
+import { requestLessonImport, LESSON_IMPORT_TIMEOUT_MS } from "../src/utils/lessonImport.js";
 
 let server;
 let hmrServer;
@@ -35,6 +37,45 @@ const render = (Component, props = {}, role = "leader") => renderToStaticMarkup(
   React.createElement(MemoryRouter, null,
     React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: [role], isAccountVerified: true } } },
       React.createElement(Component, props))));
+
+test("document requests include the PDF, cancellation signal, and a bounded upload and parsing timeout", async (t) => {
+  const file = new File(["%PDF-1.4 test"], "lesson.pdf", { type: "application/pdf" });
+  const request = new AbortController();
+  const response = { data: { success: true, draft: { title: "Faith", partitions: [{ title: "Introduction", body: "Text." }] } } };
+  t.mock.method(axios, "post", async (url, body, options) => {
+    assert.equal(url, "https://api.example.invalid/api/lessons/import");
+    assert.equal(body.get("document"), file);
+    assert.equal(options.signal, request.signal);
+    assert.equal(options.timeout, LESSON_IMPORT_TIMEOUT_MS);
+    assert.equal(options.timeout, 90_000);
+    return response;
+  });
+  assert.equal(await requestLessonImport("https://api.example.invalid", file, request.signal), response);
+});
+
+test("stalled requests and gateway timeouts produce a clear retry message", async (t) => {
+  const post = t.mock.method(axios, "post");
+  const file = new File(["content"], "lesson.txt");
+  for (const failure of [{ code: "ECONNABORTED" }, { code: "ETIMEDOUT" }, { response: { status: 408 } }, { response: { status: 504 } }]) {
+    post.mock.mockImplementation(async () => { throw failure; });
+    await assert.rejects(requestLessonImport("", file), /import timed out.*try again/i);
+  }
+});
+
+test("proxy size errors are understandable and server validation and cancellation errors are preserved", async (t) => {
+  const post = t.mock.method(axios, "post");
+  const file = new File(["content"], "lesson.txt");
+  post.mock.mockImplementation(async () => { throw { response: { status: 413, data: "Request Entity Too Large" } }; });
+  await assert.rejects(requestLessonImport("", file), /server rejected this upload as too large/i);
+  for (const failure of [
+    { response: { status: 413, data: { message: "Split this lesson into smaller documents." } } },
+    { response: { status: 422, data: { message: "Scanned PDFs need OCR." } } },
+    { code: "ERR_CANCELED" },
+  ]) {
+    post.mock.mockImplementation(async () => { throw failure; });
+    await assert.rejects(requestLessonImport("", file), (error) => error === failure);
+  }
+});
 
 test("file selection accepts all supported extensions and rejects missing, empty, oversized, and unsupported documents", () => {
   for (const name of ["lesson.docx", "lesson.PDF", "lesson.html", "lesson.htm", "lesson.txt"]) {

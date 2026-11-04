@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { AppContent } from "../Context/AppContent.js";
-import axios from "../utils/axios.js";
+import { requestLessonImport } from "../utils/lessonImport.js";
 import { LESSON_DOCUMENT_ACCEPT, lessonDocumentFileError } from "../../../shared/lessonImport.mjs";
 
 const LessonImportUploader = ({ onImported, onImportingChange, disabled = false, hasExistingContent = false }) => {
@@ -24,9 +24,7 @@ const LessonImportUploader = ({ onImported, onImportingChange, disabled = false,
     const request = new AbortController();
     requestRef.current = request;
     try {
-      const body = new FormData();
-      body.append("document", file);
-      const { data } = await axios.post(`${backendUrl}/api/lessons/import`, body, { signal: request.signal });
+      const { data } = await requestLessonImport(backendUrl, file, request.signal);
       if (request.signal.aborted) return;
       const draft = data.draft;
       if (!data.success || typeof draft?.title !== "string" || !Array.isArray(draft.partitions) || !draft.partitions.length ||

@@ -2,6 +2,14 @@
 # Requests go directly to the API containers, keeping TRUST_PROXY=1 accurate.
 http:
   routers:
+    lesson-import:
+      rule: 'Host(`{{ env "DOMAIN" }}`) && Method(`POST`) && Path(`/api/lessons/import`)'
+      priority: 200
+      entryPoints: [websecure]
+      service: api
+      middlewares: [security-headers, lesson-document-body-limit]
+      tls:
+        certResolver: le
     image-upload:
       rule: 'Host(`{{ env "DOMAIN" }}`) && Path(`/api/uploads/images`)'
       priority: 200
@@ -52,6 +60,12 @@ http:
           status: 200
 
   middlewares:
+    lesson-document-body-limit:
+      buffering:
+        # 10 MiB file plus 64 KiB for multipart boundaries and headers.
+        # Keep this in memory because the Traefik container is read-only.
+        maxRequestBodyBytes: 10551296
+        memRequestBodyBytes: 10551296
     image-body-limit:
       buffering:
         maxRequestBodyBytes: 5242880
