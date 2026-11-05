@@ -182,10 +182,10 @@ const Lessons = () => {
               </p>
 
               <h1 className="mt-5 text-5xl font-semibold leading-tight text-gray-900">
-                Set your minds on
-                things that are above,
-                not on things that are
-                on earth.
+              An intelligent heart
+              acquires knowledge,
+              and the ear of the wise
+              seeks knowledge.
               </h1>
             </div>
           </div>
