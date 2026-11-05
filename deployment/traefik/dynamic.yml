@@ -2,6 +2,14 @@
 # Requests go directly to the API containers, keeping TRUST_PROXY=1 accurate.
 http:
   routers:
+    camp-payment-application:
+      rule: 'Host(`{{ env "DOMAIN" }}`) && Method(`POST`) && PathRegexp(`^/api/camps/[a-fA-F0-9]{24}/apply$`)'
+      priority: 200
+      entryPoints: [websecure]
+      service: api
+      middlewares: [security-headers, camp-payment-body-limit]
+      tls:
+        certResolver: le
     lesson-import:
       rule: 'Host(`{{ env "DOMAIN" }}`) && Method(`POST`) && Path(`/api/lessons/import`)'
       priority: 200
@@ -60,6 +68,11 @@ http:
           status: 200
 
   middlewares:
+    camp-payment-body-limit:
+      buffering:
+        # 5 MiB screenshot plus 128 KiB for application fields and multipart data.
+        maxRequestBodyBytes: 5373952
+        memRequestBodyBytes: 5373952
     lesson-document-body-limit:
       buffering:
         # 10 MiB file plus 64 KiB for multipart boundaries and headers.

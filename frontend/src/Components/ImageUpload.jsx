@@ -6,7 +6,7 @@ import ContentImage from "./ContentImage.jsx";
 const MAX_BYTES = 5 * 1024 * 1024;
 const TYPES = ["image/jpeg", "image/png", "image/webp"];
 
-export default function ImageUpload({ value, onChange, onUploadingChange, required = false, disabled = false }) {
+export default function ImageUpload({ value, onChange, onUploadingChange, required = false, disabled = false, label = "Image" }) {
   const { backendUrl } = useContext(AppContent);
   const id = useId();
   const [uploading, setUploading] = useState(false);
@@ -46,7 +46,7 @@ export default function ImageUpload({ value, onChange, onUploadingChange, requir
   return (
     <div className="space-y-3">
       <label htmlFor={id} className="block text-sm font-medium text-gray-700">
-        Image {required ? "(required)" : "(optional)"}
+        {label} {required ? "(required)" : "(optional)"}
       </label>
       <input
         id={id}
@@ -64,7 +64,7 @@ export default function ImageUpload({ value, onChange, onUploadingChange, requir
       {error && <p id={`${id}-error`} role="alert" className="text-sm text-red-600">{error}</p>}
       {value && (
         <div className="space-y-2">
-          <ContentImage src={value} alt="Selected image preview" className="max-h-48 max-w-full rounded-xl border border-gray-200 object-contain" />
+          <ContentImage src={value} alt={`${label} preview`} className="max-h-48 max-w-full rounded-xl border border-gray-200 object-contain" />
           {!required && <button type="button" disabled={disabled || uploading} onClick={() => { onChange(""); setError(""); }} className="text-sm font-medium text-red-600 disabled:opacity-60">Remove image</button>}
         </div>
       )}

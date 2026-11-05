@@ -1,4 +1,7 @@
 import ContentImage from "../Components/ContentImage.jsx";
+import CampPaymentDetails from "../Components/CampPaymentDetails.jsx";
+import PaymentScreenshotUpload from "../Components/PaymentScreenshotUpload.jsx";
+import { formatCampPrice } from "../utils/campPrice.js";
 import Pagination from "../Components/Pagination.jsx";
 import usePaginatedList from "../hooks/usePaginatedList.js";
 import React, { useContext, useMemo, useState } from "react";
@@ -28,6 +31,8 @@ const Camp = () => {
   const [notifyingCampId, setNotifyingCampId] = useState(null);
 
   const [applyingCampId, setApplyingCampId] = useState(null);
+  const [openingCampId, setOpeningCampId] = useState(null);
+  const [paymentScreenshot, setPaymentScreenshot] = useState(null);
   const [deletingCampId, setDeletingCampId] = useState(null);
   const [withdrawingCampId, setWithdrawingCampId] = useState(null);
 
@@ -80,6 +85,7 @@ const Camp = () => {
   };
 
   const resetApplyForm = () => {
+    setPaymentScreenshot(null);
     setFormData({
       childName: "",
       childYear: "",
@@ -94,7 +100,7 @@ const Camp = () => {
     setFilters({ search: "", year: "0", sortOrder: "asc" });
   };
 
-  const openApplyForm = (camp) => {
+  const openApplyForm = async (camp) => {
     if (!isLoggedin) {
       toast.error("Please log in first");
       navigate("/login");
@@ -106,9 +112,18 @@ const Camp = () => {
       return;
     }
 
-    resetApplyForm();
-    setSelectedCamp(camp);
-    setShowApplyModal(true);
+    try {
+      setOpeningCampId(camp._id);
+      const { data } = await axios.get(`${backendUrl}/api/camps/${camp._id}`);
+      if (!data.success) throw new Error(data.message || "Unable to load trip details");
+      resetApplyForm();
+      setSelectedCamp(data.camp);
+      setShowApplyModal(true);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+    } finally {
+      setOpeningCampId(null);
+    }
   };
 
   const closeApplyForm = () => {
@@ -129,6 +144,11 @@ const Camp = () => {
 
     if (!applicationType) {
       toast.error("Your role cannot apply for this trip");
+      return;
+    }
+
+    if (applicationType !== "leader" && selectedCamp.price > 0 && !paymentScreenshot) {
+      toast.error("Attach a screenshot of your completed payment.");
       return;
     }
 
@@ -156,7 +176,7 @@ const Camp = () => {
     try {
       setApplyingCampId(selectedCamp._id);
 
-      const payload = {
+      const application = {
         applicationType,
         childName: formData.childName,
         childYear: formData.childYear,
@@ -165,6 +185,9 @@ const Camp = () => {
         leaderRole: formData.leaderRole,
         notes: formData.notes,
       };
+      const payload = new FormData();
+      Object.entries(application).forEach(([key, value]) => payload.append(key, value));
+      if (paymentScreenshot) payload.append("paymentScreenshot", paymentScreenshot);
 
       const { data } = await axios.post(
         `${backendUrl}/api/camps/${selectedCamp._id}/apply`,
@@ -419,6 +442,7 @@ const handleNotifySubmit = async (e) => {
                               <p className="mt-1 text-sm text-gray-500">
                                 {camp.name || "Camp Team"}
                               </p>
+                              <p className="mt-2 text-sm font-semibold text-indigo-700">{formatCampPrice(camp.price)}</p>
                             </div>
 
                             <button
@@ -470,10 +494,10 @@ const handleNotifySubmit = async (e) => {
                               <button
                                 type="button"
                                 onClick={() => openApplyForm(camp)}
-                                disabled={!canApplyCamp}
+                                disabled={!canApplyCamp || openingCampId !== null}
                                 className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-400"
                               >
-                                Apply
+                                {openingCampId === camp._id ? "Loading..." : "Apply"}
                               </button>
                             )}
                           </div>
@@ -490,11 +514,11 @@ const handleNotifySubmit = async (e) => {
       </div>
 
       {showApplyModal && selectedCamp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="camp-apply-title">
+          <div className="max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900">
+                <h2 id="camp-apply-title" className="text-2xl font-semibold text-gray-900">
                   Apply for {selectedCamp.title}
                 </h2>
 
@@ -506,6 +530,7 @@ const handleNotifySubmit = async (e) => {
               <button
                 type="button"
                 onClick={closeApplyForm}
+                disabled={applyingCampId === selectedCamp._id}
                 className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Close
@@ -513,6 +538,8 @@ const handleNotifySubmit = async (e) => {
             </div>
 
             <form onSubmit={handleApplySubmit} className="mt-6 space-y-4">
+              <fieldset disabled={applyingCampId === selectedCamp._id} className="space-y-4">
+              <CampPaymentDetails camp={selectedCamp} />
               {isLeaderFormUser ? (
                 <>
                   <input
@@ -585,7 +612,7 @@ const handleNotifySubmit = async (e) => {
                     required
                   >
                     <option value="">Select year</option>
-                    {yearOptions.map((year) => (
+                    {(selectedCamp.years || []).map((year) => (
                       <option key={year} value={year}>
                         Year {year}
                       </option>
@@ -606,6 +633,11 @@ const handleNotifySubmit = async (e) => {
                     required
                   />
                 </>
+              )}
+
+              {!isLeaderFormUser && selectedCamp.price > 0 && (
+                <PaymentScreenshotUpload value={paymentScreenshot} onChange={setPaymentScreenshot}
+                  disabled={applyingCampId === selectedCamp._id} />
               )}
 
               <textarea
@@ -640,6 +672,7 @@ const handleNotifySubmit = async (e) => {
                     : "Submit application"}
                 </button>
               </div>
+              </fieldset>
             </form>
           </div>
         </div>

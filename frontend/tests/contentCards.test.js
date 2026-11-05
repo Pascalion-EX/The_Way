@@ -42,8 +42,12 @@ async function compile(path, overrides = {}) {
 
 const imageUrl = await compile("../src/Components/ContentImage.jsx", { "../utils/imageUrls.js": helperUrl });
 const chantUrl = await compile("../src/Components/chantCard.jsx", { "./ContentImage.jsx": imageUrl });
+const campPaymentUrl = await compile("../src/Components/CampPaymentDetails.jsx", { "./ContentImage.jsx": imageUrl, "../utils/imageUrls.js": helperUrl });
+const screenshotUploadUrl = await compile("../src/Components/PaymentScreenshotUpload.jsx");
 const overrides = {
   "../Components/ContentImage.jsx": imageUrl,
+  "../Components/CampPaymentDetails.jsx": campPaymentUrl,
+  "../Components/PaymentScreenshotUpload.jsx": screenshotUploadUrl,
   "../Components/Pagination.jsx": emptyComponentUrl,
   "../hooks/usePaginatedList.js": hookUrl,
   "@/Components/Navbar.jsx": emptyComponentUrl,
@@ -71,3 +75,30 @@ for (const page of ["Lessons", "Games", "Activities", "Chants", "Camps"]) {
     else assert.match(html, /Edit<\/button>/);
   });
 }
+
+test("camp payment instructions show the EGP amount and full QR image for paid camps", async () => {
+  const { default: PaymentDetails } = await import(campPaymentUrl);
+  const paid = renderToStaticMarkup(React.createElement(PaymentDetails, {
+    camp: { price: 1250.50, paymentQrImage: record.image },
+  }));
+  assert.match(paid, /EGP/);
+  assert.match(paid, /1,250\.50/);
+  assert.match(paid, /Scan the QR code to pay/);
+  assert.match(paid, /screenshot of the completed payment/);
+  assert.match(paid, /alt="Payment QR code/);
+  assert.match(paid, /object-contain/);
+  const free = renderToStaticMarkup(React.createElement(PaymentDetails, { camp: { price: 0 } }));
+  assert.match(free, /Free/);
+  assert.doesNotMatch(free, /<img|Scan the QR/);
+});
+
+test("the parent screenshot field requires a supported image and explains privacy and size limits", async () => {
+  const { default: ScreenshotUpload } = await import(screenshotUploadUrl);
+  const html = renderToStaticMarkup(React.createElement(ScreenshotUpload, { value: null, onChange() {} }));
+  assert.match(html, /Payment screenshot \(required\)/);
+  assert.match(html, /type="file"/);
+  assert.match(html, /required=""/);
+  assert.match(html, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(html, /5 MB/);
+  assert.match(html, /Only staff can view/);
+});

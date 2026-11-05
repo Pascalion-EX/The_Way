@@ -6,6 +6,8 @@ import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import Camp from "../models/campsModel.js";
+import CampPaymentScreenshot from "../models/campPaymentScreenshotModel.js";
+import sharp from "sharp";
 import User from "../models/userModel.js";
 import campRouter from "../routes/campRoutes.js";
 import { toCampSummary } from "../services/campResponses.js";
@@ -17,8 +19,8 @@ const missingId = "6ab26af3171afea3091f04ae";
 const secret = "test-only-camp-privacy-secret";
 const objectId = (id) => new mongoose.Types.ObjectId(id);
 const clone = (value) => JSON.parse(JSON.stringify(value));
-const summaryKeys = ["_id", "title", "name", "body", "TripType", "image", "years", "createdAt", "updatedAt", "applicantCount", "hasApplied"].sort();
-const cardKeys = ["_id", "title", "name", "image", "hasApplied"].sort();
+const summaryKeys = ["_id", "title", "name", "body", "TripType", "image", "price", "paymentQrImage", "years", "createdAt", "updatedAt", "applicantCount", "hasApplied"].sort();
+const cardKeys = ["_id", "title", "name", "image", "price", "hasApplied"].sort();
 const projection = (record, fields) => !fields ? record :
   Object.fromEntries(Object.entries(record).filter(([key]) =>
     Object.values(fields).includes(0) ? fields[key] !== 0 : key === "_id" || fields[key] === 1));
@@ -37,13 +39,14 @@ function setup(t) {
     user: { _id: objectId(userId), name: "Viewer", email: "viewer@example.com", role: ["parent"], isAccountVerified: true, tokenVersion: 0 },
     other: { _id: objectId(otherId), name: "Private participant", email: "private@example.com", role: ["parent"], password: "private-hash", phone: "private-phone", emailJobs: { welcome: { text: "private-code" } } },
     camp: {
-      _id: objectId(campId), title: "Trip", name: "Trip team", body: "Public description", TripType: "Trip", image: "", years: [1, 2],
+      _id: objectId(campId), title: "Trip", name: "Trip team", body: "Public description", TripType: "Trip", image: "", price: 0, paymentQrImage: "", years: [1, 2],
       createdBy: objectId(otherId), createdAt: new Date("2026-10-15T00:00:00Z"), updatedAt: new Date("2026-10-15T00:00:00Z"),
       applicants: [{ _id: objectId(missingId), user: objectId(otherId), appliedAt: new Date("2026-10-14T00:00:00Z"), notes: "private-note", parentPhone: "private-phone" }],
       internalEmail: "private@example.com", futurePrivateField: "private-extra", __v: 0,
     },
     pipelines: [], campReads: [], populations: 0, writes: 0,
     roleLookupError: false, missingRoleUser: false,
+    screenshots: new Map(), screenshotReads: 0, failCampSave: false,
   };
   t.mock.method(User.collection, "findOne", async (filter, options) => {
     assert.equal(String(filter._id), userId);
@@ -87,6 +90,7 @@ function setup(t) {
     return state.camp && String(filter._id) === String(state.camp._id) ? projection(state.camp, options?.projection) : null;
   });
   t.mock.method(Camp.collection, "updateOne", async (filter, update) => {
+    if (state.failCampSave) throw new Error("Private database details");
     assert.equal(String(filter._id), campId);
     if (update.$push?.applicants) state.camp.applicants.push(...update.$push.applicants.$each);
     Object.assign(state.camp, update.$set);
@@ -106,17 +110,44 @@ function setup(t) {
     state.camp = record;
     return { acknowledged: true, insertedId: record._id };
   });
+  t.mock.method(Camp.collection, "findOneAndDelete", async () => {
+    const camp = state.camp;
+    state.camp = null;
+    return camp;
+  });
+  t.mock.method(CampPaymentScreenshot.collection, "insertOne", async (record) => {
+    state.screenshots.set(String(record._id), record);
+    return { acknowledged: true, insertedId: record._id };
+  });
+  t.mock.method(CampPaymentScreenshot.collection, "findOne", async (filter) => {
+    state.screenshotReads++;
+    const record = state.screenshots.get(String(filter._id));
+    return record && String(record.camp) === String(filter.camp) && String(record.user) === String(filter.user) ? record : null;
+  });
+  t.mock.method(CampPaymentScreenshot.collection, "deleteMany", async (filter) => {
+    for (const [id, record] of state.screenshots) {
+      if (Object.entries(filter).every(([key, value]) => String(record[key]) === String(value))) state.screenshots.delete(id);
+    }
+    return { acknowledged: true };
+  });
   const app = express();
   app.use(cookieParser());
   app.use("/api/camps", campRouter);
   // Forged claims and request fields must never grant roster access or select
   // whose registration status is returned.
   const token = jwt.sign({ id: userId, tokenVersion: 0, role: ["admin"] }, secret, { expiresIn: "1h" });
-  state.request = (method = "GET", path = "", body = {}, requestToken = token) => new Promise((resolve, reject) => {
-    const req = Readable.from([]);
+  state.request = (method = "GET", path = "", body = {}, requestToken = token, upload) => new Promise((resolve, reject) => {
+    const boundary = "camp-payment-test-boundary";
+    const multipart = upload && Buffer.concat([
+      ...Object.entries(body).map(([key, value]) => Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`)),
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="paymentScreenshot"; filename="receipt.png"\r\nContent-Type: ${upload.type}\r\n\r\n`),
+      upload.buffer, Buffer.from(`\r\n--${boundary}--\r\n`),
+    ]);
+    const req = Readable.from(multipart ? [multipart] : []);
     req.method = method;
     req.url = `/api/camps${path}`;
     req.headers = requestToken ? { cookie: `token=${requestToken}` } : {};
+    if (upload) Object.assign(req.headers, { "content-type": `multipart/form-data; boundary=${boundary}`, "content-length": multipart.length });
     req.body = { ...body, userId: otherId, role: ["admin"], user: { role: ["admin"] } };
     req.socket = {};
     req.connection = req.socket;
@@ -126,8 +157,10 @@ function setup(t) {
     res.setHeader = (name, value) => headers.set(name.toLowerCase(), value);
     res.getHeader = (name) => headers.get(name.toLowerCase());
     res.json = (result) => resolve({ status: res.statusCode, body: clone(result), headers });
+    res.send = (result) => resolve({ status: res.statusCode, body: result, headers });
     app.handle(req, res, (error) => reject(error || new Error("Unexpected route fallthrough")));
   });
+  state.upload = (body, buffer, type = "image/png") => state.request("POST", `/${campId}/apply`, body, token, { buffer, type });
   return state;
 }
 
@@ -213,10 +246,10 @@ test("all existing staff roles can read a separately projected applicant roster"
     assert.equal(result.body.applicantCount, 1);
     assert.equal(result.body.campId, campId);
     assert.deepEqual(result.body.applicants[0].user, { _id: otherId, name: state.other.name, email: state.other.email, role: ["parent"] });
-    assert.deepEqual(Object.keys(result.body.applicants[0]).sort(), ["_id", "appliedAt", "user"]);
+    assert.deepEqual(Object.keys(result.body.applicants[0]).sort(), ["_id", "appliedAt", "childName", "leaderName", "leaderRole", "notes", "parentPhone", "user"]);
     assert.deepEqual(state.campReads.at(-1).options.projection, { applicants: 1 });
     assert.equal(JSON.stringify(result.body).includes("private-hash"), false);
-    assert.equal(JSON.stringify(result.body).includes("private-phone"), false);
+    assert.equal(result.body.applicants[0].parentPhone, "private-phone");
     assert.equal(result.headers.get("cache-control"), "private, no-store");
   }
 });
@@ -325,4 +358,138 @@ test("camp summary allowlists also withstand populated documents and future priv
     futurePrivateField: "private-note",
   };
   assert.deepEqual(toCampSummary(camp, userId), { _id: campId, title: "Trip", applicantCount: 1, hasApplied: true });
+});
+
+const parentApplication = {
+  applicationType: "parent_for_child", childName: "Child name", childYear: 2, parentPhone: "01012345678", notes: "Meal request",
+};
+const paymentQrImage = `/uploads/${"a".repeat(64)}.webp`;
+const receiptImage = () => sharp({ create: { width: 24, height: 32, channels: 3, background: "white" } }).png().toBuffer();
+
+test("camp creation validates EGP prices and requires an uploaded QR image for paid camps", async (t) => {
+  const state = setup(t);
+  state.user.role = ["admin"];
+  const camp = { title: "Paid camp", name: "Team", body: "Description", years: [1, 2], TripType: "Camp" };
+  for (const fields of [{ price: -1 }, { price: "100" }, { price: null }, { price: 1.001 }, { price: 100 },
+    { price: 100, paymentQrImage: "https://example.invalid/qr.png" }, { price: 100, paymentQrImage: {} }]) {
+    const response = await state.request("POST", "", { ...camp, ...fields });
+    assert.equal(response.status, 400, JSON.stringify(fields));
+    assert.equal(state.writes, 0);
+  }
+  const response = await state.request("POST", "", { ...camp, price: 1250.50, paymentQrImage });
+  assert.equal(response.status, 201);
+  assert.equal(response.body.camp.price, 1250.50);
+  assert.equal(response.body.camp.paymentQrImage, paymentQrImage);
+  assert.equal(state.camp.price, 1250.50);
+});
+
+test("payment settings updates validate the resulting price and QR together", async (t) => {
+  const state = setup(t);
+  state.user.role = ["leader"];
+  assert.equal((await state.request("PUT", `/${campId}`, { price: 500 })).status, 400);
+  assert.equal((await state.request("PUT", `/${campId}`, { price: 500, paymentQrImage })).status, 200);
+  const updated = await state.request("PUT", `/${campId}`, { price: 600.25 });
+  assert.equal(updated.status, 200);
+  assert.equal(updated.body.camp.price, 600.25);
+  assert.equal(updated.body.camp.paymentQrImage, paymentQrImage);
+  assert.equal((await state.request("PUT", `/${campId}`, { paymentQrImage: "" })).status, 400);
+  assert.equal((await state.request("PUT", `/${campId}`, { price: 0, paymentQrImage: "" })).status, 200);
+});
+
+test("parents cannot submit paid applications without proof or bypass it using a different application type", async (t) => {
+  const state = setup(t);
+  state.camp.price = 100;
+  state.camp.paymentQrImage = paymentQrImage;
+  const missing = await state.request("POST", `/${campId}/apply`, parentApplication);
+  assert.equal(missing.status, 400);
+  assert.match(missing.body.message, /payment screenshot is required/);
+  for (const applicationType of ["leader", "child_self", "unknown"]) {
+    const response = await state.request("POST", `/${campId}/apply`, { ...parentApplication, applicationType });
+    assert.ok([400, 403].includes(response.status));
+  }
+  assert.equal(state.writes, 0);
+  assert.equal(state.screenshots.size, 0);
+});
+
+test("multipart application stores a normalized private receipt and all application details", async (t) => {
+  const state = setup(t);
+  state.camp.price = 500;
+  const result = await state.upload(parentApplication, await receiptImage());
+  assert.equal(result.status, 200);
+  assertSummary(result.body.camp, 2, true);
+  assert.doesNotMatch(JSON.stringify(result.body), /paymentScreenshot|Child name|Meal request|01012345678/);
+  const applicant = state.camp.applicants.at(-1);
+  assert.equal(applicant.childName, parentApplication.childName);
+  assert.equal(applicant.childYear, 2);
+  assert.equal(applicant.parentPhone, parentApplication.parentPhone);
+  assert.equal(applicant.notes, parentApplication.notes);
+  assert.equal(applicant.applicationType, "parent_for_child");
+  assert.equal(state.screenshots.size, 1);
+  const path = `/${campId}/applicants/${applicant._id}/payment`;
+  assert.equal((await state.request("GET", path)).status, 403);
+  assert.equal(state.screenshotReads, 0);
+  state.user.role = ["leader"];
+  const roster = await state.request("GET", `/${campId}/applicants`);
+  assert.equal(roster.body.applicants.at(-1).paymentScreenshotUrl, `/api/camps${path}`);
+  assert.equal(roster.body.applicants.at(-1).childName, parentApplication.childName);
+  assert.doesNotMatch(JSON.stringify(roster.body), /"image"|"data"/);
+  const screenshot = await state.request("GET", path);
+  assert.equal(screenshot.status, 200);
+  assert.equal(screenshot.headers.get("content-type"), "image/webp");
+  assert.equal(screenshot.headers.get("cache-control"), "private, no-store");
+  assert.equal(screenshot.headers.get("x-content-type-options"), "nosniff");
+  assert.equal((await sharp(screenshot.body).metadata()).format, "webp");
+  assert.equal((await state.upload(parentApplication, await receiptImage())).status, 400);
+  assert.equal(state.screenshots.size, 1);
+  // A receipt from another camp or user cannot be read through this applicant.
+  const stored = [...state.screenshots.values()][0];
+  stored.camp = objectId(missingId);
+  assert.equal((await state.request("GET", path)).status, 404);
+  stored.camp = objectId(campId);
+  stored.user = objectId(otherId);
+  assert.equal((await state.request("GET", path)).status, 404);
+  assert.equal((await state.request("GET", `/${campId}/applicants/invalid/payment`)).status, 400);
+  assert.equal((await state.request("GET", `/${campId}/applicants/${missingId}/payment`)).status, 404);
+});
+
+test("payment uploads reject unsupported, corrupt and oversized images without saving an application", async (t) => {
+  const state = setup(t);
+  state.camp.price = 500;
+  assert.equal((await state.upload(parentApplication, Buffer.from("<svg/>"), "image/svg+xml")).status, 415);
+  assert.equal((await state.upload(parentApplication, Buffer.from("not a PNG"))).status, 400);
+  assert.equal((await state.upload(parentApplication, Buffer.alloc(5 * 1024 * 1024 + 1))).status, 413);
+  assert.equal(state.writes, 0);
+  assert.equal(state.screenshots.size, 0);
+});
+
+test("failed applications, withdrawals and camp deletion remove their private receipts", async (t) => {
+  const state = setup(t);
+  state.camp.price = 500;
+  state.failCampSave = true;
+  const failure = await state.upload(parentApplication, await receiptImage());
+  assert.equal(failure.status, 500);
+  assert.doesNotMatch(JSON.stringify(failure.body), /Private database details/);
+  assert.equal(state.screenshots.size, 0);
+  state.failCampSave = false;
+  assert.equal((await state.upload(parentApplication, await receiptImage())).status, 200);
+  assert.equal(state.screenshots.size, 1);
+  assert.equal((await state.request("DELETE", `/${campId}/apply`)).status, 200);
+  assert.equal(state.screenshots.size, 0);
+  assert.equal((await state.upload(parentApplication, await receiptImage())).status, 200);
+  state.user.role = ["admin"];
+  assert.equal((await state.request("DELETE", `/${campId}`)).status, 200);
+  assert.equal(state.screenshots.size, 0);
+});
+
+test("legacy applications stay valid and leaders can register for paid camps without a parent receipt", async (t) => {
+  const state = setup(t);
+  state.camp.price = 100;
+  state.user.role = ["leader"];
+  const result = await state.request("POST", `/${campId}/apply`, {
+    applicationType: "leader", leaderName: "Leader", leaderRole: "Service", parentPhone: "123",
+  });
+  assert.equal(result.status, 200);
+  assert.equal(state.camp.applicants.length, 2);
+  assert.equal(state.camp.applicants.at(-1).leaderName, "Leader");
+  assert.equal(state.screenshots.size, 0);
 });

@@ -7,6 +7,24 @@ title and partitions; the UI shows a replacement notice when those fields alread
 contain text. Review and edit the result, add the required image, lesson name,
 and year, then save using the existing **Create Lesson** action.
 
+The lesson variant dialog also supports document import and image upload. Open
+**Choose variant → Create variant**, name the variant, and optionally import a
+document and upload a replacement image. Review or edit the imported title and
+partitions before choosing **Create variant**. Without replacement uploads, the
+variant copies the selected lesson's content and image. Its year, video, and
+activity are inherited from the selected lesson. The original and sibling
+variants are preserved.
+
+Existing variants and original lessons also offer the document importer on the
+**Edit Lesson** page alongside the image picker. Importing updates only the
+title and partitions in the draft; save the form to persist those changes.
+
+`POST /api/lessons/:lessonId/variants` accepts a name plus an optional `draft`
+containing an imported title and partitions, and an optional `image` URL returned
+by the image upload endpoint. Imported drafts retain the 100-partition and 80 KB
+limits. The server selects the author, group, year, video, and activity from the
+authenticated account and source lesson.
+
 `POST /api/lessons/import` accepts multipart form data with one file named
 `document`. Authentication and current database-backed role checks run before
 the upload middleware. The response contains an editable draft, without creating

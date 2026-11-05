@@ -33,6 +33,9 @@ const CreateCamp = () => {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [image, setImage] = useState("");
+  const [price, setPrice] = useState("");
+  const [paymentQrImage, setPaymentQrImage] = useState("");
+  const [qrUploading, setQrUploading] = useState(false);
   const [tripType, setTripType] = useState("");
   const [selectedYears, setSelectedYears] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,8 +70,17 @@ const CreateCamp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (imageUploading) {
+    if (imageUploading || qrUploading) {
       toast.error("Please wait for the image to finish uploading.");
+      return;
+    }
+
+    if (price === "" || !Number.isFinite(Number(price)) || Number(price) < 0) {
+      toast.error("Enter a valid price in EGP. Use 0 for a free trip.");
+      return;
+    }
+    if (Number(price) > 0 && !paymentQrImage) {
+      toast.error("Upload a payment QR image for this paid trip.");
       return;
     }
 
@@ -97,6 +109,8 @@ const CreateCamp = () => {
         name,
         body,
         image,
+        price: Number(price),
+        paymentQrImage,
         TripType: tripType,
         years: selectedYears,
       });
@@ -216,6 +230,18 @@ const CreateCamp = () => {
                 </select>
               </div>
 
+              <section className="mt-5 space-y-4 rounded-2xl border border-gray-300 p-4 sm:p-5" aria-label="Payment settings">
+                <div>
+                  <label htmlFor="camp-price" className="block text-sm font-medium text-gray-700">Price per applicant (EGP)</label>
+                  <input id="camp-price" type="number" min="0" max="1000000000" step="0.01" required value={price}
+                    onChange={(e) => setPrice(e.target.value)} placeholder="0.00"
+                    className="mt-2 h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+                  <p className="mt-2 text-xs text-gray-500">Use 0 for a free trip. Parents applying to paid trips must attach a payment screenshot.</p>
+                </div>
+                <ImageUpload label="Payment QR code" value={paymentQrImage} onChange={setPaymentQrImage}
+                  onUploadingChange={setQrUploading} required={Number(price) > 0} disabled={isSubmitting || qrUploading} />
+              </section>
+
               <div className="mt-5 rounded-2xl border border-gray-300 p-4 sm:p-5">
                 <p className="text-sm font-medium text-gray-700">
                   Available years
@@ -259,7 +285,7 @@ const CreateCamp = () => {
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <button
                   type="submit"
-                  disabled={isSubmitting || imageUploading}
+                  disabled={isSubmitting || imageUploading || qrUploading}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-8 text-sm font-medium text-white shadow-md transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                 >
                   {isSubmitting ? "Creating..." : "Create Trip"}

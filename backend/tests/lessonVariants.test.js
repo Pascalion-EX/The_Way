@@ -342,3 +342,69 @@ test("variant requests cannot override copied fields, authorship, or group membe
   assert.equal(result.body.lesson.variantGroup, lessonId);
   assert.equal(result.body.lesson.year, 3);
 });
+
+test("a variant can use imported content and an uploaded image while preserving its source and siblings", async (t) => {
+  const state = setup(t);
+  const sibling = (await state.create("Existing variant")).body.lesson;
+  const before = clone(state.lessons.get(lessonId));
+  const image = `/uploads/${"a".repeat(64)}.webp`;
+  const result = await state.request("POST", `${lessonId}/variants`, {
+    name: "Imported variant", image,
+    draft: { title: " Imported title ", body: "Ignored legacy body", year: 12, createdBy: unrelatedId,
+      partitions: [{ _id: unrelatedId, title: " Section ", body: " New document content " }] },
+    variantGroup: unrelatedId, createdBy: unrelatedId, year: 12,
+  });
+  assert.equal(result.status, 201);
+  const copy = result.body.lesson;
+  assert.equal(copy.title, "Imported title");
+  assert.equal(copy.image, image);
+  assert.equal(copy.body, "");
+  assert.deepEqual(copy.partitions.map(({ title, body }) => ({ title, body })), [{ title: "Section", body: "New document content" }]);
+  assert.notEqual(copy.partitions[0]._id, unrelatedId);
+  assert.equal(copy.variantGroup, lessonId);
+  assert.equal(copy.createdBy, userId);
+  for (const field of ["year", "video", "activity"]) assert.deepEqual(copy[field], before[field]);
+  assert.deepEqual(clone(state.lessons.get(lessonId)), before);
+  assert.equal(state.lessons.get(sibling._id).title, before.title);
+});
+
+test("document and image replacement are optional independently, including on legacy sources", async (t) => {
+  const state = setup(t);
+  const before = clone(state.lessons.get(lessonId));
+  const image = `/uploads/${"b".repeat(64)}.webp`;
+  const imageOnly = await state.request("POST", `${lessonId}/variants`, { name: "New image", image });
+  assert.equal(imageOnly.status, 201);
+  assert.equal(imageOnly.body.lesson.image, image);
+  assert.equal(imageOnly.body.lesson.title, before.title);
+  assert.deepEqual(imageOnly.body.lesson.partitions.map(({ title, body }) => ({ title, body })),
+    before.partitions.map(({ title, body }) => ({ title, body })));
+  Object.assign(state.lessons.get(lessonId), { body: "Legacy source text", partitions: [] });
+  const draft = { title: "New content", partitions: [{ title: "Section", body: "Imported body" }] };
+  const documentOnly = await state.request("POST", `${lessonId}/variants`, { name: "New document", draft });
+  assert.equal(documentOnly.status, 201);
+  assert.equal(documentOnly.body.lesson.image, before.image);
+  assert.equal(documentOnly.body.lesson.body, "");
+  assert.equal(documentOnly.body.lesson.partitions[0].body, "Imported body");
+  assert.equal(state.lessons.get(lessonId).body, "Legacy source text");
+});
+
+test("invalid imported drafts and images cannot create partial variants", async (t) => {
+  const state = setup(t);
+  const partition = { title: "Section", body: "Content" };
+  for (const draft of [null, "text", [], {}, { title: "", partitions: [partition] },
+    { title: "Title", partitions: [] }, { title: "Title", partitions: {} },
+    { title: "Title", partitions: [null] }, { title: "Title", partitions: [{ ...partition, body: " " }] },
+    { title: "Title", partitions: [{ ...partition, title: { $ne: "" } }] },
+    { title: "Title", partitions: Array.from({ length: 101 }, () => partition) }]) {
+    assert.equal((await state.request("POST", `${lessonId}/variants`, { name: "Invalid draft", draft })).status, 400);
+  }
+  const large = await state.request("POST", `${lessonId}/variants`, {
+    name: "Too much content", draft: { title: "Title", partitions: [{ title: "Section", body: "a".repeat(81 * 1024) }] },
+  });
+  assert.equal(large.status, 413);
+  for (const image of [null, "", "https://example.com/image.jpg", "javascript:alert(1)", {}, []]) {
+    assert.equal((await state.request("POST", `${lessonId}/variants`, { name: "Invalid image", image })).status, 400);
+  }
+  assert.equal(state.reads, 0);
+  assert.equal(state.writes, 0);
+});

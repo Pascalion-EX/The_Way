@@ -27,7 +27,7 @@ const imageType = (data) => {
   return null;
 };
 
-export async function saveUploadedImage(data, type, directory = uploadsDirectory()) {
+export async function prepareUploadedImage(data, type) {
   if (!Buffer.isBuffer(data) || !data.length) throw new ImageUploadError("Choose an image to upload.");
   if (data.length > MAX_IMAGE_BYTES) throw new ImageUploadError("Images must be 5 MB or smaller.", 413);
   if (!IMAGE_TYPES.has(type) || imageType(data) !== type) {
@@ -63,6 +63,11 @@ export async function saveUploadedImage(data, type, directory = uploadsDirectory
     throw new ImageUploadError("This image could not be read. Choose a still JPEG, PNG, or WebP image up to 20 megapixels.");
   }
 
+  return output;
+}
+
+export async function saveUploadedImage(data, type, directory = uploadsDirectory()) {
+  const output = await prepareUploadedImage(data, type);
   const filename = `${createHash("sha256").update(output).digest("hex")}.webp`;
   await ensureUploadsDirectory(directory);
   const temporaryPath = join(directory, `.${randomUUID()}.tmp`);

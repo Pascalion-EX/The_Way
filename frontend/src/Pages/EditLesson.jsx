@@ -1,4 +1,5 @@
 import ImageUpload from "../Components/ImageUpload.jsx";
+import LessonImportUploader from "../Components/LessonImportUploader.jsx";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../../shared/videoUrls.mjs";
 import React, {
   useContext,
@@ -85,6 +86,7 @@ const EditLesson = () => {
   const passedLesson = location.state?.lesson;
 
   const [imageUploading, setImageUploading] = useState(false);
+  const [documentImporting, setDocumentImporting] = useState(false);
   const [lesson, setLesson] = useState(
     passedLesson || null
   );
@@ -264,6 +266,11 @@ const EditLesson = () => {
 
   const updateLessonHandler = async (e) => {
     e?.preventDefault();
+
+    if (documentImporting) {
+      toast.error("Please wait for the document to finish importing.");
+      return;
+    }
 
     if (imageUploading) {
       toast.error("Please wait for the image to finish uploading.");
@@ -450,6 +457,17 @@ const EditLesson = () => {
               </p>
             </div>
 
+            <LessonImportUploader
+              disabled={loadingUpdate || imageUploading}
+              hasExistingContent={Boolean(title.trim() || partitions.some((partition) => partition.title.trim() || partition.body.trim()))}
+              onImportingChange={setDocumentImporting}
+              onImported={(draft) => {
+                setTitle(draft.title);
+                setPartitions(draft.partitions);
+              }}
+              completionHint="Review the title and partitions below, then save your changes."
+            />
+
             <form
               onSubmit={updateLessonHandler}
               className="space-y-8"
@@ -528,7 +546,7 @@ const EditLesson = () => {
                       value={image}
                       onChange={setImage}
                       onUploadingChange={setImageUploading}
-                      disabled={loadingUpdate || imageUploading}
+                      disabled={loadingUpdate || imageUploading || documentImporting}
                       required
                     />
                   </div>
@@ -696,7 +714,7 @@ const EditLesson = () => {
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
-                  disabled={loadingUpdate || imageUploading}
+                  disabled={loadingUpdate || imageUploading || documentImporting}
                   className="h-12 w-full rounded-xl bg-indigo-600 px-6 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                   {loadingUpdate
@@ -709,7 +727,7 @@ const EditLesson = () => {
                   onClick={() =>
                     navigate("/lessons")
                   }
-                  disabled={loadingUpdate || imageUploading}
+                  disabled={loadingUpdate || imageUploading || documentImporting}
                   className="h-12 w-full rounded-xl border border-gray-300 px-6 text-sm font-medium text-gray-700 transition hover:bg-gray-50 sm:w-auto"
                 >
                   Cancel

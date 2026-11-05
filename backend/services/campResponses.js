@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
-const CAMP_FIELDS = ["_id", "title", "name", "body", "TripType", "image", "years", "createdAt", "updatedAt"];
-const CARD_FIELDS = ["_id", "title", "name", "image"];
+const CAMP_FIELDS = ["_id", "title", "name", "body", "TripType", "image", "price", "paymentQrImage", "years", "createdAt", "updatedAt"];
+const CARD_FIELDS = ["_id", "title", "name", "image", "price"];
 
 export const campCardProjection = (userId) => ({
   ...Object.fromEntries(CARD_FIELDS.map((field) => [field, 1])),
@@ -34,9 +34,14 @@ export const toCampSummary = (camp, userId) => {
 };
 
 // Private records have their own allowlist, even after Mongoose population.
-export const toStaffApplicant = (applicant) => ({
+export const toStaffApplicant = (applicant, campId) => ({
   _id: applicant._id,
   appliedAt: applicant.appliedAt,
+  ...Object.fromEntries(["applicationType", "childName", "childYear", "parentPhone", "leaderName", "leaderRole", "notes"]
+    .filter((field) => applicant[field] !== undefined).map((field) => [field, applicant[field]])),
+  ...(applicant.paymentScreenshot ? {
+    paymentScreenshotUrl: `/api/camps/${campId}/applicants/${applicant._id}/payment`,
+  } : {}),
   user: applicant.user ? {
     _id: applicant.user._id,
     name: applicant.user.name,

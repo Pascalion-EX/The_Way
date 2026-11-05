@@ -30,6 +30,8 @@ const campSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    price: { type: Number, default: 0, min: 0 },
+    paymentQrImage: { type: String, default: "", trim: true },
 
     years: {
       type: [Number],
@@ -51,14 +53,14 @@ const campSchema = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "user",
       required: true,
     },
 
     applicationType: {
       type: String,
       enum: ["parent_for_child", "child_self", "leader"],
-      required: true,
+      // Older applications contain only user and appliedAt.
     },
 
     childName: {
@@ -96,6 +98,10 @@ const campSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    paymentScreenshot: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CampPaymentScreenshot",
+    },
 
     appliedAt: {
       type: Date,
@@ -110,19 +116,6 @@ const campSchema = new mongoose.Schema(
       required: true,
     },
 
-    applicants: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "user",
-          required: true,
-        },
-        appliedAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
   },
   {
     timestamps: true,

@@ -35,3 +35,23 @@ test("production retains the existing JSON and image upload limits", () => {
   assert.ok(http.routers["image-upload"].middlewares.includes("image-body-limit"));
   assert.equal(http.middlewares["image-body-limit"].buffering.maxRequestBodyBytes, 5 * 1024 * 1024);
 });
+
+test("paid camp applications allow a full payment screenshot and form fields through the production proxy", async () => {
+  const route = http.routers["camp-payment-application"];
+  assert.match(route.rule, /Host\(`/);
+  assert.match(route.rule, /Method\(`POST`\)/);
+  const pattern = new RegExp(route.rule.match(/PathRegexp\(`([^`]+)`\)/)[1]);
+  assert.ok(pattern.test(`/api/camps/${"a".repeat(24)}/apply`));
+  for (const path of ["/api/camps", `/api/camps/${"a".repeat(24)}`, "/api/camps/invalid/apply", `/api/camps/${"a".repeat(24)}/apply/other`]) assert.ok(!pattern.test(path));
+  assert.equal(route.service, "api");
+  assert.ok(route.priority > http.routers.api.priority);
+  assert.ok(route.middlewares.includes("security-headers"));
+  assert.ok(!route.middlewares.includes("api-body-limit"));
+  const limit = http.middlewares["camp-payment-body-limit"].buffering;
+  const body = new FormData();
+  body.append("paymentScreenshot", new Blob([new Uint8Array(5 * 1024 * 1024)], { type: "image/png" }), "payment.png");
+  for (const field of ["applicationType", "childName", "childYear", "parentPhone", "leaderName", "leaderRole", "notes"]) body.append(field, "a".repeat(10 * 1024));
+  const request = new Request(`https://way.example.invalid/api/camps/${"a".repeat(24)}/apply`, { method: "POST", body });
+  assert.ok((await request.arrayBuffer()).byteLength <= limit.maxRequestBodyBytes);
+  assert.equal(limit.memRequestBodyBytes, limit.maxRequestBodyBytes);
+});

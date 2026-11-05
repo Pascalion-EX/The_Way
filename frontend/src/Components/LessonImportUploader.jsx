@@ -3,7 +3,8 @@ import { AppContent } from "../Context/AppContent.js";
 import { requestLessonImport } from "../utils/lessonImport.js";
 import { LESSON_DOCUMENT_ACCEPT, lessonDocumentFileError } from "../../../shared/lessonImport.mjs";
 
-const LessonImportUploader = ({ onImported, onImportingChange, disabled = false, hasExistingContent = false }) => {
+const LessonImportUploader = ({ onImported, onImportingChange, disabled = false, hasExistingContent = false,
+  completionHint = "Review the content below, then add the image, name, and year before saving." }) => {
   const { backendUrl } = useContext(AppContent);
   const [file, setFile] = useState(null);
   const [importing, setImporting] = useState(false);
@@ -76,7 +77,7 @@ const LessonImportUploader = ({ onImported, onImportingChange, disabled = false,
       {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
       {result && (
         <div role="status" className="mt-3 space-y-1 text-sm text-gray-700">
-          <p>Imported {result.count} {result.count === 1 ? "partition" : "partitions"}. Review the content below, then add the image, name, and year before saving.</p>
+          <p>Imported {result.count} {result.count === 1 ? "partition" : "partitions"}. {completionHint}</p>
           {result.warnings.map((warning, index) => <p key={index}>{warning}</p>)}
         </div>
       )}

@@ -1,5 +1,7 @@
 import { denyAccess } from "../services/accessDenials.js";
 import Camp from "../models/campsModel.js";
+import CampPaymentScreenshot from "../models/campPaymentScreenshotModel.js";
+import { ImageUploadError, prepareUploadedImage } from "../services/imageUploads.js";
 import userModel from "../models/userModel.js";
 import transporter from "../config/nodemailer.js";
 import mongoose from "mongoose";
@@ -14,6 +16,27 @@ import { readPage, paginationFor } from "../utils/pagination.js";
 const createRoles = ['admin', 'leader', 'pascal','pamela'];
 const applyRoles = ['parent', 'admin', 'leader', 'pascal'];
 const tripTypeOptions = ['Camp', 'Trip', 'Outing', 'Other'];
+
+const paymentSettings = (body, current = {}) => {
+  const price = body.price === undefined ? current.price ?? 0 : body.price;
+  const qr = body.paymentQrImage === undefined ? current.paymentQrImage ?? "" : body.paymentQrImage;
+  if (typeof price !== "number" || !Number.isFinite(price) || price < 0 || price > 1_000_000_000 ||
+      Math.abs(price * 100 - Math.round(price * 100)) > 0.00001) {
+    throw Object.assign(new Error("Price must be a non-negative amount in EGP with at most two decimal places."), { status: 400 });
+  }
+  if (typeof qr !== "string" || (qr.trim() && !/^\/uploads\/[a-f0-9]{64}\.webp$/.test(qr.trim()))) {
+    throw Object.assign(new Error("Upload a valid payment QR image."), { status: 400 });
+  }
+  if (price > 0 && !qr.trim()) {
+    throw Object.assign(new Error("A payment QR image is required for paid trips."), { status: 400 });
+  }
+  return { price, paymentQrImage: qr.trim() };
+};
+
+const removePaymentScreenshots = async (filter) => {
+  try { await CampPaymentScreenshot.deleteMany(filter); }
+  catch { console.error("Unable to remove unused camp payment screenshots"); }
+};
 
 const normalizeRoles = (roleValue) => {
   if (Array.isArray(roleValue)) {
@@ -101,6 +124,7 @@ export const createCamp = async (req, res) => {
       TripType,
       image: image?.trim() || "",
       years: cleanedYears,
+      ...paymentSettings(req.body),
       createdBy: userId,
     });
 
@@ -110,7 +134,7 @@ export const createCamp = async (req, res) => {
       camp: toCampSummary(camp, userId),
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message,
     });
@@ -233,10 +257,30 @@ export const getCampApplicants = async (req, res) => {
     return res.status(200).json({
       success: true, campId: camp._id,
       applicantCount: applicants.length,
-      applicants: applicants.map(toStaffApplicant),
+      applicants: applicants.map((applicant) => toStaffApplicant(applicant, camp._id)),
     });
   } catch {
     return res.status(500).json({ success: false, message: "Unable to load camp applicants" });
+  }
+};
+
+export const getCampPaymentScreenshot = async (req, res) => {
+  try {
+    const { id, applicantId } = req.params;
+    if (![id, applicantId].every((value) => mongoose.isObjectIdOrHexString(value))) {
+      return res.status(400).json({ success: false, message: "Invalid camp or applicant ID" });
+    }
+    const camp = await Camp.findById(id).select("applicants");
+    const applicant = camp?.applicants?.id(applicantId);
+    const screenshot = applicant?.paymentScreenshot && await CampPaymentScreenshot.findOne({
+      _id: applicant.paymentScreenshot, camp: id, user: applicant.user,
+    }).select("+image");
+    if (!screenshot) return res.status(404).json({ success: false, message: "Payment screenshot not found" });
+    res.set("X-Content-Type-Options", "nosniff");
+    res.set("Content-Disposition", 'inline; filename="payment-screenshot.webp"');
+    return res.type("image/webp").send(screenshot.image);
+  } catch {
+    return res.status(500).json({ success: false, message: "Unable to load payment screenshot" });
   }
 };
 
@@ -259,6 +303,12 @@ export const updateCamp = async (req, res) => {
     const { title, name, body, image, years, TripType } = req.body;
 
     const updateData = {};
+
+    if (req.body.price !== undefined || req.body.paymentQrImage !== undefined) {
+      const current = await Camp.findById(id).select("price paymentQrImage");
+      if (!current) return res.status(404).json({ success: false, message: "Camp not found" });
+      Object.assign(updateData, paymentSettings(req.body, current));
+    }
 
     if (title !== undefined) updateData.title = title.trim();
     if (name !== undefined) updateData.name = name.trim();
@@ -316,7 +366,7 @@ export const updateCamp = async (req, res) => {
       camp: toCampSummary(updatedCamp, req.userId),
     });
   } catch (error) {
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       success: false,
       message: error.message,
     });
@@ -364,6 +414,8 @@ export const deleteCamp = async (req, res) => {
       });
     }
 
+    await removePaymentScreenshots({ camp: deletedCamp._id });
+
     return res.status(200).json({
       success: true,
       message: "Camp deleted successfully",
@@ -377,9 +429,14 @@ export const deleteCamp = async (req, res) => {
 };
 
 export const applyToCamp = async (req, res) => {
+  let screenshotId;
   try {
     const { id } = req.params;
     const userId = req.userId;
+
+    if (!mongoose.isObjectIdOrHexString(id)) {
+      return res.status(400).json({ success: false, message: "Invalid camp ID" });
+    }
 
     if (!userId) {
       return res.status(401).json({
@@ -436,7 +493,7 @@ export const applyToCamp = async (req, res) => {
       leaderName,
       leaderRole,
       notes,
-    } = req.body;
+    } = req.body || {};
 
     if (!applicationType) {
       return res.status(400).json({
@@ -445,8 +502,28 @@ export const applyToCamp = async (req, res) => {
       });
     }
 
+    if (!["parent_for_child", "child_self", "leader"].includes(applicationType)) {
+      return res.status(400).json({ success: false, message: "Invalid application type" });
+    }
+    const isStaff = userRoles.some((role) => createRoles.includes(role));
+    if (!isStaff && applicationType !== "parent_for_child") {
+      return res.status(403).json({ success: false, message: "Parents must apply using the parent application form" });
+    }
+    for (const value of [childName, parentPhone, leaderName, leaderRole, notes]) {
+      if (value !== undefined && typeof value !== "string") {
+        return res.status(400).json({ success: false, message: "Application details must be text" });
+      }
+    }
+    if (applicationType !== "leader" &&
+        (!Number.isInteger(Number(childYear)) || !camp.years.includes(Number(childYear)))) {
+      return res.status(400).json({ success: false, message: "Select an available year for this trip" });
+    }
+    if (applicationType !== "leader" && camp.price > 0 && !req.file) {
+      return res.status(400).json({ success: false, message: "A payment screenshot is required for this trip" });
+    }
+
     if (applicationType === "parent_for_child") {
-      if (!childName || !childYear || !parentPhone) {
+      if (!childName?.trim() || !childYear || !parentPhone?.trim()) {
         return res.status(400).json({
           success: false,
           message: "Child name, child year, and parent phone are required",
@@ -455,7 +532,7 @@ export const applyToCamp = async (req, res) => {
     }
 
     if (applicationType === "child_self") {
-      if (!childName || !childYear || !parentPhone) {
+      if (!childName?.trim() || !childYear || !parentPhone?.trim()) {
         return res.status(400).json({
           success: false,
           message: "Name, year, and phone are required",
@@ -464,12 +541,18 @@ export const applyToCamp = async (req, res) => {
     }
 
     if (applicationType === "leader") {
-      if (!leaderName || !leaderRole || !parentPhone) {
+      if (!leaderName?.trim() || !leaderRole?.trim() || !parentPhone?.trim()) {
         return res.status(400).json({
           success: false,
           message: "Leader name, leader role, and phone are required",
         });
       }
+    }
+
+    if (req.file) {
+      const image = await prepareUploadedImage(req.file.buffer, req.file.mimetype);
+      const screenshot = await CampPaymentScreenshot.create({ camp: camp._id, user: userId, image });
+      screenshotId = screenshot._id;
     }
 
     camp.applicants.push({
@@ -481,6 +564,7 @@ export const applyToCamp = async (req, res) => {
       leaderName: leaderName?.trim() || "",
       leaderRole: leaderRole?.trim() || "",
       notes: notes?.trim() || "",
+      paymentScreenshot: screenshotId,
       appliedAt: new Date(),
     });
 
@@ -492,9 +576,10 @@ export const applyToCamp = async (req, res) => {
       camp: toCampSummary(camp, userId),
     });
   } catch (error) {
-    return res.status(500).json({
+    if (screenshotId) await removePaymentScreenshots({ _id: screenshotId });
+    return res.status(error instanceof ImageUploadError ? error.status : 500).json({
       success: false,
-      message: error.message,
+      message: error instanceof ImageUploadError ? error.message : "Unable to submit application. Please try again.",
     });
   }
 };
@@ -534,6 +619,8 @@ export const withdrawFromCamp = async (req, res) => {
     }
 
     await camp.save();
+
+    await removePaymentScreenshots({ camp: camp._id, user: userId });
 
     return res.status(200).json({
       success: true,

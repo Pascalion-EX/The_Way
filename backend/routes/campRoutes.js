@@ -1,11 +1,13 @@
 import express from "express";
 import userAuth from "../middleware/userAuth.js";
 import { requireStaff } from "../middleware/staffAuth.js";
+import { uploadCampPayment } from "../middleware/campPaymentUpload.js";
 import {
   createCamp,
   getAllCamps,
   getCampById,
   getCampApplicants,
+  getCampPaymentScreenshot,
   updateCamp,
   deleteCamp,
   applyToCamp,
@@ -24,12 +26,13 @@ campRouter.use((req, res, next) => {
 campRouter.post("/", userAuth, createCamp);
 campRouter.get("/",userAuth,  getAllCamps);
 campRouter.get("/:id/applicants", userAuth, requireStaff, getCampApplicants);
+campRouter.get("/:id/applicants/:applicantId/payment", userAuth, requireStaff, getCampPaymentScreenshot);
 campRouter.get("/:id",userAuth,  getCampById);
 campRouter.put("/:id", userAuth, updateCamp);
 campRouter.post("/:id/notify", userAuth, notifyCampApplicants);
 campRouter.delete("/:id", userAuth, deleteCamp);
 
-campRouter.post("/:id/apply", userAuth, applyToCamp);
+campRouter.post("/:id/apply", userAuth, uploadCampPayment, applyToCamp);
 campRouter.delete("/:id/apply", userAuth, withdrawFromCamp);
 
 export default campRouter;

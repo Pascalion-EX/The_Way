@@ -360,6 +360,24 @@ export const createLessonVariant = async (req, res) => {
       });
     }
 
+    const { draft, image } = req.body;
+    let importedContent;
+    if (draft !== undefined) {
+      if (typeof draft?.title !== "string" || !draft.title.trim() ||
+          !Array.isArray(draft.partitions) || !draft.partitions.length || draft.partitions.length > 100 ||
+          !draft.partitions.every((partition) => typeof partition?.title === "string" && partition.title.trim() &&
+            typeof partition?.body === "string" && partition.body.trim())) {
+        return res.status(400).json({ success: false, message: "Imported content must have a title and 1–100 complete partitions" });
+      }
+      importedContent = { title: draft.title.trim(), partitions: cleanPartitions(draft.partitions), body: "" };
+      if (Buffer.byteLength(JSON.stringify(importedContent)) > 80 * 1024) {
+        return res.status(413).json({ success: false, message: "This lesson is too long to import at once. Split it into smaller documents." });
+      }
+    }
+    if (image !== undefined && (typeof image !== "string" || !/^\/uploads\/[a-f0-9]{64}\.webp$/.test(image))) {
+      return res.status(400).json({ success: false, message: "Upload a valid image for this variant" });
+    }
+
     const source = await lessonModel.findById(lessonId);
     if (!source) {
       return res.status(404).json({ success: false, message: "Lesson not found" });
@@ -374,7 +392,8 @@ export const createLessonVariant = async (req, res) => {
       variantGroup: source.variantGroup || source._id,
       body: source.body,
       partitions: source.partitions.map(({ title, body }) => ({ title, body })),
-      image: source.image,
+      ...importedContent,
+      image: image ?? source.image,
       video,
       activity: source.activity,
       year: source.year,

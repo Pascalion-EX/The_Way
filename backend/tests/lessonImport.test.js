@@ -41,6 +41,7 @@ async function setup(t) {
     state.writes.push(document);
     return { acknowledged: true, insertedId: document._id };
   });
+  t.mock.method(Lesson.collection, "findOne", async (filter) => state.writes.find((lesson) => String(lesson._id) === String(filter._id)) || null);
   const app = express();
   app.use(cookieParser());
   app.use(express.json({ limit: "100kb" }));
@@ -143,6 +144,34 @@ test("the real import route accepts Word, PDF, HTML, and text and saves only thr
   assert.equal(saved.status, 201);
   assert.equal(state.writes.length, 1);
   assert.equal(saved.body.lesson.partitions[0].body, draft.partitions[0].body);
+});
+
+test("a Word import can be reviewed and saved as a variant with its own uploaded image", async (t) => {
+  const state = await setup(t);
+  const headers = { "Content-Type": "application/json" };
+  const source = await state.request("", JSON.stringify({
+    title: "Original lesson", name: "Service", image: "https://example.com/original.jpg", year: 3,
+    partitions: [{ title: "Original section", body: "Original text" }], activity: "Original activity",
+  }), { headers });
+  assert.equal(source.status, 201);
+  const before = JSON.stringify(state.writes[0]);
+  const imported = await state.upload(lessonDocx(), "faith.docx");
+  assert.equal(imported.status, 200);
+  assert.equal(state.writes.length, 1, "Import must not create or modify a lesson");
+  const image = `/uploads/${"c".repeat(64)}.webp`;
+  const saved = await state.request(`/${source.body.lesson._id}/variants`, JSON.stringify({
+    name: "Younger group", draft: imported.body.draft, image,
+  }), { headers });
+  assert.equal(saved.status, 201);
+  assert.equal(saved.body.lesson.name, "Younger group");
+  assert.equal(saved.body.lesson.title, "Faith");
+  assert.equal(saved.body.lesson.image, image);
+  assert.equal(saved.body.lesson.variantGroup, source.body.lesson._id);
+  assert.equal(saved.body.lesson.year, 3);
+  assert.equal(saved.body.lesson.activity, "Original activity");
+  assert.deepEqual(saved.body.lesson.partitions.map(({ title, body }) => ({ title, body })), expectedPartitions);
+  assert.equal(state.writes.length, 2);
+  assert.equal(JSON.stringify(state.writes[0]), before);
 });
 
 test("import authorization checks current roles before accepting uploads", async (t) => {

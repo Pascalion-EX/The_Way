@@ -1,4 +1,7 @@
 import ContentImage from "../Components/ContentImage.jsx";
+import CampPaymentDetails from "../Components/CampPaymentDetails.jsx";
+import CampPaymentSettings from "../Components/CampPaymentSettings.jsx";
+import CampApplicants from "../Components/CampApplicants.jsx";
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AppContent } from "../Context/AppContent.js";
@@ -32,7 +35,9 @@ import Navbar from "@/Components/Navbar.jsx";
 const CampDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { backendUrl } = useContext(AppContent);
+  const { backendUrl, userData } = useContext(AppContent);
+  const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
+  const isStaff = roles.some((role) => ["admin", "leader", "pascal", "pamela"].includes(String(role).toLowerCase()));
 
   const [camp, setCamp] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -166,6 +171,10 @@ const CampDetails = () => {
           </div>
 
           <div className="mt-6 sm:mt-8">
+            <CampPaymentDetails camp={camp} />
+          </div>
+
+          <div className="mt-6 sm:mt-8">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
               Description
             </p>
@@ -174,6 +183,11 @@ const CampDetails = () => {
               {camp.body}
             </p>
           </div>
+
+          {isStaff && <>
+            <CampPaymentSettings camp={camp} onUpdate={setCamp} />
+            <CampApplicants campId={camp._id} />
+          </>}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button

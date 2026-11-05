@@ -166,6 +166,9 @@ Features include:
 - Apply for a trip
 - Withdraw an application
 - Role-specific application forms
+- Set a price per applicant in EGP (0 for a free trip) and upload a payment QR image
+- Require parents to attach a payment screenshot when applying to paid trips
+- Review applicants and private payment screenshots from the trip details page
 - Notify trip applicants by email
 
 Application types currently used by the controller are:
@@ -558,6 +561,7 @@ Base path: `/api/camps`
 | GET | `/` | Yes | List trips/camps |
 | GET | `/:id` | Yes | Get trip/camp by ID |
 | GET | `/:id/applicants` | Verified staff | Read private applicant roster |
+| GET | `/:id/applicants/:applicantId/payment` | Verified staff | View a private payment screenshot |
 | PUT | `/:id` | Yes + role check | Update trip/camp |
 | DELETE | `/:id` | Yes + role check | Delete trip/camp |
 | POST | `/:id/apply` | Yes + role check | Apply to trip/camp |
@@ -567,9 +571,22 @@ Base path: `/api/camps`
 List, detail, create, update, apply, and withdraw responses return a camp summary
 with `applicantCount` and viewer-specific `hasApplied`. They omit applicant
 records and creator contact details. The separate applicants endpoint requires
-current database-backed staff permissions and returns only applicant IDs,
-application timestamps, and user name/email/role. Camp responses use
+current database-backed staff permissions and returns application details,
+user name/email/role, and protected payment screenshot URLs. Camp responses use
 `Cache-Control: private, no-store`.
+
+Create/update accepts `price` (a non-negative EGP amount with up to two decimal
+places) and `paymentQrImage` (an image URL from `/api/uploads/images`). Paid
+trips require a payment QR image. Existing trips default to free until staff set
+their price using **Manage payment settings** on the details page.
+
+Applications accept `multipart/form-data` with the existing application fields
+and a `paymentScreenshot` file. Parent applications to paid trips require a
+screenshot; leader and free-trip applications can still use JSON. Screenshots
+must be still JPEG, PNG, or WebP images of at most 5 MB and 20 megapixels. They
+are validated, resized, stripped of metadata, and stored as WebP in a separate
+MongoDB collection. Staff can review them under **Applicants and payments**.
+Withdrawing an application or deleting its camp also removes its screenshots.
 
 Typical trip/camp data:
 
@@ -580,6 +597,8 @@ Typical trip/camp data:
   "body": "Camp description",
   "TripType": "Camp",
   "image": "https://example.com/image.jpg",
+  "price": 1500,
+  "paymentQrImage": "/uploads/<64-character-image-hash>.webp",
   "years": [4, 5, 6]
 }
 ```
@@ -781,6 +800,8 @@ name        String, required
 body        String, required
 TripType    Camp | Trip | Outing | Other
 image       String
+price       Number, non-negative EGP amount, defaults to 0
+paymentQrImage String, uploaded QR image URL
 years       Number[]
 createdBy   ObjectId -> user
 applicants  Array
@@ -1309,30 +1330,12 @@ Production origins must be added or loaded from environment configuration before
 
 The root `package.json` declares `concurrently` in development dependencies.
 
-### 5. Camp Schema Contains `applicants` Twice
+### 5. Camp Applications
 
-`backend/models/campsModel.js` currently declares the `applicants` property twice in the same schema object.
-
-The earlier declaration contains the richer application information:
-
-```text
-applicationType
-childName
-childYear
-parentPhone
-leaderName
-leaderRole
-notes
-```
-
-The later declaration contains only:
-
-```text
-user
-appliedAt
-```
-
-In a JavaScript object, the later property definition replaces the earlier property. The schema should be consolidated into one `applicants` definition so it matches `campController.js`.
+The camp schema retains application details and references private payment
+screenshots. Older applications containing only `user` and `appliedAt` remain
+valid. Details already discarded by the former duplicate schema definition
+cannot be recovered.
 
 ### 6. Activity Authorization Middleware Mismatch
 

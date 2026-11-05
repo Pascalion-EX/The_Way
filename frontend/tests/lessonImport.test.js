@@ -15,6 +15,9 @@ let hmrServer;
 let AppContent;
 let CreateLesson;
 let LessonImportUploader;
+let EditLesson;
+let LessonVariants;
+let contentImageUrl;
 
 before(async () => {
   hmrServer = createHttpServer();
@@ -26,6 +29,9 @@ before(async () => {
   ({ AppContent } = await server.ssrLoadModule("/src/Context/AppContent.js"));
   ({ default: CreateLesson } = await server.ssrLoadModule("/src/Pages/CreateLesson.jsx"));
   ({ default: LessonImportUploader } = await server.ssrLoadModule("/src/Components/LessonImportUploader.jsx"));
+  ({ default: EditLesson } = await server.ssrLoadModule("/src/Pages/EditLesson.jsx"));
+  ({ default: LessonVariants } = await server.ssrLoadModule("/src/Components/LessonVariants.jsx"));
+  ({ contentImageUrl } = await server.ssrLoadModule("/src/utils/imageUrls.js"));
 });
 
 after(async () => {
@@ -33,8 +39,8 @@ after(async () => {
   hmrServer?.close();
 });
 
-const render = (Component, props = {}, role = "leader") => renderToStaticMarkup(
-  React.createElement(MemoryRouter, null,
+const render = (Component, props = {}, role = "leader", route = "/") => renderToStaticMarkup(
+  React.createElement(MemoryRouter, { initialEntries: [route] },
     React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: [role], isAccountVerified: true } } },
       React.createElement(Component, props))));
 
@@ -110,4 +116,34 @@ test("every lesson creator sees import alongside the unchanged required lesson f
   const denied = render(CreateLesson, {}, "parent");
   assert.match(denied, /You do not have permission/);
   assert.doesNotMatch(denied, /Import a lesson document/);
+});
+
+test("variant creation offers document import and image replacement while members retain read-only controls", () => {
+  const lesson = { _id: "source", name: "Original name", image: "/uploads/original.webp" };
+  const props = { lesson, variants: [lesson], backendUrl: "", canManageLessons: true };
+  const html = render(LessonVariants, props);
+  assert.match(html, /Import a lesson document/);
+  assert.match(html, /accept="\.docx,\.pdf,\.html,\.htm,\.txt"/);
+  assert.match(html, /Variant image \(required\)/);
+  assert.match(html, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.ok(html.includes(`src="${contentImageUrl(lesson.image)}"`));
+  assert.match(html, /current image is used unless you upload a replacement/);
+  assert.equal((html.match(/<form/g) || []).length, 1);
+  const member = render(LessonVariants, { ...props, canManageLessons: false }, "parent");
+  assert.doesNotMatch(member, /<dialog|Import a lesson document|type="file"/);
+});
+
+test("existing variants can import a document and replace their image from the edit form", () => {
+  const lesson = {
+    _id: "variant", variantGroup: "original", title: "Current title", name: "Younger group", year: 3,
+    image: "/uploads/current.webp", partitions: [{ title: "Current section", body: "Current content" }],
+  };
+  const html = render(EditLesson, {}, "leader", { pathname: "/lessons/edit/variant", state: { lesson } });
+  assert.match(html, /Import a lesson document/);
+  assert.match(html, /Import and replace title &amp; partitions/);
+  assert.match(html, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(html, /value="Younger group"/);
+  assert.match(html, /value="3"/);
+  assert.ok(html.includes(`src="${contentImageUrl(lesson.image)}"`));
+  assert.equal((html.match(/<form/g) || []).length, 1);
 });
