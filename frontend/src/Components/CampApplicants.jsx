@@ -2,18 +2,13 @@ import { useContext, useEffect, useState } from "react";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
 
-function PaymentScreenshot({ path }) {
-  const { backendUrl } = useContext(AppContent);
-  const [open, setOpen] = useState(false);
+function PaymentScreenshotImage({ source }) {
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!open) return;
     const controller = new AbortController();
     let objectUrl;
-    setUrl("");
-    setError("");
-    axios.get(`${backendUrl}${path}`, { responseType: "blob", signal: controller.signal }).then(({ data }) => {
+    axios.get(source, { responseType: "blob", signal: controller.signal }).then(({ data }) => {
       if (controller.signal.aborted) return;
       objectUrl = URL.createObjectURL(data);
       setUrl(objectUrl);
@@ -21,18 +16,27 @@ function PaymentScreenshot({ path }) {
       if (!controller.signal.aborted) setError("Unable to load payment screenshot. Close and reopen to retry.");
     });
     return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
-  }, [open, backendUrl, path]);
+  }, [source]);
+  if (error) return <p role="alert" className="mt-2 text-sm text-red-600">{error}</p>;
+  if (!url) return <p role="status" className="mt-2 text-sm text-gray-500">Loading screenshot...</p>;
+  return (
+    <div className="mt-3 space-y-2">
+      <img src={url} alt="Submitted payment screenshot" className="max-h-96 max-w-full rounded-xl border border-gray-200 object-contain" />
+      <a href={url} target="_blank" rel="noreferrer" className="inline-block text-sm font-medium text-indigo-700">Open screenshot full size</a>
+    </div>
+  );
+}
+
+function PaymentScreenshot({ path }) {
+  const { backendUrl } = useContext(AppContent);
+  const [open, setOpen] = useState(false);
+  const source = `${backendUrl}${path}`;
   return (
     <div className="mt-3">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="text-sm font-semibold text-indigo-700">
         {open ? "Hide payment screenshot" : "View payment screenshot"}
       </button>
-      {open && (error ? <p role="alert" className="mt-2 text-sm text-red-600">{error}</p> : url ? (
-        <div className="mt-3 space-y-2">
-          <img src={url} alt="Submitted payment screenshot" className="max-h-96 max-w-full rounded-xl border border-gray-200 object-contain" />
-          <a href={url} target="_blank" rel="noreferrer" className="inline-block text-sm font-medium text-indigo-700">Open screenshot full size</a>
-        </div>
-      ) : <p role="status" className="mt-2 text-sm text-gray-500">Loading screenshot...</p>)}
+      {open && <PaymentScreenshotImage key={source} source={source} />}
     </div>
   );
 }

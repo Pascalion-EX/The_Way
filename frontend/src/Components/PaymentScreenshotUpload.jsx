@@ -1,14 +1,18 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 export default function PaymentScreenshotUpload({ value, onChange, disabled }) {
   const id = useId();
-  const [preview, setPreview] = useState("");
+  const previewRef = useRef(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!value) { setPreview(""); return; }
+    const image = previewRef.current;
+    if (!value || !image) return;
     const url = URL.createObjectURL(value);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
+    image.src = url;
+    return () => {
+      image.removeAttribute("src");
+      URL.revokeObjectURL(url);
+    };
   }, [value]);
 
   return (
@@ -31,7 +35,7 @@ export default function PaymentScreenshotUpload({ value, onChange, disabled }) {
         className="block w-full rounded-xl border border-gray-300 bg-white p-2 text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:px-3 file:py-2 file:text-indigo-700 disabled:opacity-60" />
       <p id={`${id}-hint`} className="text-xs text-gray-500">JPEG, PNG, or WebP. Up to 5 MB. Only staff can view your payment screenshot.</p>
       {error && <p id={`${id}-error`} role="alert" className="text-sm text-red-600">{error}</p>}
-      {preview && <img src={preview} alt="Your payment screenshot preview" className="max-h-64 max-w-full rounded-xl border border-gray-200 object-contain" />}
+      {value && <img ref={previewRef} alt="Your payment screenshot preview" className="max-h-64 max-w-full rounded-xl border border-gray-200 object-contain" />}
     </div>
   );
 }
