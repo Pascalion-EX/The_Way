@@ -25,6 +25,8 @@ const Chants = lazy(() => import("./Pages/Chants.jsx"));
 const ChantViewer = lazy(() => import("./Pages/ChantViewer.jsx"));
 const CreateChant = lazy(() => import("./Pages/CreateChant.jsx"));
 const EditChant = lazy(() => import("./Pages/EditChant.jsx"));
+const Prayer = lazy(() => import("./Pages/Prayer.jsx"));
+const PrayerEditor = lazy(() => import("./Pages/PrayerEditor.jsx"));
 const CampDetails = lazy(() => import("./Pages/CampDetails.jsx"));
 const Profile = lazy(() => import("./Pages/Profile.jsx"));
 const Admin = lazy(() => import("./Pages/Admin.jsx"));
@@ -279,6 +281,11 @@ const App = () => {
               path="/edit-chant/:id"
               element={<EditChant />}
             />
+
+            <Route path="/prayer" element={<Prayer />} />
+            <Route path="/prayer/new" element={<PrayerEditor />} />
+            <Route path="/prayer/:id" element={<ChantViewer key="prayer" contentType="prayer" />} />
+            <Route path="/prayer/:id/edit" element={<PrayerEditor />} />
 
           </Route>
         </Route>

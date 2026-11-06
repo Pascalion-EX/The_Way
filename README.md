@@ -143,6 +143,25 @@ detection, upload limits, and supported document formats.
 - Export selected chant language to PDF
 - Authorized create, edit, and delete operations
 
+### Prayer
+
+Open **Prayer** from the navigation menu to search and read saved prayers.
+The prayer viewer shares the chant viewer's language buttons, slide navigation,
+arrow-key controls, fullscreen, and projector mode. Prayers support Arabic,
+Coptic, and English slides. Each slide can contain text, an uploaded image, or
+both. Existing prayers still split their text at blank lines until edited.
+
+On **Add prayer** or **Edit prayer**, each slide has its own image picker. Add,
+remove, or reorder slide cards; images move with their text. JPEG, PNG, and WebP
+uploads up to 5 MB are supported, and saving waits for uploads to finish. Images
+appear alongside the slide text in the viewer and projector mode. Empty slide
+cards are skipped when saving.
+
+Only `admin`, `pascal`, and `pamela` accounts can add, edit, or delete prayers.
+Deletion is available on the prayer list and viewer, with a confirmation prompt.
+These permissions are checked against current database roles for every change.
+Other verified members, including leaders, can read and present prayers.
+
 ### Trips and Camps
 
 The trip system supports the following trip types:
@@ -338,6 +357,8 @@ A user can hold multiple roles because `role` is stored as an array.
 | Manage lessons | `pascal`, `admin`, `leader`, `pamela` |
 | Manage games | `admin`, `leader`, `pascal`, `pamela` |
 | Manage chants | `admin`, `leader`, `pascal`, `pamela` |
+| Add/edit/delete prayers | `admin`, `pascal`, `pamela` |
+| Read/present prayers | Any verified account |
 | Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
 | Read/manage child profiles | `pascal`, `pamela` only |
 | Read/manage attendance | `admin`, `leader`, `pascal`, `pamela` |
@@ -387,6 +408,10 @@ All routes below are wrapped in `ProtectedRoute` and require a valid authenticat
 | `/chants/:id` | `ChantViewer.jsx` | Chant viewer/presenter |
 | `/create-chant` | `CreateChant.jsx` | Create chant |
 | `/edit-chant/:id` | `EditChant.jsx` | Edit chant |
+| `/prayer` | `Prayer.jsx` | Prayer list/search |
+| `/prayer/:id` | `ChantViewer.jsx` | Shared prayer viewer/presenter |
+| `/prayer/new` | `PrayerEditor.jsx` | Add prayer (admin, Pascal, Pamela) |
+| `/prayer/:id/edit` | `PrayerEditor.jsx` | Edit prayer (admin, Pascal, Pamela) |
 
 Unknown frontend routes are redirected to `/`.
 
@@ -725,6 +750,33 @@ Chant payload:
 
 At least one lyrics language is required by the controller.
 
+### Prayers API
+
+Base path: `/api/prayers`. All routes require a verified authenticated account.
+
+| Method | Endpoint | Permission | Purpose |
+|---|---|---|---|
+| GET | `/` | Verified account | List prayer titles; supports `search` and `page` |
+| GET | `/:id` | Verified account | Read prayer text |
+| POST | `/` | Admin, Pascal, Pamela | Add prayer |
+| PUT | `/:id` | Admin, Pascal, Pamela | Save prayer changes |
+| DELETE | `/:id` | Admin, Pascal, Pamela | Delete prayer |
+
+Create and update accept a `title` (1–120 characters) and `slides`, grouped by
+`arabic`, `coptic`, and `english`. Each language contains an ordered array of
+`{ "text": "Slide text", "image": "/uploads/<image-hash>.webp" }` entries.
+Text or image can be omitted from a slide, but at least one must be present.
+Image URLs must come from the existing image upload endpoint. At least one
+language must contain a slide. Each card stays one slide even if its text has
+blank lines.
+
+Legacy `text` payloads with language strings are still accepted and split at
+blank lines into slides without images. Text is also derived from structured
+slides for older clients. The submitted JSON is limited to 80 KB; image files
+are uploaded separately. Omitted languages are cleared on update. Author
+metadata is stored by the server and excluded from API responses. Lists contain
+only titles and IDs; details include slides, text, and timestamps.
+
 ### Activities API
 
 Base path: `/api/activities`
@@ -853,6 +905,22 @@ favorites           ObjectId[] -> user
 createdBy           ObjectId -> user
 createdAt           Date
 updatedAt           Date
+```
+
+### Prayer model
+
+```text
+title          String, required, maximum 120 characters
+text.arabic    String
+text.coptic    String
+text.english   String
+slides.arabic  Array of { text, image }
+slides.coptic  Array of { text, image }
+slides.english Array of { text, image }
+createdBy      ObjectId -> user
+updatedBy      ObjectId -> user
+createdAt      Date
+updatedAt      Date
 ```
 
 ### Activity

@@ -281,6 +281,13 @@ const hasVideoRequestAccess = userData
             >
               Chants
             </button>
+                        <button
+              type="button"
+              onClick={() => handleNavigate("/prayer")}
+              className="cursor-pointer rounded-full border border-gray-500 bg-white px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-200 sm:px-5 sm:text-base"
+            >
+              Prayer
+            </button>
                  <button
               type="button"
               onClick={() =>
@@ -330,6 +337,8 @@ className="cursor-pointer rounded-full border border-[#e4b44f] bg-white px-3 py-
                 Video Editing Requests
               </button>
             )}
+
+
 
                         {hasCurriculumAccess && <button
               type="button"

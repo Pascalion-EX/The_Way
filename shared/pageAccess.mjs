@@ -1,7 +1,9 @@
 const STAFF = ["admin", "leader", "pascal", "pamela"];
+const PRAYER_MANAGERS = ["admin", "pascal", "pamela"];
 const CHILD_PROFILE_MANAGERS = ["pascal", "pamela"];
 const CHILD_PROFILE_ROLES = [...CHILD_PROFILE_MANAGERS, "parent"];
 const restrictedPages = [
+  [/^\/prayer\/(new|[^/]+\/edit)\/?$/i, PRAYER_MANAGERS],
   [/^\/admin\/?$/i, ["admin", "pascal", "pamela"]],
   [/^\/activities\/year-1-3\/?$/i, STAFF, canAccessYearOneToThreeActivities],
   [/^\/childrenProfile\/?$/i, CHILD_PROFILE_ROLES],
@@ -11,6 +13,11 @@ const restrictedPages = [
   [/^\/events\/(create|[^/]+\/edit)\/?$/i, STAFF],
   [/^\/edit-chant\/[^/]+\/?$/i, STAFF],
 ];
+
+export function canManagePrayers(role) {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.some((value) => PRAYER_MANAGERS.includes(value));
+}
 
 export function canAccessChildrenProfiles(role) {
   const roles = Array.isArray(role) ? role : [role];

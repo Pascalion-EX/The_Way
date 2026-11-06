@@ -13,6 +13,7 @@ import campRouter from "./routes/campRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import gameRouter from "./routes/gameRoutes.js";
 import chantRouter from "./routes/chantRoutes.js";
+import prayerRouter from "./routes/prayerRoutes.js";
 import activityRouter from "./routes/activitiesRoutes.js";
 import eventRouter from "./routes/eventRoutes.js"
 import videoRequestRouter from "./routes/videoRequestRoutes.js";
@@ -74,6 +75,7 @@ app.use("/api/notifications", notificationRouter);
 app.use("/api/children", childProfileRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/chants", chantRouter);
+app.use("/api/prayers", prayerRouter);
 app.use("/api/activities", activityRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);

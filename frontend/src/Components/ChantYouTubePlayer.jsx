@@ -3,7 +3,7 @@ import { Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { formatMediaTime, loadYouTubePlayerApi } from "../utils/youtubePlayer.js";
 import { getYouTubeEmbedUrl, VIDEO_IFRAME_ALLOW, VIDEO_IFRAME_SANDBOX } from "../../../shared/videoUrls.mjs";
 
-const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
+const ChantYouTubePlayer = ({ embedUrl, title, projectorMode, projectorDarkMode = false }) => {
   const hostRef = useRef(null);
   const playerRef = useRef(null);
   const [playback, setPlayback] = useState({
@@ -81,7 +81,8 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
   }, [embedUrl, title]);
 
   const disabled = !playback.ready || Boolean(error);
-  const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 px-3 py-2 hover:bg-white/20 disabled:opacity-40";
+  const buttonClass = `inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 disabled:opacity-40 ${projectorDarkMode ? "bg-white/10 hover:bg-white/20" : "bg-black/5 hover:bg-black/10"}`;
+  const accentClass = projectorDarkMode ? "accent-white" : "accent-black";
 
   return (
     <section aria-label="Chant YouTube player">
@@ -95,8 +96,8 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
           : "aspect-video min-h-[200px] w-full overflow-hidden rounded-2xl border border-gray-200"}
       />
 
-      <div className={projectorMode ? "rounded-2xl border border-white/10 bg-white/5 p-4 text-white" : "hidden"}>
-        <p className="mb-3 truncate text-sm text-white/70">YouTube audio · {title}</p>
+      <div className={projectorMode ? `rounded-2xl border p-4 ${projectorDarkMode ? "border-white/10 bg-white/5 text-white" : "border-black/10 bg-black/5 text-black"}` : "hidden"}>
+        <p className="mb-3 truncate text-sm opacity-70">YouTube audio · {title}</p>
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
@@ -120,7 +121,7 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
           >
             <RotateCcw size={18} />
           </button>
-          <span className="text-xs tabular-nums text-white/70">
+          <span className="text-xs tabular-nums opacity-70">
             {formatMediaTime(playback.time)} / {formatMediaTime(playback.duration)}
           </span>
           <input
@@ -131,7 +132,7 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
             step="1"
             value={Math.min(playback.time, playback.duration || 1)}
             disabled={disabled || !playback.duration}
-            className="min-w-24 flex-1 accent-white disabled:opacity-40"
+            className={`min-w-24 flex-1 disabled:opacity-40 ${accentClass}`}
             onChange={(event) => {
               const time = Number(event.target.value);
               playerRef.current.seekTo(time, true);
@@ -158,7 +159,7 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
             max="100"
             value={playback.muted ? 0 : playback.volume}
             disabled={disabled}
-            className="w-24 accent-white disabled:opacity-40"
+            className={`w-24 disabled:opacity-40 ${accentClass}`}
             onChange={(event) => {
               const volume = Number(event.target.value);
               playerRef.current.setVolume(volume);
@@ -167,10 +168,10 @@ const ChantYouTubePlayer = ({ embedUrl, title, projectorMode }) => {
             }}
           />
         </div>
-        {!playback.ready && !error && <p role="status" className="mt-2 text-xs text-white/60">Loading YouTube audio…</p>}
-        {notice && !error && <p role="status" className="mt-2 text-xs text-white/70">{notice}</p>}
+        {!playback.ready && !error && <p role="status" className="mt-2 text-xs opacity-60">Loading YouTube audio…</p>}
+        {notice && !error && <p role="status" className="mt-2 text-xs opacity-70">{notice}</p>}
       </div>
-      {error && <p role="alert" className="mt-2 text-sm text-red-400">{error}</p>}
+      {error && <p role="alert" className={`mt-2 text-sm ${projectorMode && !projectorDarkMode ? "text-red-600" : "text-red-400"}`}>{error}</p>}
     </section>
   );
 };

@@ -73,6 +73,11 @@ bg-white/10 backdrop-blur-md rounded-2xl border border-white shadow-lg">
           Chants
         </button>
                 <button
+          onClick={() => navigate("/prayer")}
+        className="border border-gray-500 rounded-full px-8 py-2.5 hover:bg-gray-100 transition-all">
+          Prayer
+        </button>
+                <button
           onClick={() => navigate("/calendar")}
         className="border border-gray-500 rounded-full px-8 py-2.5 hover:bg-gray-100 transition-all">
           Calendar
