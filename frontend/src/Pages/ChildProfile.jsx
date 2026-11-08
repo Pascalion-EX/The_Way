@@ -19,7 +19,7 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar.jsx";
-import { canAccessChildrenProfiles, canManageChildrenProfiles } from "../../../shared/pageAccess.mjs";
+import { canAccessChildrenProfiles, canEditChildrenProfiles, canManageChildrenProfiles } from "../../../shared/pageAccess.mjs";
 
 // ======================================================
 // EMPTY FORM
@@ -71,7 +71,8 @@ const ChildProfiles = () => {
   // ======================================================
 
   const canCreate = canAccessChildrenProfiles(userData?.role);
-  const canManage = canManageChildrenProfiles(userData?.role);
+  const canEdit = canEditChildrenProfiles(userData?.role);
+  const canDelete = canManageChildrenProfiles(userData?.role);
 
   // ======================================================
   // FETCH CHILDREN
@@ -135,7 +136,7 @@ const ChildProfiles = () => {
   const openCreateForm = () => {
     if (!canCreate) return;
     setEditingChild(null);
-    setForm(canManage ? emptyForm : {
+    setForm(canEdit ? emptyForm : {
       ...emptyForm,
       firstParent: userData?.name || "",
       firstParentNumber: userData?.phone || "",
@@ -149,7 +150,7 @@ const ChildProfiles = () => {
   // ======================================================
 
   const openEditForm = (child) => {
-    if (!canManage) return;
+    if (!canEdit) return;
     setEditingChild(child);
 
     setForm({
@@ -189,7 +190,7 @@ const ChildProfiles = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!canCreate || (editingChild && !canManage)) return;
+    if (!canCreate || (editingChild && !canEdit)) return;
 
     if (!form.name.trim()) {
       toast.error("Child name is required.");
@@ -300,7 +301,7 @@ const ChildProfiles = () => {
   // ======================================================
 
   const handleDelete = async (child) => {
-    if (!canManage) return;
+    if (!canDelete) return;
     const confirmed = window.confirm(
       `Are you sure you want to delete ${child.name}?`
     );
@@ -489,7 +490,7 @@ const ChildProfiles = () => {
                     sm:text-base
                   "
                 >
-                  {canManage
+                  {canEdit
                     ? "Manage children, grades, parents, contact information and important details."
                     : "Add and view your children's profiles. Contact the service team to update or remove a profile."}
                 </p>
@@ -753,9 +754,8 @@ const ChildProfiles = () => {
                 <ChildCard
                   key={child._id}
                   child={child}
-                  canManage={
-                    canManage
-                  }
+                  canEdit={canEdit}
+                  canDelete={canDelete}
                   onEdit={() =>
                     openEditForm(
                       child
@@ -807,7 +807,8 @@ const ChildProfiles = () => {
 
 const ChildCard = ({
   child,
-  canManage,
+  canEdit,
+  canDelete,
   onEdit,
   onDelete,
   deleting,
@@ -965,7 +966,7 @@ const ChildCard = ({
 
       {/* ACTIONS */}
 
-      {canManage && (
+      {(canEdit || canDelete) && (
         <div
           className="
             mt-6
@@ -976,63 +977,67 @@ const ChildCard = ({
             pt-5
           "
         >
-          <button
-            onClick={onEdit}
-            className="
-              flex
-              flex-1
-              items-center
-              justify-center
-              gap-2
-              rounded-xl
-              bg-blue-50
-              px-4
-              py-2.5
-              text-sm
-              font-semibold
-              text-blue-700
-              transition
-              hover:bg-blue-100
-            "
-          >
-            <Pencil size={17} />
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="
+                flex
+                flex-1
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-blue-50
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-blue-700
+                transition
+                hover:bg-blue-100
+              "
+            >
+              <Pencil size={17} />
 
-            Edit
-          </button>
+              Edit
+            </button>
+          )}
 
-          <button
-            onClick={onDelete}
-            disabled={deleting}
-            className="
-              flex
-              flex-1
-              items-center
-              justify-center
-              gap-2
-              rounded-xl
-              bg-red-50
-              px-4
-              py-2.5
-              text-sm
-              font-semibold
-              text-red-600
-              transition
-              hover:bg-red-100
-              disabled:cursor-not-allowed
-              disabled:opacity-50
-            "
-          >
-            {deleting ? (
-              <Loader2
-                size={17}
-                className="animate-spin"
-              />
-            ) : (
-              <Trash2 size={17} />
-            )}
+          {canDelete && (
+            <button
+              onClick={onDelete}
+              disabled={deleting}
+              className="
+                flex
+                flex-1
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-red-50
+                px-4
+                py-2.5
+                text-sm
+                font-semibold
+                text-red-600
+                transition
+                hover:bg-red-100
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
+            >
+              {deleting ? (
+                <Loader2
+                  size={17}
+                  className="animate-spin"
+                />
+              ) : (
+                <Trash2 size={17} />
+              )}
 
-            Delete
-          </button>
+              Delete
+            </button>
+          )}
         </div>
       )}
     </div>

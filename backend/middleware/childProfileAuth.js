@@ -1,4 +1,4 @@
-import { canAccessChildrenProfiles, canManageChildrenProfiles } from "../../shared/pageAccess.mjs";
+import { canAccessChildrenProfiles, canEditChildrenProfiles, canManageChildrenProfiles } from "../../shared/pageAccess.mjs";
 import { getRequestIdentity } from "../services/requestIdentity.js";
 
 // userAuth supplies the current verified database identity.
@@ -9,13 +9,22 @@ export function requireChildProfileAccess(req, res, next) {
   }
   if (canAccessChildrenProfiles(user.role)) {
     req.childProfileUser = user;
-    req.childProfileFilter = canManageChildrenProfiles(user.role) ? {} : { createdBy: req.userId };
+    req.childProfileFilter = canEditChildrenProfiles(user.role) ? {} : { createdBy: req.userId };
     return next();
   }
   return res.status(403).json({
     success: false,
     code: "CHILD_PROFILE_ACCESS_REQUIRED",
-    message: "Children Profile is available to parents, Pamela, and Pascal users.",
+    message: "Children Profile is available to parents, leaders, admins, Pamela, and Pascal users.",
+  });
+}
+
+export function requireChildProfileEditing(req, res, next) {
+  if (canEditChildrenProfiles(req.childProfileUser?.role)) return next();
+  return res.status(403).json({
+    success: false,
+    code: "CHILD_PROFILE_ACCESS_REQUIRED",
+    message: "Only leaders, admins, Pamela, and Pascal can edit child profiles.",
   });
 }
 
@@ -24,6 +33,6 @@ export function requireChildProfileManagement(req, res, next) {
   return res.status(403).json({
     success: false,
     code: "CHILD_PROFILE_ACCESS_REQUIRED",
-    message: "Only Pamela and Pascal can edit or delete child profiles.",
+    message: "Only admins, Pamela, and Pascal can delete child profiles.",
   });
 }

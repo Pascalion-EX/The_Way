@@ -159,7 +159,7 @@ test("every child alias, attendance route, and notification mutation rejects una
   }
 });
 
-test("child profile management requires Pascal or Pamela while other staff routes retain all four staff roles", async (t) => {
+test("leaders can access, create, and edit child profiles while deletion requires admin, Pascal, or Pamela", async (t) => {
   const state = stubDatabase(t);
   const app = createApp();
   for (const role of ["admin", "leader", "pascal", "pamela"]) {
@@ -168,7 +168,7 @@ test("child profile management requires Pascal or Pamela while other staff route
       const before = state.businessCalls;
       const result = await request(app, route, state.token);
       const isChildProfile = /^\/api\/(children|childProfile)(\/|$)/.test(route.path);
-      if (isChildProfile && !["pascal", "pamela"].includes(role)) {
+      if (isChildProfile && role === "leader" && route.method === "DELETE") {
         assert.equal(result.status, 403, `${role}: ${route.method} ${route.path}`);
         assert.equal(result.body.code, "CHILD_PROFILE_ACCESS_REQUIRED");
         assert.equal(state.businessCalls, before, "Denied profile requests must not reach the database");
@@ -202,10 +202,10 @@ test("verified non-staff users can read their notifications and mark them seen",
 test("staff authorization uses current database roles and fails closed on lookup errors", async (t) => {
   const state = stubDatabase(t);
   const app = createApp();
-  const route = protectedRoutes[0];
+  const route = protectedRoutes.find(({ method, path }) => method === "DELETE" && path.startsWith("/api/children/"));
   state.user.role = ["pamela"];
   assert.equal((await request(app, route, state.token)).status, 200);
-  state.user.role = ["admin"];
+  state.user.role = ["leader"];
   const before = state.businessCalls;
   assert.equal((await request(app, route, state.token)).status, 403);
   assert.equal(state.businessCalls, before, "A still-valid staff JWT must not bypass role revocation");

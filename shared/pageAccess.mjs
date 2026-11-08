@@ -1,7 +1,8 @@
 const STAFF = ["admin", "leader", "pascal", "pamela"];
 const PRAYER_MANAGERS = ["admin", "pascal", "pamela"];
-const CHILD_PROFILE_MANAGERS = ["pascal", "pamela"];
-const CHILD_PROFILE_ROLES = [...CHILD_PROFILE_MANAGERS, "parent"];
+const CHILD_PROFILE_MANAGERS = ["admin", "pascal", "pamela"];
+const CHILD_PROFILE_EDITORS = [...CHILD_PROFILE_MANAGERS, "leader"];
+const CHILD_PROFILE_ROLES = [...CHILD_PROFILE_EDITORS, "parent"];
 const restrictedPages = [
   [/^\/prayer\/(new|[^/]+\/edit)\/?$/i, PRAYER_MANAGERS],
   [/^\/admin\/?$/i, ["admin", "pascal", "pamela"]],
@@ -27,6 +28,11 @@ export function canAccessChildrenProfiles(role) {
 export function canManageChildrenProfiles(role) {
   const roles = Array.isArray(role) ? role : [role];
   return roles.some((value) => CHILD_PROFILE_MANAGERS.includes(value));
+}
+
+export function canEditChildrenProfiles(role) {
+  const roles = Array.isArray(role) ? role : [role];
+  return roles.some((value) => CHILD_PROFILE_EDITORS.includes(value));
 }
 
 export function canAccessYearOneToThreeActivities(role, assignedClass) {
