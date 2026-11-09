@@ -17,6 +17,6 @@ export const requireAttendanceAccess = (req, res, next) => {
   return res.status(403).json({
     success: false,
     code: "ATTENDANCE_CLASS_REQUIRED",
-    message: "You need an assigned class to take attendance. Please contact an administrator.",
+    message: "You need an assigned year to take attendance. Please contact an administrator.",
   });
 };

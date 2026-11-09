@@ -22,7 +22,7 @@ const matches = (document, filter) => Object.entries(filter).every(([key, value]
   return String(document[key]) === String(value);
 });
 
-const setup = (t, roles = ["leader"], assignedClass = 1) => {
+const setup = (t, roles = ["leader"], assignedClass = 1, grades = [1, 2]) => {
   const previousSecret = process.env.JWT_SECRET;
   const previousSanitizer = mongoose.get("sanitizeFilter");
   process.env.JWT_SECRET = "test-only-attendance-class-secret";
@@ -32,7 +32,7 @@ const setup = (t, roles = ["leader"], assignedClass = 1) => {
     else process.env.JWT_SECRET = previousSecret;
     mongoose.set("sanitizeFilter", previousSanitizer);
   });
-  const children = childIds.map((id, index) => ({ _id: objectId(id), name: `Child ${index}`, grade: index + 1 }));
+  const children = childIds.map((id, index) => ({ _id: objectId(id), name: `Child ${index}`, grade: grades[index] }));
   const records = recordIds.map((id, index) => ({
     _id: objectId(id), child: children[index]._id, recordedBy: objectId(userId),
     serviceDate: new Date(`${serviceDate}T00:00:00Z`), serviceYear: 2026, status: "present",
@@ -153,6 +153,30 @@ test("leaders can record their class and mixed-class batches are rejected before
   assert.equal(weekly.status, 200);
   assert.equal(weekly.body.count, 1, "Saving must not return other classes' attendance");
   assert.equal(String(weekly.body.attendance[0].child._id), childIds[0]);
+  assert.equal(state.writes, 2);
+});
+
+test("a Year 3 leader can take only Year 3 attendance despite forged year and role claims", async (t) => {
+  const state = setup(t, ["leader"], 3, [3, 4]);
+  const roster = await state.request("GET", "/children?grade=4&class=4&allClasses=true");
+  assert.equal(roster.status, 200);
+  assert.deepEqual(roster.body.access, { allClasses: false, grade: 3 });
+  assert.deepEqual(roster.body.children.map((child) => child.grade), [3]);
+
+  const forbidden = await state.request("POST", "/", { child: childIds[1], serviceDate });
+  assert.equal(forbidden.status, 403);
+  const mixed = await state.request("POST", "/weekly", {
+    serviceDate, attendance: childIds.map((child) => ({ child, status: "present" })),
+  });
+  assert.equal(mixed.status, 403);
+  assert.equal(state.writes, 0, "No attendance may be written for a batch containing another year");
+
+  assert.equal((await state.request("POST", "/", { child: childIds[0], serviceDate })).status, 200);
+  const weekly = await state.request("POST", "/weekly", {
+    serviceDate, attendance: [{ child: childIds[0], status: "present" }],
+  });
+  assert.equal(weekly.status, 200);
+  assert.deepEqual(weekly.body.attendance.map((record) => record.child.grade), [3]);
   assert.equal(state.writes, 2);
 });
 

@@ -15,7 +15,7 @@ const attendanceFilter = async (req) => {
 
 const denyOtherClass = (res) => res.status(403).json({
   success: false,
-  message: "You can only access attendance for your assigned class.",
+  message: "You can only access attendance for your assigned year.",
 });
 
 export const getAttendanceChildren = async (req, res) => {

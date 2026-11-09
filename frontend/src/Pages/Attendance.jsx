@@ -509,11 +509,11 @@ const Attendance = () => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Grade
+                Year
               </label>
 
               <select
-                aria-label="Filter by grade"
+                aria-label="Filter by year"
                 value={attendanceAccess?.allClasses ? gradeFilter : String(attendanceAccess?.grade ?? "")}
                 disabled={!attendanceAccess?.allClasses}
                 onChange={(event) =>
@@ -534,18 +534,20 @@ const Attendance = () => {
                   focus:ring-[#D4AF37]/20
                 "
               >
-                {attendanceAccess?.allClasses && <option value="0">0 — All Grades</option>}
+                {attendanceAccess?.allClasses && <option value="0">All Years</option>}
 
                 {(attendanceAccess?.allClasses
                   ? Array.from({ length: 12 }, (_, index) => index + 1)
                   : attendanceAccess ? [attendanceAccess.grade] : []).map((grade) => (
                   <option key={grade} value={String(grade)}>
-                    {grade}
+                    Year {grade}
                   </option>
                 ))}
               </select>
               {attendanceAccess && !attendanceAccess.allClasses && (
-                <p className="mt-2 text-sm text-gray-500">Attendance is limited to your assigned class.</p>
+                <p className="mt-2 text-sm text-gray-500">
+                  You can take attendance only for your assigned year: Year {attendanceAccess.grade}.
+                </p>
               )}
             </div>
 
