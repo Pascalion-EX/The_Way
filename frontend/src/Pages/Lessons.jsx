@@ -38,7 +38,7 @@ const Lessons = () => {
       const allowedRoles = [
         "pascal",
         "admin",
-        "leader",
+        "servant",
         "pamela",
       ];
 

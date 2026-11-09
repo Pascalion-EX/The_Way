@@ -43,15 +43,15 @@ const Camp = () => {
     childName: "",
     childYear: "",
     parentPhone: "",
-    leaderName: "",
-    leaderRole: "",
+    servantName: "",
+    servantRole: "",
     notes: "",
   });
 
-  const createRoles = ["admin", "leader", "pascal"];
-  const applyRoles = ["parent", "admin", "leader", "pascal"];
-  const leaderFormRoles = ["admin", "leader", "pascal"];
-  const notifyRoles = ["admin", "leader", "pascal"];
+  const createRoles = ["admin", "servant", "pascal"];
+  const applyRoles = ["parent", "admin", "servant", "pascal"];
+  const servantFormRoles = ["admin", "servant", "pascal"];
+  const notifyRoles = ["admin", "servant", "pascal"];
 
   const userRoles = useMemo(() => {
     const roles = Array.isArray(userData?.role)
@@ -69,8 +69,8 @@ const Camp = () => {
 
   const isParent = userRoles.includes("parent");
   const isChild = userRoles.includes("child");
-  const isLeaderFormUser = userRoles.some((role) =>
-    leaderFormRoles.includes(role)
+  const isServantFormUser = userRoles.some((role) =>
+    servantFormRoles.includes(role)
   );
 
   const yearOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -78,7 +78,7 @@ const Camp = () => {
   const hasApplied = (camp) => camp.hasApplied === true;
 
   const getApplicationType = () => {
-    if (isLeaderFormUser) return "leader";
+    if (isServantFormUser) return "servant";
     if (isParent) return "parent_for_child";
     if (isChild) return "child_self";
     return "";
@@ -90,8 +90,8 @@ const Camp = () => {
       childName: "",
       childYear: "",
       parentPhone: "",
-      leaderName: "",
-      leaderRole: "",
+      servantName: "",
+      servantRole: "",
       notes: "",
     });
   };
@@ -147,7 +147,7 @@ const Camp = () => {
       return;
     }
 
-    if (applicationType !== "leader" && selectedCamp.price > 0 && !paymentScreenshot) {
+    if (applicationType !== "servant" && selectedCamp.price > 0 && !paymentScreenshot) {
       toast.error("Attach a screenshot of your completed payment.");
       return;
     }
@@ -166,9 +166,9 @@ const Camp = () => {
       }
     }
 
-    if (applicationType === "leader") {
-      if (!formData.leaderName || !formData.leaderRole || !formData.parentPhone) {
-        toast.error("Leader name, leader role, and phone are required");
+    if (applicationType === "servant") {
+      if (!formData.servantName || !formData.servantRole || !formData.parentPhone) {
+        toast.error("Servant name, servant role, and phone are required");
         return;
       }
     }
@@ -181,8 +181,8 @@ const Camp = () => {
         childName: formData.childName,
         childYear: formData.childYear,
         parentPhone: formData.parentPhone,
-        leaderName: formData.leaderName,
-        leaderRole: formData.leaderRole,
+        servantName: formData.servantName,
+        servantRole: formData.servantRole,
         notes: formData.notes,
       };
       const payload = new FormData();
@@ -360,7 +360,7 @@ const handleNotifySubmit = async (e) => {
             <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
                 type="text"
-                placeholder="Search by title, leader, type, body, or year"
+                placeholder="Search by title, servant, type, body, or year"
                 className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500 md:col-span-2"
                 value={search}
                 onChange={(e) => setFilters((previous) => ({ ...previous, search: e.target.value }))}
@@ -540,17 +540,17 @@ const handleNotifySubmit = async (e) => {
             <form onSubmit={handleApplySubmit} className="mt-6 space-y-4">
               <fieldset disabled={applyingCampId === selectedCamp._id} className="space-y-4">
               <CampPaymentDetails camp={selectedCamp} />
-              {isLeaderFormUser ? (
+              {isServantFormUser ? (
                 <>
                   <input
                     type="text"
-                    placeholder="Leader name"
+                    placeholder="Servant name"
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={formData.leaderName}
+                    value={formData.servantName}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        leaderName: e.target.value,
+                        servantName: e.target.value,
                       }))
                     }
                     required
@@ -558,13 +558,13 @@ const handleNotifySubmit = async (e) => {
 
                   <input
                     type="text"
-                    placeholder="Leader role / service"
+                    placeholder="Servant role / service"
                     className="h-12 w-full rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={formData.leaderRole}
+                    value={formData.servantRole}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
-                        leaderRole: e.target.value,
+                        servantRole: e.target.value,
                       }))
                     }
                     required
@@ -635,7 +635,7 @@ const handleNotifySubmit = async (e) => {
                 </>
               )}
 
-              {!isLeaderFormUser && selectedCamp.price > 0 && (
+              {!isServantFormUser && selectedCamp.price > 0 && (
                 <PaymentScreenshotUpload value={paymentScreenshot} onChange={setPaymentScreenshot}
                   disabled={applyingCampId === selectedCamp._id} />
               )}

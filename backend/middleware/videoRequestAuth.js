@@ -3,7 +3,7 @@ import userModel from "../models/userModel.js";
 
 const VIDEO_REQUEST_ROLES = [
   "pamela",
-  "leader",
+  "servant",
   "pascal",
   "admin",
 ];
@@ -14,7 +14,7 @@ const VIDEO_REQUEST_ROLES = [
 // Convert role into an array
 // Supports:
 // role: "pascal"
-// role: ["leader", "pascal"]
+// role: ["servant", "pascal"]
 // ============================================================
 
 const normalizeRoles = (role) => {
@@ -33,7 +33,7 @@ const normalizeRoles = (role) => {
 //
 // Allowed:
 // pamela
-// leader
+// servant
 // pascal
 // admin
 //

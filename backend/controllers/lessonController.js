@@ -6,7 +6,7 @@ import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 import { normalizeVideoUrl, VIDEO_URL_ERROR } from "../../shared/videoUrls.mjs";
 
-const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 
 /*
 |--------------------------------------------------------------------------

@@ -113,7 +113,7 @@ test("mark-as-seen permits any matching normalized role and stays idempotent und
   const state = setup(t);
   for (const identity of [
     { roles: ["parent"], targetRoles: ["admin", "parent"] },
-    { roles: ["parent", "leader"], targetRoles: ["leader"] },
+    { roles: ["parent", "servant"], targetRoles: ["servant"] },
     { roles: ["unAssigned"], targetRoles: ["unAssined"] },
     { roles: [" PAMELA "], targetRoles: ["pamela"] },
   ]) {

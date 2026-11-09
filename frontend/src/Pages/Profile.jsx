@@ -50,7 +50,7 @@ const Profile = () => {
 
   const availableNotificationRoles = [
     "admin",
-    "leader",
+    "servant",
     "pascal",
     "pamela",
     "parent",
@@ -108,7 +108,7 @@ const Profile = () => {
 
   const notificationManagementRoles = [
     "admin",
-    "leader",
+    "servant",
     "pascal",
     "pamela",
   ];
@@ -130,7 +130,7 @@ const Profile = () => {
       )
     );
 
-  const canEditClass = !userRoles.includes("leader") || canAccessAllAttendanceClasses(userRoles);
+  const canEditClass = !userRoles.includes("servant") || canAccessAllAttendanceClasses(userRoles);
 
   // ======================================================
   // LOAD USER DATA
@@ -172,7 +172,7 @@ const Profile = () => {
       case "admin":
         return "bg-red-100 text-red-700 border-red-200";
 
-      case "leader":
+      case "servant":
         return "bg-blue-100 text-blue-700 border-blue-200";
 
       case "pascal":

@@ -5,7 +5,7 @@ import lessonModel from "../models/lessonModel.js";
 import userModel from "../models/userModel.js";
 import { curriculumGraph, validateCurriculumTree } from "../utils/curriculumTree.js";
 
-const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 const validId = (id) => typeof id === "string" && mongoose.isObjectIdOrHexString(id);
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
 

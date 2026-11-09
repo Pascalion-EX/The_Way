@@ -37,7 +37,7 @@ const CampDetails = () => {
   const { id } = useParams();
   const { backendUrl, userData } = useContext(AppContent);
   const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
-  const isStaff = roles.some((role) => ["admin", "leader", "pascal", "pamela"].includes(String(role).toLowerCase()));
+  const isStaff = roles.some((role) => ["admin", "servant", "pascal", "pamela"].includes(String(role).toLowerCase()));
 
   const [camp, setCamp] = useState(null);
   const [loading, setLoading] = useState(true);

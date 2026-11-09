@@ -76,7 +76,7 @@ Drag the background to pan, drag individual nodes to rearrange the view, and cli
 a lesson to open it. Zoom, fit, reset, and wiggle controls are above the tree;
 wiggle respects reduced-motion preferences. Layout changes are temporary.
 The curriculum navigation button is shown to `admin`, `pascal`, `pamela`, and
-`leader` roles. These users can create curriculum, edit lesson connections, and
+`servant` roles. These users can create curriculum, edit lesson connections, and
 delete curriculum on this page. Deleting a curriculum preserves its lessons.
 Selected curriculum are retained in the URL as `?curriculum=<id>`.
 
@@ -160,7 +160,7 @@ cards are skipped when saving.
 Only `admin`, `pascal`, and `pamela` accounts can add, edit, or delete prayers.
 Deletion is available on the prayer list and viewer, with a confirmation prompt.
 These permissions are checked against current database roles for every change.
-Other verified members, including leaders, can read and present prayers.
+Other verified members, including servants, can read and present prayers.
 
 ### Trips and Camps
 
@@ -194,7 +194,7 @@ Application types currently used by the controller are:
 
 - `parent_for_child`
 - `child_self`
-- `leader`
+- `servant`
 
 ### Year 1–3 Activities
 
@@ -203,7 +203,7 @@ and Day activity columns. The server generates every Wednesday for the selected
 month and uses Cairo time for the current month. The page follows the current
 month automatically and also supports browsing past and future months. Saved
 activities remain attached to their dates in MongoDB. Access to the page and its
-read/write API is limited to verified leaders assigned to classes 1–3, plus
+read/write API is limited to verified servants assigned to classes 1–3, plus
 admin, Pascal, and Pamela users regardless of class. These users can edit and
 clear activities. The navigation menu and Activities page show the schedule
 link only to eligible users.
@@ -339,7 +339,7 @@ The user schema currently supports these role values:
 ```text
 pascal
 admin
-leader
+servant
 parent
 pamela
 unAssined
@@ -354,20 +354,20 @@ A user can hold multiple roles because `role` is stored as an array.
 | View authenticated content | Any logged-in user |
 | Admin dashboard | `admin`, `pamela`, `pascal` |
 | Delete users | `admin`, `pamela`, `pascal` |
-| Manage lessons | `pascal`, `admin`, `leader`, `pamela` |
-| Manage games | `admin`, `leader`, `pascal`, `pamela` |
-| Manage chants | `admin`, `leader`, `pascal`, `pamela` |
+| Manage lessons | `pascal`, `admin`, `servant`, `pamela` |
+| Manage games | `admin`, `servant`, `pascal`, `pamela` |
+| Manage chants | `admin`, `servant`, `pascal`, `pamela` |
 | Add/edit/delete prayers | `admin`, `pascal`, `pamela` |
 | Read/present prayers | Any verified account |
-| Manage activities | `admin`, `leader`, `pascal`, `pamela` intended |
+| Manage activities | `admin`, `servant`, `pascal`, `pamela` intended |
 | Read/manage child profiles | `pascal`, `pamela` only |
-| Read/manage attendance | `admin`, `leader`, `pascal`, `pamela` |
-| Publish/broadcast/clear/delete shared notifications | `admin`, `leader`, `pascal`, `pamela` |
+| Read/manage attendance | `admin`, `servant`, `pascal`, `pamela` |
+| Publish/broadcast/clear/delete shared notifications | `admin`, `servant`, `pascal`, `pamela` |
 | Read own notifications and mark them seen | Any verified account |
-| Create/manage trips | `admin`, `leader`, `pascal`, `pamela` intended by backend |
-| Apply to trips | `parent`, `admin`, `leader`, `pascal` |
-| View private trip applicant rosters | `admin`, `leader`, `pascal`, `pamela` |
-| Notify trip applicants | `admin`, `leader`, `pascal` |
+| Create/manage trips | `admin`, `servant`, `pascal`, `pamela` intended by backend |
+| Apply to trips | `parent`, `admin`, `servant`, `pascal` |
+| View private trip applicant rosters | `admin`, `servant`, `pascal`, `pamela` |
+| Notify trip applicants | `admin`, `servant`, `pascal` |
 
 > See [Current Implementation Notes](#current-implementation-notes) for permission inconsistencies currently present between some frontend and backend checks.
 
@@ -607,7 +607,7 @@ their price using **Manage payment settings** on the details page.
 
 Applications accept `multipart/form-data` with the existing application fields
 and a `paymentScreenshot` file. Parent applications to paid trips require a
-screenshot; leader and free-trip applications can still use JSON. Screenshots
+screenshot; servant and free-trip applications can still use JSON. Screenshots
 must be still JPEG, PNG, or WebP images of at most 5 MB and 20 megapixels. They
 are validated, resized, stripped of metadata, and stored as WebP in a separate
 MongoDB collection. Staff can review them under **Applicants and payments**.
@@ -654,13 +654,13 @@ Child applying for themselves:
 }
 ```
 
-Leader application:
+Servant application:
 
 ```json
 {
-  "applicationType": "leader",
-  "leaderName": "Leader Name",
-  "leaderRole": "Service Role",
+  "applicationType": "servant",
+  "servantName": "Servant Name",
+  "servantRole": "Service Role",
   "parentPhone": "01234567890",
   "notes": "Optional notes"
 }
@@ -677,7 +677,7 @@ Applicant notification payload:
 
 ### Event Updates API
 
-`PUT /api/events/:id` requires a verified `admin`, `leader`, `pascal`, or `pamela`
+`PUT /api/events/:id` requires a verified `admin`, `servant`, `pascal`, or `pamela`
 account. It accepts partial edits to `title`, `description`, `eventType`,
 `startDate`, `endDate`, `allDay`, `location`, and `years`. Author/calendar metadata,
 MongoDB operators, dotted/prototype keys, unknown fields, and invalid values are
@@ -869,8 +869,8 @@ applicationType
 childName
 childYear
 parentPhone
-leaderName
-leaderRole
+servantName
+servantRole
 notes
 appliedAt
 ```
@@ -1142,6 +1142,11 @@ npm run dev
 ---
 
 ## Production Deployment
+
+For the `leader` → `servant` rename, follow the coordinated
+[servant role migration plan](deployment/SERVANT_ROLE_MIGRATION.md) before
+releasing the new images. It includes a read-only preview, the user/notification/
+trip data migration, verification, and rollback.
 
 Follow the [step-by-step VPS deployment guide](DEPLOYMENT.md) to configure
 GitHub Actions testing and publishing to GitHub Container Registry (GHCR),
@@ -1439,7 +1444,7 @@ Some backend controllers allow `pamela`, while some frontend pages only show man
 
 ```text
 admin
-leader
+servant
 pascal
 ```
 

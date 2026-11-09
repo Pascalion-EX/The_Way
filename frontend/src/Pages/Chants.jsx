@@ -22,7 +22,7 @@ const Chants = () => {
     debounce: 300,
   });
 
-  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+  const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
   const canManageChants = allowedRoles.some((role) =>
     Array.isArray(userData?.role)

@@ -39,7 +39,7 @@ after(async () => {
   hmrServer?.close();
 });
 
-const render = (Component, props = {}, role = "leader", route = "/") => renderToStaticMarkup(
+const render = (Component, props = {}, role = "servant", route = "/") => renderToStaticMarkup(
   React.createElement(MemoryRouter, { initialEntries: [route] },
     React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: [role], isAccountVerified: true } } },
       React.createElement(Component, props))));
@@ -104,7 +104,7 @@ test("the importer explains supported formats, heading fallback, OCR, and draft 
 });
 
 test("every lesson creator sees import alongside the unchanged required lesson fields", () => {
-  for (const role of ["leader", "admin", "pamela", "pascal"]) {
+  for (const role of ["servant", "admin", "pamela", "pascal"]) {
     const html = render(CreateLesson, {}, role);
     assert.match(html, /Import a lesson document/);
     assert.match(html, /placeholder="Lesson title"[^>]*required=""/);
@@ -138,7 +138,7 @@ test("existing variants can import a document and replace their image from the e
     _id: "variant", variantGroup: "original", title: "Current title", name: "Younger group", year: 3,
     image: "/uploads/current.webp", partitions: [{ title: "Current section", body: "Current content" }],
   };
-  const html = render(EditLesson, {}, "leader", { pathname: "/lessons/edit/variant", state: { lesson } });
+  const html = render(EditLesson, {}, "servant", { pathname: "/lessons/edit/variant", state: { lesson } });
   assert.match(html, /Import a lesson document/);
   assert.match(html, /Import and replace title &amp; partitions/);
   assert.match(html, /accept="image\/jpeg,image\/png,image\/webp"/);

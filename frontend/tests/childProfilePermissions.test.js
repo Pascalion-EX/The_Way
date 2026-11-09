@@ -91,8 +91,8 @@ async function mountPage(roles) {
   };
 }
 
-test("leaders can create and edit child profiles without a Delete action", async () => {
-  for (const roles of [["leader"], ["parent", "leader"]]) {
+test("servants can create and edit child profiles without a Delete action", async () => {
+  for (const roles of [["servant"], ["parent", "servant"]]) {
     const page = await mountPage(roles);
     assert.ok(page.button("Add Child"));
     assert.ok(page.button("Edit"));
@@ -129,7 +129,7 @@ test("parents retain creation only while admins, Pascal, and Pamela have edit an
   parent.button("Add Child").props.onClick(); parent.render();
   assert.equal(parent.field("firstParent").props.value, "Current user");
 
-  for (const roles of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["leader", "admin"], ["leader", "pamela"]]) {
+  for (const roles of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["servant", "admin"], ["servant", "pamela"]]) {
     const page = await mountPage(roles);
     assert.ok(page.button("Add Child"));
     assert.ok(page.button("Edit"));

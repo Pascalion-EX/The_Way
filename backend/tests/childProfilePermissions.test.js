@@ -147,9 +147,9 @@ test("parents cannot edit or delete any child, including their own and newly cre
   assert.equal(state.writes, writes, "Denied mutations must not write child records");
 });
 
-test("leaders can view all children, including other parents' and legacy profiles", async (t) => {
+test("servants can view all children, including other parents' and legacy profiles", async (t) => {
   const state = setup(t);
-  for (const role of [["leader"], ["parent", "leader"], ["admin", "leader"]]) {
+  for (const role of [["servant"], ["parent", "servant"], ["admin", "servant"]]) {
     state.user.role = role;
     for (const prefix of prefixes) {
       const list = await state.request("GET", prefix);
@@ -167,12 +167,12 @@ test("leaders can view all children, including other parents' and legacy profile
   }
 });
 
-test("leaders can create and edit any child through both aliases without changing ownership", async (t) => {
+test("servants can create and edit any child through both aliases without changing ownership", async (t) => {
   const state = setup(t);
-  for (const role of [["leader"], ["parent", "leader"], ["admin", "leader"]]) {
+  for (const role of [["servant"], ["parent", "servant"], ["admin", "servant"]]) {
     state.user.role = role;
     for (const prefix of prefixes) {
-      const created = await state.request("POST", prefix, { name: "Leader's new child", grade: 1, createdBy: otherId });
+      const created = await state.request("POST", prefix, { name: "Servant's new child", grade: 1, createdBy: otherId });
       assert.equal(created.status, 201);
       assert.equal(String(created.body.childProfile.createdBy), userId);
       for (const id of [ownChildId, otherChildId, legacyChildId, String(created.body.childProfile._id)]) {
@@ -194,14 +194,14 @@ test("leaders can create and edit any child through both aliases without changin
   assert.equal(state.writes, 30);
 });
 
-test("leaders cannot delete any child, including their own and newly created profiles", async (t) => {
+test("servants cannot delete any child, including their own and newly created profiles", async (t) => {
   const state = setup(t);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   const created = await state.request("POST", prefixes[0], { name: "New child", grade: 1 });
   assert.equal(created.status, 201);
   const reads = state.reads;
   const writes = state.writes;
-  for (const role of [["leader"], ["parent", "leader"]]) {
+  for (const role of [["servant"], ["parent", "servant"]]) {
     state.user.role = role;
     for (const prefix of prefixes) {
       for (const id of [ownChildId, otherChildId, legacyChildId, String(created.body.childProfile._id)]) {
@@ -216,9 +216,9 @@ test("leaders cannot delete any child, including their own and newly created pro
   assert.equal(state.children.length, 4);
 });
 
-test("leader access requires current verified leader permissions", async (t) => {
+test("servant access requires current verified servant permissions", async (t) => {
   const state = setup(t);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   assert.equal((await state.request("GET", `${prefixes[0]}/${otherChildId}`)).status, 200);
   state.user.isAccountVerified = false;
   const reads = state.reads;
@@ -241,7 +241,7 @@ test("leader access requires current verified leader permissions", async (t) => 
 
 test("admins, Pascal, and Pamela can access all children including legacy profiles", async (t) => {
   const state = setup(t);
-  for (const role of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["admin", "leader"], ["parent", "pascal"], ["parent", "pamela"]]) {
+  for (const role of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["admin", "servant"], ["parent", "pascal"], ["parent", "pamela"]]) {
     state.user.role = role;
     for (const prefix of prefixes) {
       const result = await state.request("GET", prefix);
@@ -254,7 +254,7 @@ test("admins, Pascal, and Pamela can access all children including legacy profil
 
 test("admins, Pascal, and Pamela can create, edit, and delete child profiles through both aliases", async (t) => {
   const state = setup(t);
-  for (const role of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["admin", "leader"]]) {
+  for (const role of [["admin"], ["pascal"], ["pamela"], ["parent", "admin"], ["admin", "servant"]]) {
     state.user.role = role;
     for (const prefix of prefixes) {
       const created = await state.request("POST", prefix, { name: "New child", grade: 1 });
@@ -285,18 +285,18 @@ test("parent access requires current verified parent permissions", async (t) => 
   assert.equal(state.writes, 0);
 });
 
-test("shared permissions separate parent creation, leader editing, and full profile management", () => {
+test("shared permissions separate parent creation, servant editing, and full profile management", () => {
   for (const roles of ["parent", ["parent"], ["parent", "unAssigned"]]) {
     assert.equal(canAccessChildrenProfiles(roles), true);
     assert.equal(canEditChildrenProfiles(roles), false);
     assert.equal(canManageChildrenProfiles(roles), false);
   }
-  for (const roles of ["leader", ["leader"], ["parent", "leader"]]) {
+  for (const roles of ["servant", ["servant"], ["parent", "servant"]]) {
     assert.equal(canAccessChildrenProfiles(roles), true);
     assert.equal(canEditChildrenProfiles(roles), true);
     assert.equal(canManageChildrenProfiles(roles), false);
   }
-  for (const roles of ["admin", ["admin"], "pascal", "pamela", ["parent", "admin"], ["admin", "leader"], ["parent", "pascal"]]) {
+  for (const roles of ["admin", ["admin"], "pascal", "pamela", ["parent", "admin"], ["admin", "servant"], ["parent", "pascal"]]) {
     assert.equal(canAccessChildrenProfiles(roles), true);
     assert.equal(canEditChildrenProfiles(roles), true);
     assert.equal(canManageChildrenProfiles(roles), true);

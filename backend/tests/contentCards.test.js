@@ -67,7 +67,7 @@ for (const entry of cases) {
     t.mock.method(entry.model.collection, "findOne", async () => records[0]);
     t.mock.method(User.collection, "find", () => {
       populationReads++;
-      return { toArray: async () => [{ _id: creatorId, name: "Creator", email: "creator@example.com", role: ["leader"] }] };
+      return { toArray: async () => [{ _id: creatorId, name: "Creator", email: "creator@example.com", role: ["servant"] }] };
     });
 
     for (const query of [{}, { page: "1" }, { page: "2", search: "content" }]) {

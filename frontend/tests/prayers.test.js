@@ -39,7 +39,7 @@ const render = (Component, roles) => renderToStaticMarkup(React.createElement(Me
 
 test("Prayer has a viewer link for all members and add/edit controls only for its managers", async () => {
   const { default: Prayer } = await compilePage("Prayer");
-  for (const roles of [["parent"], ["leader"], ["child"], ["admin"], ["pascal"], ["pamela"], ["leader", "pamela"]]) {
+  for (const roles of [["parent"], ["servant"], ["child"], ["admin"], ["pascal"], ["pamela"], ["servant", "pamela"]]) {
     const html = render(Prayer, roles);
     assert.match(html, /<h1[^>]*>Prayer<\/h1>/);
     assert.match(html, /Prayer of thanksgiving/);
@@ -50,7 +50,7 @@ test("Prayer has a viewer link for all members and add/edit controls only for it
   }
 });
 
-test("prayer editors offer three languages and slide instructions while leaders and members cannot edit", async () => {
+test("prayer editors offer three languages and slide instructions while servants and members cannot edit", async () => {
   const { default: Editor } = await compilePage("PrayerEditor");
   for (const roles of [["admin"], ["pascal"], ["pamela"]]) {
     const html = render(Editor, roles);
@@ -67,7 +67,7 @@ test("prayer editors offer three languages and slide instructions while leaders 
     assert.equal((html.match(/accept="image\/jpeg,image\/png,image\/webp"/g) || []).length, 3);
     assert.equal((html.match(/<form/g) || []).length, 1);
   }
-  for (const roles of [["parent"], ["leader"], ["child"]]) {
+  for (const roles of [["parent"], ["servant"], ["child"]]) {
     const html = render(Editor, roles);
     assert.match(html, /Only admin, Pascal, and Pamela/);
     assert.doesNotMatch(html, /<form|<textarea/);
@@ -241,14 +241,14 @@ test("prayers reuse the chant viewer's language, slide, keyboard, fullscreen and
 });
 
 test("prayer management roles stay narrower than chant roles and failed prayer reads return to Prayer", async () => {
-  for (const roles of [["leader"], ["admin"], ["pascal"], ["pamela"]]) {
+  for (const roles of [["servant"], ["admin"], ["pascal"], ["pamela"]]) {
     const viewer = await mountViewer({ roles });
     assert.equal(Boolean(viewer.button("Edit")), canManagePrayers(roles));
     assert.equal(Boolean(viewer.button("Delete prayer")), canManagePrayers(roles));
     if (viewer.button("Edit")) { viewer.button("Edit").props.onClick(); assert.deepEqual(viewer.navigations, ["/prayer/test-id/edit"]); }
     viewer.cleanup();
   }
-  const chant = await mountViewer({ roles: ["leader"], contentType: "chant" });
+  const chant = await mountViewer({ roles: ["servant"], contentType: "chant" });
   assert.deepEqual(chant.requests, ["https://api.example.invalid/api/chants/test-id"]);
   assert.ok(chant.button("Edit"));
   assert.ok(chant.button("Delete"));

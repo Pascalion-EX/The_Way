@@ -41,7 +41,7 @@ const sections = [
     content: (
       <>
         <p>
-          Authorised service leaders, staff, and administrators can access records according
+          Authorised service servants, staff, and administrators can access records according
           to their roles. Hosting and email providers process information needed to run
           the website and deliver messages. When Google Drive backups are enabled,
           database records and uploaded images are included in those backups.

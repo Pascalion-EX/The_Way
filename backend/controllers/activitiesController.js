@@ -10,7 +10,7 @@ mongoose.set("strictQuery", true);
 
 const allowedRoles = [
   "admin",
-  "leader",
+  "servant",
   "pascal",
   "pamela",
 ];

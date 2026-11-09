@@ -104,7 +104,7 @@ function setup(t) {
 
 test("all verified members can browse prayers and read multilingual text without author records", async (t) => {
   const state = setup(t);
-  for (const role of ["parent", "child", "leader", "admin", "pascal", "pamela", "unAssigned"]) {
+  for (const role of ["parent", "child", "servant", "admin", "pascal", "pamela", "unAssigned"]) {
     state.user.role = [role];
     const list = await state.request();
     assert.equal(list.status, 200);
@@ -120,7 +120,7 @@ test("all verified members can browse prayers and read multilingual text without
 
 test("only admin, Pascal and Pamela can manage prayers using their current database roles", async (t) => {
   const state = setup(t);
-  for (const role of ["leader", "parent", "child", "unAssigned", "unknown"]) {
+  for (const role of ["servant", "parent", "child", "unAssigned", "unknown"]) {
     state.user.role = [role];
     const forged = { ...content, role: ["admin"], userId: otherId };
     assert.equal((await state.request("POST", "", forged)).status, 403);
@@ -143,9 +143,9 @@ test("only admin, Pascal and Pamela can manage prayers using their current datab
     assert.equal(String(state.records.get(prayerId).createdBy), otherId);
     assert.equal(String(state.records.get(prayerId).updatedBy), userId);
   }
-  state.user.role = ["leader", "pamela"];
+  state.user.role = ["servant", "pamela"];
   assert.equal((await state.request("POST", "", content)).status, 201);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   assert.equal((await state.request("PUT", `/${prayerId}`, content)).status, 403);
   assert.equal((await state.request("DELETE", `/${prayerId}`)).status, 403);
 });
@@ -153,7 +153,7 @@ test("only admin, Pascal and Pamela can manage prayers using their current datab
 test("prayer managers can delete a prayer without changing other prayers or returning private data", async (t) => {
   const state = setup(t);
   const original = clone(state.records.get(prayerId));
-  for (const roles of [["admin"], ["pascal"], ["pamela"], ["leader", "pamela"]]) {
+  for (const roles of [["admin"], ["pascal"], ["pamela"], ["servant", "pamela"]]) {
     state.user.role = roles;
     const created = await state.request("POST", "", content);
     const id = created.body.prayer._id;
@@ -237,7 +237,7 @@ test("invalid and missing prayers return useful responses while database failure
 });
 
 test("prayer editor page permissions match API management permissions and allow all members to view", () => {
-  for (const roles of [["admin"], ["pascal"], ["pamela"], ["leader", "pamela"], ["leader"], ["parent"], ["child"], []]) {
+  for (const roles of [["admin"], ["pascal"], ["pamela"], ["servant", "pamela"], ["servant"], ["parent"], ["child"], []]) {
     const expected = roles.some((role) => ["admin", "pascal", "pamela"].includes(role));
     assert.equal(canManagePrayers(roles), expected);
     assert.equal(canAccessPage("/prayer/new", roles), expected);
@@ -279,7 +279,7 @@ test("prayer slide images are saved, read, reordered and removed independently f
   assert.equal(imageOnly.status, 201);
   assert.equal(imageOnly.body.prayer.text.english, "");
   assert.deepEqual(imageOnly.body.prayer.slides.english, [{ text: "", image: images[0] }]);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   assert.equal((await state.request("PUT", `/${id}`, payload)).status, 403);
   state.user.role = ["parent"];
   assert.equal((await state.request("GET", `/${id}`)).status, 200);

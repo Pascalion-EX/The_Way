@@ -13,7 +13,7 @@ const upload = multer({
 }).single("paymentScreenshot");
 
 export function uploadCampPayment(req, res, next) {
-  // Retain JSON applications for leaders and free/legacy camps.
+  // Retain JSON applications for servants and free/legacy camps.
   if (!req.is("multipart/form-data")) return next();
   upload(req, res, (error) => {
     if (!error) return next();

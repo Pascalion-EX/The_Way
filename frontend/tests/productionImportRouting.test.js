@@ -50,7 +50,7 @@ test("paid camp applications allow a full payment screenshot and form fields thr
   const limit = http.middlewares["camp-payment-body-limit"].buffering;
   const body = new FormData();
   body.append("paymentScreenshot", new Blob([new Uint8Array(5 * 1024 * 1024)], { type: "image/png" }), "payment.png");
-  for (const field of ["applicationType", "childName", "childYear", "parentPhone", "leaderName", "leaderRole", "notes"]) body.append(field, "a".repeat(10 * 1024));
+  for (const field of ["applicationType", "childName", "childYear", "parentPhone", "servantName", "servantRole", "notes"]) body.append(field, "a".repeat(10 * 1024));
   const request = new Request(`https://way.example.invalid/api/camps/${"a".repeat(24)}/apply`, { method: "POST", body });
   assert.ok((await request.arrayBuffer()).byteLength <= limit.maxRequestBodyBytes);
   assert.equal(limit.memRequestBodyBytes, limit.maxRequestBodyBytes);

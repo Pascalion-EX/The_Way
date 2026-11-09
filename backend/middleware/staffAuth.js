@@ -2,7 +2,7 @@ import { denyAccess } from "../services/accessDenials.js";
 import userModel from "../models/userModel.js";
 import { getRequestIdentity } from "../services/requestIdentity.js";
 
-const STAFF_ROLES = new Set(["admin", "leader", "pascal", "pamela"]);
+const STAFF_ROLES = new Set(["admin", "servant", "pascal", "pamela"]);
 
 // Read current permissions from the database, never from request data or JWT claims.
 export const requireStaff = async (req, res, next) => {

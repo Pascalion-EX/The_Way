@@ -21,7 +21,7 @@ test("one database authorization read per request still rechecks revocations on 
     else process.env.JWT_SECRET = previous;
   });
   const id = "6ab26b08171afea3091f04b3";
-  let identity = { _id: id, tokenVersion: 0, role: ["leader"], class: 2, isAccountVerified: true };
+  let identity = { _id: id, tokenVersion: 0, role: ["servant"], class: 2, isAccountVerified: true };
   const lookup = t.mock.method(User, "findById", () => ({ select: async () => structuredClone(identity) }));
   const token = jwt.sign({ id, tokenVersion: 0 }, process.env.JWT_SECRET);
   const request = async () => {

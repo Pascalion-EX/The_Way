@@ -16,7 +16,7 @@ const Header = () => {
 
     const videoRequestRoles = [
   "pamela",
-  "leader",
+  "servant",
   "pascal",
   "admin",
 ];

@@ -12,7 +12,7 @@ Implemented on 14 October 2026 following [the original review](../SECURITY_REVIE
 | F04: OTP guessing | Codes expire after ten minutes and allow five attempts. MongoDB atomically admits attempts and consumes a specific generation with verification/password changes. Resend, concurrent requests, expiry during work, and replay cannot reuse an old generation. |
 | F05: dependency advisories | All three locked package trees now return zero npm advisory entries. Compatible upgrades and unnecessary-tool removal replace forced historical downgrades. |
 
-Staff roles are the existing `admin`, `leader`, `pascal`, and `pamela` roles. The
+Staff roles are the existing `admin`, `servant`, `pascal`, and `pamela` roles. The
 shared permission middleware reads current database roles and verification,
 ignoring request-body or JWT role claims. Scope follows the existing staff UI;
 guardian/class-specific relationships remain a future policy extension.

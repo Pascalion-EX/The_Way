@@ -17,7 +17,7 @@ import axios from "../utils/axios";
 
 const PAGE_ROLES = [
   "pamela",
-  "leader",
+  "servant",
   "pascal",
   "admin",
 ];

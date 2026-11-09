@@ -15,7 +15,7 @@ export function requireChildProfileAccess(req, res, next) {
   return res.status(403).json({
     success: false,
     code: "CHILD_PROFILE_ACCESS_REQUIRED",
-    message: "Children Profile is available to parents, leaders, admins, Pamela, and Pascal users.",
+    message: "Children Profile is available to parents, servants, admins, Pamela, and Pascal users.",
   });
 }
 
@@ -24,7 +24,7 @@ export function requireChildProfileEditing(req, res, next) {
   return res.status(403).json({
     success: false,
     code: "CHILD_PROFILE_ACCESS_REQUIRED",
-    message: "Only leaders, admins, Pamela, and Pascal can edit child profiles.",
+    message: "Only servants, admins, Pamela, and Pascal can edit child profiles.",
   });
 }
 

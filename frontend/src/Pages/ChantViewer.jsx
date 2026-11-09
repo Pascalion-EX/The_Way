@@ -31,7 +31,7 @@ const ChantViewer = ({ contentType = "chant" }) => {
   const [deleting, setDeleting] = useState(false);
   const deletingRef = useRef(false);
 
-  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+  const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
   const canManageChants = isPrayer ? canManagePrayers(userData?.role) : allowedRoles.some((role) =>
     Array.isArray(userData?.role)

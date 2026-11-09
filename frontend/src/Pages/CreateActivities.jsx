@@ -57,7 +57,7 @@ const CreateActivities = () => {
     const allowedRoles = [
       "pascal",
       "admin",
-      "leader",
+      "servant",
       "pamela",
     ];
 

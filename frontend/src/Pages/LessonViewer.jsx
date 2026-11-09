@@ -47,7 +47,7 @@ const LessonViewer = () => {
   const lesson = loading ? null : result.lesson;
   const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
   const canManageLessons = roles.some((role) =>
-    ["pascal", "admin", "leader", "pamela"].includes(role)
+    ["pascal", "admin", "servant", "pamela"].includes(role)
   );
 
   useEffect(() => {

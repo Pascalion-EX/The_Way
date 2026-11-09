@@ -58,7 +58,7 @@ const EditEvent = () => {
     years: [],
   });
 
-  const allowedManageRoles = ["admin", "leader", "pascal", "pamela"];
+  const allowedManageRoles = ["admin", "servant", "pascal", "pamela"];
 
   const userRoles = Array.isArray(userData?.role)
     ? userData.role

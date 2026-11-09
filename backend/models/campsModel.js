@@ -59,7 +59,7 @@ const campSchema = new mongoose.Schema(
 
     applicationType: {
       type: String,
-      enum: ["parent_for_child", "child_self", "leader"],
+      enum: ["parent_for_child", "child_self", "servant"],
       // Older applications contain only user and appliedAt.
     },
 
@@ -81,13 +81,13 @@ const campSchema = new mongoose.Schema(
       default: "",
     },
 
-    leaderName: {
+    servantName: {
       type: String,
       trim: true,
       default: "",
     },
 
-    leaderRole: {
+    servantRole: {
       type: String,
       trim: true,
       default: "",

@@ -28,7 +28,7 @@ async function setup(t) {
     else process.env.JWT_SECRET = previous;
   });
   const state = {
-    user: { _id: userId, role: ["leader"], isAccountVerified: true, tokenVersion: 0 },
+    user: { _id: userId, role: ["servant"], isAccountVerified: true, tokenVersion: 0 },
     writes: [], counter: 0, counterOutage: false,
   };
   t.mock.method(User.collection, "findOne", async () => structuredClone(state.user));
@@ -176,7 +176,7 @@ test("a Word import can be reviewed and saved as a variant with its own uploaded
 
 test("import authorization checks current roles before accepting uploads", async (t) => {
   const state = await setup(t);
-  for (const role of ["leader", "admin", "pascal", "pamela"]) {
+  for (const role of ["servant", "admin", "pascal", "pamela"]) {
     state.user.role = [role];
     assert.equal((await state.upload("Content.")).status, 200);
   }
@@ -187,7 +187,7 @@ test("import authorization checks current roles before accepting uploads", async
   state.user.isAccountVerified = true;
   state.user.role = ["parent"];
   assert.equal((await state.upload("Content.")).status, 403);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   state.user.isBanned = true;
   assert.equal((await state.upload("Content.")).body.code, "ACCOUNT_BANNED");
   assert.equal(state.counter, counter, "Denied requests must not consume import quota or parse a document");

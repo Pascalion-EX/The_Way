@@ -17,7 +17,7 @@ const Games = () => {
   const [yearFilter, setYearFilter] = useState("0");
 
   const canManageGames = useMemo(() => {
-    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+    const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 
     const roles = Array.isArray(userData?.role)
       ? userData.role

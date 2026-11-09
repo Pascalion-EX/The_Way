@@ -53,11 +53,11 @@ This was a repository review and offline validation, not a live infrastructure p
 
 Every child route checks only `userAuth`, which validates a signed-in, verified account. It does not require staff membership or a relationship to the requested child. Both `/api/children` and `/api/childProfile` mount the same router. Listing returns complete documents, including child names/grades, parent names and phone numbers, home addresses, and allergies. IDs from the list can be reused for update/delete requests.
 
-**Proof:** A synthetic verified `unAssigned` account passed the actual JWT/verification middleware, received sensitive child fields, and successfully invoked child deletion. The frontend's [ChildProfile.jsx:69](/home/kfam/Service/The_Way/frontend/src/Pages/ChildProfile.jsx:69) restricts management to `admin`, `leader`, `pascal`, and `pamela`; that restriction is absent from the backend.
+**Proof:** A synthetic verified `unAssigned` account passed the actual JWT/verification middleware, received sensitive child fields, and successfully invoked child deletion. The frontend's [ChildProfile.jsx:69](/home/kfam/Service/The_Way/frontend/src/Pages/ChildProfile.jsx:69) restricts management to `admin`, `servant`, `pascal`, and `pamela`; that restriction is absent from the backend.
 
 **Impact:** Unauthorized disclosure of children's/families' personal and health-related details, alteration of safety information, and deletion of records. Email verification alone does not establish authorization to manage children.
 
-**Fix:** Immediately require authorized staff on backend reads and writes. If guardians/class leaders need access, store explicit guardian/class relationships and include them in database query conditions. Return only fields needed for the caller's role. Protect both router mount paths. Test `unAssigned`, unrelated parent, related parent, staff for another class, authorized staff, and admin.
+**Fix:** Immediately require authorized staff on backend reads and writes. If guardians/class servants need access, store explicit guardian/class relationships and include them in database query conditions. Return only fields needed for the caller's role. Protect both router mount paths. Test `unAssigned`, unrelated parent, related parent, staff for another class, authorized staff, and admin.
 
 ### F02 — Unrestricted attendance access and modification
 

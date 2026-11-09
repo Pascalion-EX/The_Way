@@ -70,9 +70,9 @@ export default function CampApplicants({ campId }) {
       <div className="mt-4 space-y-4">
         {applicants?.map((applicant) => (
           <article key={applicant._id} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-            <h3 className="break-words font-semibold text-gray-900">{applicant.childName || applicant.leaderName || applicant.user?.name || "Applicant"}</h3>
+            <h3 className="break-words font-semibold text-gray-900">{applicant.childName || applicant.servantName || applicant.user?.name || "Applicant"}</h3>
             {applicant.childYear && <p className="mt-1 text-sm text-gray-600">Year {applicant.childYear}</p>}
-            {applicant.leaderRole && <p className="mt-1 text-sm text-gray-600">{applicant.leaderRole}</p>}
+            {applicant.servantRole && <p className="mt-1 text-sm text-gray-600">{applicant.servantRole}</p>}
             <p className="mt-1 break-words text-sm text-gray-600">{applicant.user?.name || "Deleted account"}{applicant.user?.email ? ` · ${applicant.user.email}` : ""}</p>
             {applicant.parentPhone && <p className="mt-1 text-sm text-gray-600">Phone: {applicant.parentPhone}</p>}
             {applicant.appliedAt && <p className="mt-1 text-xs text-gray-500">Applied {new Date(applicant.appliedAt).toLocaleDateString("en-GB")}</p>}

@@ -3,7 +3,7 @@ import userModel from "../models/userModel.js";
 
 export const eventAdminOnly = async (req, res, next) => {
   try {
-    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+    const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 
     if (!req.userId) {
       return res.status(401).json({

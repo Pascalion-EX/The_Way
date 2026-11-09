@@ -35,11 +35,11 @@ const Navbar = () => {
     )
   );
   const hasCurriculumAccess = userRoles.some((role) =>
-    ["admin", "pascal", "pamela", "leader"].includes(role)
+    ["admin", "pascal", "pamela", "servant"].includes(role)
   );
   const videoRequestRoles = [
   "pamela",
-  "leader",
+  "servant",
   "pascal",
   "admin",
 ];

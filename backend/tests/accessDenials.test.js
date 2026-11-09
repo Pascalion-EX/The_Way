@@ -253,7 +253,7 @@ test("expired ban mail and mail for a cleared ban are discarded", async (t) => {
 });
 
 test("page permissions preserve admin/staff distinctions and cover create and edit routes", () => {
-  assert.equal(canAccessPage("/admin", ["leader"]), false);
+  assert.equal(canAccessPage("/admin", ["servant"]), false);
   assert.equal(canAccessPage("/ADMIN", ["parent"]), false);
   assert.equal(canAccessPage("/%61dmin/", ["parent"]), false);
   assert.equal(pageAccessRoles("/%invalid"), null);
@@ -261,12 +261,12 @@ test("page permissions preserve admin/staff distinctions and cover create and ed
   for (const page of ["/attendance", "/video-requests", "/create-lesson", "/create-camp", "/create-game", "/create-chant", "/create-activity", "/lessons/123/edit", "/games/123/edit", "/chants/123/edit", "/edit-chant/123", "/activities/123/edit", "/events/create", "/events/123/edit"]) {
     assert.ok(pageAccessRoles(page), page);
     assert.equal(canAccessPage(page, ["parent"]), false, page);
-    for (const role of ["admin", "leader", "pascal", "pamela"]) assert.equal(canAccessPage(page, role), true, `${page}: ${role}`);
+    for (const role of ["admin", "servant", "pascal", "pamela"]) assert.equal(canAccessPage(page, role), true, `${page}: ${role}`);
   }
   for (const page of ["/childrenProfile", "/CHILDRENPROFILE/", "/%63hildrenProfile"]) {
     assert.ok(pageAccessRoles(page), page);
     assert.equal(canAccessPage(page, "unAssigned"), false, page);
-    for (const role of ["parent", "leader", "admin", "pamela", "pascal"]) {
+    for (const role of ["parent", "servant", "admin", "pamela", "pascal"]) {
       assert.equal(canAccessPage(page, role), true, `${page}: ${role}`);
       assert.equal(canAccessPage(page, ["unAssigned", role]), true, `${page}: ${role}`);
     }

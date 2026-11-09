@@ -27,7 +27,7 @@ try {
   const password = await bcrypt.hash("synthetic-load-test-password", 10);
   const users = await User.insertMany(Array.from({ length: 1000 }, (_, i) => ({
     name: `Synthetic ${i}`, email: `load-${i}@example.invalid`, password,
-    role: [i === 0 ? "admin" : i % 5 === 0 ? "leader" : "parent"], class: 1 + i % 12, isAccountVerified: true,
+    role: [i === 0 ? "admin" : i % 5 === 0 ? "servant" : "parent"], class: 1 + i % 12, isAccountVerified: true,
   })));
   const creator = users[0]._id;
   const lessons = await Lesson.insertMany(Array.from({ length: 500 }, (_, i) => ({
@@ -41,7 +41,7 @@ try {
     title: `Synthetic chant ${i}`, lyrics: { english: "Synthetic lyrics. ".repeat(100) }, createdBy: creator,
   })));
   await Notification.insertMany(Array.from({ length: 100 }, (_, i) => ({
-    title: `Synthetic notice ${i}`, targetRoles: ["parent", "leader"], url: "/", message: "Synthetic message",
+    title: `Synthetic notice ${i}`, targetRoles: ["parent", "servant"], url: "/", message: "Synthetic message",
   })));
   await Event.insertMany(Array.from({ length: 100 }, (_, i) => ({
     title: `Synthetic event ${i}`, eventType: "Other", startDate: new Date(2026, 0, 1 + i), createdBy: creator,

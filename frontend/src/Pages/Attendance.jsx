@@ -108,7 +108,7 @@ const Attendance = () => {
   // PERMISSIONS
   // ======================================================
 
-  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+  const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
   const userRoles = userData
     ? Array.isArray(userData.role)

@@ -21,7 +21,7 @@ export default function Curriculum() {
   const [editor, setEditor] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const roles = Array.isArray(userData?.role) ? userData.role : [userData?.role];
-  const canManage = roles.some((role) => ["pascal", "admin", "leader", "pamela"].includes(role));
+  const canManage = roles.some((role) => ["pascal", "admin", "servant", "pamela"].includes(role));
   const selectedId = params.get("curriculum");
   const selected = curriculumList.find((curriculum) => curriculum._id === selectedId) || (!selectedId ? curriculumList[0] : null);
   const filtered = curriculumList.filter((curriculum) => curriculum.name.toLowerCase().includes(search.trim().toLowerCase()));

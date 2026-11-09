@@ -1,7 +1,7 @@
-const STAFF = ["admin", "leader", "pascal", "pamela"];
+const STAFF = ["admin", "servant", "pascal", "pamela"];
 const PRAYER_MANAGERS = ["admin", "pascal", "pamela"];
 const CHILD_PROFILE_MANAGERS = ["admin", "pascal", "pamela"];
-const CHILD_PROFILE_EDITORS = [...CHILD_PROFILE_MANAGERS, "leader"];
+const CHILD_PROFILE_EDITORS = [...CHILD_PROFILE_MANAGERS, "servant"];
 const CHILD_PROFILE_ROLES = [...CHILD_PROFILE_EDITORS, "parent"];
 const restrictedPages = [
   [/^\/prayer\/(new|[^/]+\/edit)\/?$/i, PRAYER_MANAGERS],
@@ -38,7 +38,7 @@ export function canEditChildrenProfiles(role) {
 export function canAccessYearOneToThreeActivities(role, assignedClass) {
   const roles = Array.isArray(role) ? role : [role];
   return roles.some((value) => ["admin", "pascal", "pamela"].includes(value)) ||
-    (roles.includes("leader") && Number.isInteger(assignedClass) && assignedClass >= 1 && assignedClass <= 3);
+    (roles.includes("servant") && Number.isInteger(assignedClass) && assignedClass >= 1 && assignedClass <= 3);
 }
 
 function findPageRule(pathname) {

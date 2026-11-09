@@ -19,7 +19,7 @@ const find = (node, predicate) => {
   return predicate(node) ? node : find(node.props?.children, predicate);
 };
 
-async function mountPage({ roles = ["leader"], access = { allClasses: false, grade: 3 }, denied = false } = {}) {
+async function mountPage({ roles = ["servant"], access = { allClasses: false, grade: 3 }, denied = false } = {}) {
   const values = [];
   const effects = [];
   const pending = [];
@@ -64,7 +64,7 @@ async function mountPage({ roles = ["leader"], access = { allClasses: false, gra
             response: { data: { message: "You need an assigned year to take attendance." } },
           });
           return { data: url.endsWith("/children") ? { children, access } : {
-            // Include an unrelated record to verify it cannot enter a leader's saved attendance.
+            // Include an unrelated record to verify it cannot enter a servant's saved attendance.
             attendance: roster.map((child) => ({ child, status: "absent", notes: "" })),
           } };
         },
@@ -98,7 +98,7 @@ async function mountPage({ roles = ["leader"], access = { allClasses: false, gra
   };
 }
 
-test("a Year 3 leader sees a locked year selector and saves only Year 3 attendance", async () => {
+test("a Year 3 servant sees a locked year selector and saves only Year 3 attendance", async () => {
   const page = await mountPage();
   const selector = page.yearSelector();
   assert.equal(selector.props.disabled, true);
@@ -114,9 +114,9 @@ test("a Year 3 leader sees a locked year selector and saves only Year 3 attendan
   assert.deepEqual(page.errors, []);
 });
 
-test("admin, Pascal, and Pamela can select any year, including when they also have the leader role", async () => {
+test("admin, Pascal, and Pamela can select any year, including when they also have the servant role", async () => {
   for (const role of ["admin", "pascal", "pamela"]) {
-    for (const roles of [[role], ["leader", role]]) {
+    for (const roles of [[role], ["servant", role]]) {
       const page = await mountPage({ roles, access: { allClasses: true, grade: null } });
       const selector = page.yearSelector();
       assert.equal(selector.props.disabled, false);
@@ -138,7 +138,7 @@ test("admin, Pascal, and Pamela can select any year, including when they also ha
   }
 });
 
-test("a leader without an assigned year cannot select a year or save attendance", async () => {
+test("a servant without an assigned year cannot select a year or save attendance", async () => {
   const page = await mountPage({ denied: true });
   assert.equal(page.yearSelector().props.disabled, true);
   assert.equal(page.button("Save Attendance"), null);

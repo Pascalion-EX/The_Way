@@ -26,7 +26,7 @@ const notificationSchema = new mongoose.Schema(
         type: String,
         enum: [
           "admin",
-          "leader",
+          "servant",
           "pascal",
           "pamela",
           "parent",

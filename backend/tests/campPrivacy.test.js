@@ -183,7 +183,7 @@ const assertCard = (camp, applied = false) => {
 
 test("unrelated members receive only counts and their own status from camp lists and details", async (t) => {
   const state = setup(t);
-  for (const role of ["parent", "unAssigned", "admin", "leader", "pascal", "pamela"]) {
+  for (const role of ["parent", "unAssigned", "admin", "servant", "pascal", "pamela"]) {
     state.user.role = [role];
     const list = await state.request("GET", `?userId=${otherId}&role=admin&populate=applicants.user`);
     const detail = await state.request("GET", `/${campId}?userId=${otherId}&populate=createdBy`);
@@ -239,14 +239,14 @@ test("ordinary members cannot retrieve rosters even with forged admin claims", a
 
 test("all existing staff roles can read a separately projected applicant roster", async (t) => {
   const state = setup(t);
-  for (const role of ["admin", "leader", "pascal", "pamela"]) {
+  for (const role of ["admin", "servant", "pascal", "pamela"]) {
     state.user.role = [role];
     const result = await state.request("GET", `/${campId}/applicants`);
     assert.equal(result.status, 200);
     assert.equal(result.body.applicantCount, 1);
     assert.equal(result.body.campId, campId);
     assert.deepEqual(result.body.applicants[0].user, { _id: otherId, name: state.other.name, email: state.other.email, role: ["parent"] });
-    assert.deepEqual(Object.keys(result.body.applicants[0]).sort(), ["_id", "appliedAt", "childName", "leaderName", "leaderRole", "notes", "parentPhone", "user"]);
+    assert.deepEqual(Object.keys(result.body.applicants[0]).sort(), ["_id", "appliedAt", "childName", "servantName", "servantRole", "notes", "parentPhone", "user"].sort());
     assert.deepEqual(state.campReads.at(-1).options.projection, { applicants: 1 });
     assert.equal(JSON.stringify(result.body).includes("private-hash"), false);
     assert.equal(result.body.applicants[0].parentPhone, "private-phone");
@@ -290,7 +290,7 @@ test("unverified, anonymous, deleted, and revoked accounts cannot read camp meta
 
 test("staff creation and update responses use the same safe camp summary", async (t) => {
   const state = setup(t);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   const updated = await state.request("PUT", `/${campId}`, { title: "Updated trip", applicants: [], createdBy: userId });
   assert.equal(updated.status, 200);
   assertSummary(updated.body.camp);
@@ -385,7 +385,7 @@ test("camp creation validates EGP prices and requires an uploaded QR image for p
 
 test("payment settings updates validate the resulting price and QR together", async (t) => {
   const state = setup(t);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   assert.equal((await state.request("PUT", `/${campId}`, { price: 500 })).status, 400);
   assert.equal((await state.request("PUT", `/${campId}`, { price: 500, paymentQrImage })).status, 200);
   const updated = await state.request("PUT", `/${campId}`, { price: 600.25 });
@@ -403,7 +403,7 @@ test("parents cannot submit paid applications without proof or bypass it using a
   const missing = await state.request("POST", `/${campId}/apply`, parentApplication);
   assert.equal(missing.status, 400);
   assert.match(missing.body.message, /payment screenshot is required/);
-  for (const applicationType of ["leader", "child_self", "unknown"]) {
+  for (const applicationType of ["servant", "child_self", "unknown"]) {
     const response = await state.request("POST", `/${campId}/apply`, { ...parentApplication, applicationType });
     assert.ok([400, 403].includes(response.status));
   }
@@ -428,7 +428,7 @@ test("multipart application stores a normalized private receipt and all applicat
   const path = `/${campId}/applicants/${applicant._id}/payment`;
   assert.equal((await state.request("GET", path)).status, 403);
   assert.equal(state.screenshotReads, 0);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   const roster = await state.request("GET", `/${campId}/applicants`);
   assert.equal(roster.body.applicants.at(-1).paymentScreenshotUrl, `/api/camps${path}`);
   assert.equal(roster.body.applicants.at(-1).childName, parentApplication.childName);
@@ -481,15 +481,15 @@ test("failed applications, withdrawals and camp deletion remove their private re
   assert.equal(state.screenshots.size, 0);
 });
 
-test("legacy applications stay valid and leaders can register for paid camps without a parent receipt", async (t) => {
+test("legacy applications stay valid and servants can register for paid camps without a parent receipt", async (t) => {
   const state = setup(t);
   state.camp.price = 100;
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   const result = await state.request("POST", `/${campId}/apply`, {
-    applicationType: "leader", leaderName: "Leader", leaderRole: "Service", parentPhone: "123",
+    applicationType: "servant", servantName: "Servant", servantRole: "Service", parentPhone: "123",
   });
   assert.equal(result.status, 200);
   assert.equal(state.camp.applicants.length, 2);
-  assert.equal(state.camp.applicants.at(-1).leaderName, "Leader");
+  assert.equal(state.camp.applicants.at(-1).servantName, "Servant");
   assert.equal(state.screenshots.size, 0);
 });

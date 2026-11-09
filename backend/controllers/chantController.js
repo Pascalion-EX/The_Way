@@ -8,7 +8,7 @@ import userModel from "../models/userModel.js";
 mongoose.set("sanitizeFilter", true);
 mongoose.set("strictQuery", true);
 
-const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
 const hasChantPermission = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];
@@ -83,7 +83,7 @@ export const createChant = async (req, res) => {
     if (!hasChantPermission(user.role)) {
       return await denyAccess(req, res, {
         success: false,
-        message: "Access denied. Admins, leaders, and pascal only.",
+        message: "Access denied. Admins, servants, and pascal only.",
       });
     }
 

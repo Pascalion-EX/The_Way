@@ -37,7 +37,7 @@ export const toCampSummary = (camp, userId) => {
 export const toStaffApplicant = (applicant, campId) => ({
   _id: applicant._id,
   appliedAt: applicant.appliedAt,
-  ...Object.fromEntries(["applicationType", "childName", "childYear", "parentPhone", "leaderName", "leaderRole", "notes"]
+  ...Object.fromEntries(["applicationType", "childName", "childYear", "parentPhone", "servantName", "servantRole", "notes"]
     .filter((field) => applicant[field] !== undefined).map((field) => [field, applicant[field]])),
   ...(applicant.paymentScreenshot ? {
     paymentScreenshotUrl: `/api/camps/${campId}/applicants/${applicant._id}/payment`,

@@ -34,7 +34,7 @@ function setup(t) {
     mongoose.set("sanitizeFilter", oldSanitizer);
   });
   const state = {
-    user: { _id: objectId(userId), role: ["leader"], tokenVersion: 0, isAccountVerified: true },
+    user: { _id: objectId(userId), role: ["servant"], tokenVersion: 0, isAccountVerified: true },
     event: {
       _id: objectId(eventId), title: "Original", description: "Original description", eventType: "Meeting", location: "Church", years: [1, 2], allDay: false,
       startDate: new Date("2026-10-15T10:00:00Z"), endDate: new Date("2026-10-15T12:00:00Z"),
@@ -186,7 +186,7 @@ test("all four staff roles retain partial edits for manual and generated events"
   for (const source of ["manual", "coptic-calendar"]) {
     state.event.source = source;
     const before = metadata(state.event);
-    for (const role of ["admin", "leader", "pascal", "pamela"]) {
+    for (const role of ["admin", "servant", "pascal", "pamela"]) {
       state.user.role = [role];
       const result = await state.request({ title: `Title ${role}` });
       assert.equal(result.status, 200);
@@ -257,7 +257,7 @@ test("current permissions, verified status, and session revocation gate updates"
   const reads = state.reads;
   state.user.role = ["parent"];
   assert.equal((await state.request({ title: "Demoted" })).status, 403);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   state.user.isAccountVerified = false;
   assert.equal((await state.request({ title: "Unverified" })).status, 403);
   state.user.isAccountVerified = true;

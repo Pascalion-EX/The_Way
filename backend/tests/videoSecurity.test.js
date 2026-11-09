@@ -40,7 +40,7 @@ function setup(t) {
     else process.env.JWT_SECRET = oldSecret;
   });
   const state = { writes: [], reads: 0 };
-  const user = { _id: userId, tokenVersion: 0, isAccountVerified: true, role: ["leader"] };
+  const user = { _id: userId, tokenVersion: 0, isAccountVerified: true, role: ["servant"] };
   t.mock.method(User.collection, "findOne", async () => user);
   t.mock.method(User.collection, "find", () => ({ toArray: async () => [user] }));
   const app = express();

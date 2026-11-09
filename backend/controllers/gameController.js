@@ -8,7 +8,7 @@ import userModel from "../models/userModel.js";
 mongoose.set("sanitizeFilter", true);
 mongoose.set("strictQuery", true);
 
-const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
 const hasGamePermission = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];
@@ -47,7 +47,7 @@ export const createGame = async (req, res) => {
       return await denyAccess(req, res, {
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and pamela only.",
+          "Access denied. Admins, servants, pascals, and pamela only.",
       });
     }
 
@@ -178,7 +178,7 @@ export const updateGame = async (req, res) => {
       return await denyAccess(req, res, {
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and pamela only.",
+          "Access denied. Admins, servants, pascals, and pamela only.",
       });
     }
 
@@ -281,7 +281,7 @@ export const deleteGame = async (req, res) => {
       return await denyAccess(req, res, {
         success: false,
         message:
-          "Access denied. Admins, leaders, pascals, and pamela only.",
+          "Access denied. Admins, servants, pascals, and pamela only.",
       });
     }
 

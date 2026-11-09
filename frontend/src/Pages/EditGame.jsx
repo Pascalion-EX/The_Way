@@ -96,7 +96,7 @@ const EditGame = () => {
   const canEdit = useMemo(() => {
     const allowedRoles = [
       "admin",
-      "leader",
+      "servant",
       "pascal",
       "pamela",
     ];

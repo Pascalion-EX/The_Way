@@ -18,7 +18,7 @@ const Activities = () => {
   const [search, setSearch] = useState("");
 
   const canManageActivities = useMemo(() => {
-    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+    const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 
     const roles = Array.isArray(userData?.role)
       ? userData.role

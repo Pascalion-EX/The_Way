@@ -26,7 +26,7 @@ const CalendarView = ({onClose}) => {
 
   const allowedManageRoles = [
     "admin",
-    "leader",
+    "servant",
     "pascal",
     "pamela",
   ];

@@ -1,7 +1,7 @@
 # Lesson document import
 
 Create Lesson includes an optional document importer for verified `admin`,
-`leader`, `pascal`, and `pamela` accounts. Select a DOCX, PDF, HTML/HTM, or UTF-8
+`servant`, `pascal`, and `pamela` accounts. Select a DOCX, PDF, HTML/HTM, or UTF-8
 TXT file up to 10 MB and click **Import document**. Importing replaces the form's
 title and partitions; the UI shows a replacement notice when those fields already
 contain text. Review and edit the result, add the required image, lesson name,

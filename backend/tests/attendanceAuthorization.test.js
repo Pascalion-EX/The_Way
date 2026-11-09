@@ -22,7 +22,7 @@ const matches = (document, filter) => Object.entries(filter).every(([key, value]
   return String(document[key]) === String(value);
 });
 
-const setup = (t, roles = ["leader"], assignedClass = 1, grades = [1, 2]) => {
+const setup = (t, roles = ["servant"], assignedClass = 1, grades = [1, 2]) => {
   const previousSecret = process.env.JWT_SECRET;
   const previousSanitizer = mongoose.get("sanitizeFilter");
   process.env.JWT_SECRET = "test-only-attendance-class-secret";
@@ -95,7 +95,7 @@ const setup = (t, roles = ["leader"], assignedClass = 1, grades = [1, 2]) => {
   return state;
 };
 
-test("leaders receive only their class roster, dated attendance, and yearly attendance", async (t) => {
+test("servants receive only their class roster, dated attendance, and yearly attendance", async (t) => {
   const state = setup(t);
   const roster = await state.request("GET", "/children?grade=2&allClasses=true");
   assert.equal(roster.status, 200);
@@ -116,7 +116,7 @@ test("leaders receive only their class roster, dated attendance, and yearly atte
   assert.equal(otherHistory.body.attendance, undefined);
 });
 
-test("absence counters use saved history and respect the leader's class access", async (t) => {
+test("absence counters use saved history and respect the servant's class access", async (t) => {
   const state = setup(t);
   state.records.forEach((record) => { record.status = "absent"; });
   let response = await state.request("GET", `/date/${serviceDate}`);
@@ -136,7 +136,7 @@ test("absence counters use saved history and respect the leader's class access",
   assert.equal(response.body.consecutiveAbsences[childIds[1]], 1);
 });
 
-test("leaders can record their class and mixed-class batches are rejected before any write", async (t) => {
+test("servants can record their class and mixed-class batches are rejected before any write", async (t) => {
   const state = setup(t);
   const other = await state.request("POST", "/", { child: childIds[1], serviceDate });
   assert.equal(other.status, 403);
@@ -156,8 +156,8 @@ test("leaders can record their class and mixed-class batches are rejected before
   assert.equal(state.writes, 2);
 });
 
-test("a Year 3 leader can take only Year 3 attendance despite forged year and role claims", async (t) => {
-  const state = setup(t, ["leader"], 3, [3, 4]);
+test("a Year 3 servant can take only Year 3 attendance despite forged year and role claims", async (t) => {
+  const state = setup(t, ["servant"], 3, [3, 4]);
   const roster = await state.request("GET", "/children?grade=4&class=4&allClasses=true");
   assert.equal(roster.status, 200);
   assert.deepEqual(roster.body.access, { allClasses: false, grade: 3 });
@@ -180,7 +180,7 @@ test("a Year 3 leader can take only Year 3 attendance despite forged year and ro
   assert.equal(state.writes, 2);
 });
 
-test("leaders can update and delete only attendance records from their class", async (t) => {
+test("servants can update and delete only attendance records from their class", async (t) => {
   const state = setup(t);
   for (const method of ["PUT", "DELETE"]) {
     const before = state.writes;
@@ -192,10 +192,10 @@ test("leaders can update and delete only attendance records from their class", a
   }
 });
 
-test("admin, pascal, and pamela retain all-class access, including combined leader roles", async (t) => {
+test("admin, pascal, and pamela retain all-class access, including combined servant roles", async (t) => {
   const state = setup(t);
   for (const role of ["admin", "pascal", "pamela"]) {
-    for (const roles of [[role], ["leader", role]]) {
+    for (const roles of [[role], ["servant", role]]) {
       state.user.role = roles;
       state.user.class = 0;
       const roster = await state.request("GET", "/children");
@@ -221,7 +221,7 @@ test("admin, pascal, and pamela retain all-class access, including combined lead
   }
 });
 
-test("leaders without an assigned class cannot read or write attendance", async (t) => {
+test("servants without an assigned class cannot read or write attendance", async (t) => {
   const state = setup(t);
   const routes = [
     ["GET", "/children"], ["GET", `/date/${serviceDate}`], ["GET", "/year/2026"],
@@ -247,14 +247,14 @@ test("attendance requests immediately follow class reassignment and role changes
     const roster = await state.request("GET", "/children");
     assert.deepEqual(roster.body.children.map((child) => child.grade), [grade]);
   }
-  state.user.role = ["leader", "admin"];
+  state.user.role = ["servant", "admin"];
   assert.equal((await state.request("GET", "/children")).body.children.length, 2);
-  state.user.role = ["leader"];
+  state.user.role = ["servant"];
   assert.deepEqual((await state.request("GET", "/children")).body.children.map((child) => child.grade), [2]);
 });
 
 test("an assigned class with no children returns no attendance and cannot mutate other records", async (t) => {
-  const state = setup(t, ["leader"], 3);
+  const state = setup(t, ["servant"], 3);
   const roster = await state.request("GET", "/children");
   assert.equal(roster.status, 200);
   assert.deepEqual(roster.body.children, []);

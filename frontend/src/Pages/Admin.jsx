@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { CalendarPlus } from "lucide-react";
 import { hasProtectedAccountRole } from "../../../shared/accountProtection.mjs";
 
-const userRoles = ["pascal", "admin", "pamela", "leader", "parent", "unAssigned"];
+const userRoles = ["pascal", "admin", "pamela", "servant", "parent", "unAssigned"];
 
 const Admin = () => {
   const { backendUrl, userData, getUserData } = useContext(AppContent);
@@ -41,7 +41,7 @@ const Admin = () => {
     switch (normalizedRole) {
       case "admin":
         return "bg-red-100 text-red-700 border-red-200";
-      case "leader":
+      case "servant":
         return "bg-blue-100 text-blue-700 border-blue-200";
       case "pascal":
         return "bg-purple-100 text-purple-700 border-purple-200";
@@ -168,7 +168,7 @@ const Admin = () => {
         if (!prev) return prev;
         const updatedStats = { ...prev };
         const previousRoles = Array.isArray(user.role) ? user.role : [user.role];
-        for (const value of ["admin", "leader", "pascal", "pamela", "parent"]) {
+        for (const value of ["admin", "servant", "pascal", "pamela", "parent"]) {
           updatedStats[`${value}Count`] += Number(data.user.role.includes(value)) - Number(previousRoles.includes(value));
         }
         return updatedStats;
@@ -316,7 +316,7 @@ const Admin = () => {
           <>
             <section className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard title="Total Users" value={stats?.totalUsers || 0} />
-              <StatCard title="Leaders" value={(stats?.leaderCount ?? 0)+(stats?.adminCount ?? 0)+(stats?.pamelaCount ?? 0)+(stats?.pascalCount ?? 0)} />
+              <StatCard title="Servants" value={(stats?.servantCount ?? 0)+(stats?.adminCount ?? 0)+(stats?.pamelaCount ?? 0)+(stats?.pascalCount ?? 0)} />
               <StatCard title="Parents" value={stats?.parentCount || 0} />
             </section>
 
@@ -580,7 +580,8 @@ const UserRoleEditor = ({ user, onSave, canEditAllRoles = false }) => {
         type="button"
         aria-label={`Edit roles for ${user.name || user.email}`}
         onClick={() => {
-          setSelectedRoles(Array.isArray(user.role) ? user.role : user.role ? [user.role] : []);
+          const roles = Array.isArray(user.role) ? user.role : user.role ? [user.role] : [];
+          setSelectedRoles([...new Set(roles.map((role) => /^leader$/i.test(role) ? "servant" : role))]);
           setEditing(true);
         }}
         className="mt-2 block text-xs font-semibold text-blue-600 hover:text-blue-800"

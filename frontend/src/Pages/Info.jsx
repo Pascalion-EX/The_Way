@@ -19,7 +19,7 @@ const Info = () => {
       number: "03",
       title: "Our Community",
       description:
-        "The Way brings together children, parents, servants, and leaders in one organized and supportive Community.",
+        "The Way brings together children, parents, and servants in one organized and supportive Community.",
     },
   ];
 

@@ -28,7 +28,7 @@ async function setup(t, { brokenStorage = false } = {}) {
     await rm(directory, { recursive: true, force: true });
   });
   const state = {
-    directory, user: { _id: userId, role: ["leader"], isAccountVerified: true, tokenVersion: 0, email: "test@example.invalid" },
+    directory, user: { _id: userId, role: ["servant"], isAccountVerified: true, tokenVersion: 0, email: "test@example.invalid" },
     counters: new Map(), counterReads: 0, counterOutage: false, userOutage: false,
   };
   t.mock.method(User.collection, "findOne", async () => {
@@ -104,7 +104,7 @@ test("JPEG, PNG and WebP uploads are stored as decoded images and readable throu
 test("all current staff roles can upload; non-staff, anonymous, unverified, banned and revoked users cannot write files", async (t) => {
   const state = await setup(t);
   const data = await image();
-  for (const role of ["admin", "leader", "pascal", "pamela"]) {
+  for (const role of ["admin", "servant", "pascal", "pamela"]) {
     state.user.role = [role];
     assert.equal((await state.upload(data)).status, 201);
   }

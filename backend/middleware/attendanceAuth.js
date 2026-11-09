@@ -9,7 +9,7 @@ export const requireAttendanceAccess = (req, res, next) => {
   }
 
   const roles = Array.isArray(user?.role) ? user.role : [user?.role];
-  if (roles.includes("leader") && Number.isInteger(user.class) && user.class >= 1 && user.class <= 12) {
+  if (roles.includes("servant") && Number.isInteger(user.class) && user.class >= 1 && user.class <= 12) {
     req.attendanceAccess = { allClasses: false, grade: user.class };
     return next();
   }

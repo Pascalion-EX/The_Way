@@ -10,7 +10,7 @@ import userModel from "../models/userModel.js";
 
 const allowedRoles = [
   "admin",
-  "leader",
+  "servant",
   "pascal",
   "pamela",
   "parent",

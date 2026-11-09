@@ -124,7 +124,7 @@ const camp = new Camp({ title: 'Example', name: 'Example', body: 'Example', Trip
 assert.deepEqual(Object.keys(camp.applicants[0].toObject()).sort(), ['_id', 'appliedAt', 'user']);
 pass('duplicate camp applicant schema drops submitted child/phone/notes fields');
 
-User.findById = () => userQuery(['leader']);
+User.findById = () => userQuery(['servant']);
 const campForMail = { title: '<a href="https://example.invalid">Injected title</a>', applicants: [{ user: { email: 'synthetic@example.invalid' } }] };
 Camp.findById = () => ({ populate() { return this; }, then(resolve) { resolve(campForMail); } });
 let mail;

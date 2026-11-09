@@ -2,7 +2,7 @@
 
 Base URL: `/api/curriculum`. All routes use the existing JWT cookie and require a
 verified account. Reading is available to verified users; creating, updating, and
-deleting requires one of `pascal`, `admin`, `leader`, or `pamela`, matching lessons.
+deleting requires one of `pascal`, `admin`, `servant`, or `pamela`, matching lessons.
 
 Each curriculum has a required, trimmed `name`. Its root is generated with id
 `root` and that name as its label. The root represents the curriculum; every other

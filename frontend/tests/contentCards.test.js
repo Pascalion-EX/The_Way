@@ -62,7 +62,7 @@ for (const page of ["Lessons", "Games", "Activities", "Chants", "Camps"]) {
   test(`${page} renders an identifying image and name without full content`, async () => {
     const { default: Page } = await import(await compile(`../src/Pages/${page}.jsx`, overrides));
     const html = renderToStaticMarkup(React.createElement(MemoryRouter, null,
-      React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: ["leader"] }, isLoggedin: true } },
+      React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: ["servant"] }, isLoggedin: true } },
         React.createElement(Page))));
     assert.match(html, /Card (?:name|title)/);
     assert.match(html, /src="\/uploads\/a{64}\.webp"/);

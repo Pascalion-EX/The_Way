@@ -25,7 +25,7 @@ const videoRequestRouter = express.Router();
 //
 // Allowed roles:
 // pamela
-// leader
+// servant
 // pascal
 // admin
 // ============================================================

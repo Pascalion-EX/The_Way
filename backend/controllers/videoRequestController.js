@@ -9,7 +9,7 @@ import { getSecrets } from "../config/secrets.js";
 // ============================================================
 // CREATE VIDEO REQUEST
 // Allowed roles will be checked in middleware:
-// pamela, leader, pascal, admin
+// pamela, servant, pascal, admin
 // ============================================================
 
 export const createVideoRequest = async (req, res) => {
@@ -200,7 +200,7 @@ Pending
 
 // ============================================================
 // GET LOGGED-IN USER'S REQUESTS
-// pamela / leader / admin / pascal
+// pamela / servant / admin / pascal
 // ============================================================
 
 export const getMyVideoRequests = async (req, res) => {

@@ -47,7 +47,7 @@ const CreateGame = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const canCreate = useMemo(() => {
-    const allowedRoles = ["admin", "leader", 'pascal', 'pamela'];
+    const allowedRoles = ["admin", "servant", 'pascal', 'pamela'];
 
     const rawRoles = userData?.role;
 
@@ -160,7 +160,7 @@ const CreateGame = () => {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
-                Only admins, leaders, pascals, and pamela can create games.
+                Only admins, servants, pascals, and pamela can create games.
               </p>
 
               <div className="mt-8">

@@ -13,8 +13,8 @@ import { timeOperation } from "../services/performance.js";
 import { getSecrets } from "../config/secrets.js";
 import { readPage, paginationFor } from "../utils/pagination.js";
 
-const createRoles = ['admin', 'leader', 'pascal','pamela'];
-const applyRoles = ['parent', 'admin', 'leader', 'pascal'];
+const createRoles = ['admin', 'servant', 'pascal','pamela'];
+const applyRoles = ['parent', 'admin', 'servant', 'pascal'];
 const tripTypeOptions = ['Camp', 'Trip', 'Outing', 'Other'];
 
 const paymentSettings = (body, current = {}) => {
@@ -490,8 +490,8 @@ export const applyToCamp = async (req, res) => {
       childName,
       childYear,
       parentPhone,
-      leaderName,
-      leaderRole,
+      servantName,
+      servantRole,
       notes,
     } = req.body || {};
 
@@ -502,23 +502,23 @@ export const applyToCamp = async (req, res) => {
       });
     }
 
-    if (!["parent_for_child", "child_self", "leader"].includes(applicationType)) {
+    if (!["parent_for_child", "child_self", "servant"].includes(applicationType)) {
       return res.status(400).json({ success: false, message: "Invalid application type" });
     }
     const isStaff = userRoles.some((role) => createRoles.includes(role));
     if (!isStaff && applicationType !== "parent_for_child") {
       return res.status(403).json({ success: false, message: "Parents must apply using the parent application form" });
     }
-    for (const value of [childName, parentPhone, leaderName, leaderRole, notes]) {
+    for (const value of [childName, parentPhone, servantName, servantRole, notes]) {
       if (value !== undefined && typeof value !== "string") {
         return res.status(400).json({ success: false, message: "Application details must be text" });
       }
     }
-    if (applicationType !== "leader" &&
+    if (applicationType !== "servant" &&
         (!Number.isInteger(Number(childYear)) || !camp.years.includes(Number(childYear)))) {
       return res.status(400).json({ success: false, message: "Select an available year for this trip" });
     }
-    if (applicationType !== "leader" && camp.price > 0 && !req.file) {
+    if (applicationType !== "servant" && camp.price > 0 && !req.file) {
       return res.status(400).json({ success: false, message: "A payment screenshot is required for this trip" });
     }
 
@@ -540,11 +540,11 @@ export const applyToCamp = async (req, res) => {
       }
     }
 
-    if (applicationType === "leader") {
-      if (!leaderName?.trim() || !leaderRole?.trim() || !parentPhone?.trim()) {
+    if (applicationType === "servant") {
+      if (!servantName?.trim() || !servantRole?.trim() || !parentPhone?.trim()) {
         return res.status(400).json({
           success: false,
-          message: "Leader name, leader role, and phone are required",
+          message: "Servant name, servant role, and phone are required",
         });
       }
     }
@@ -561,8 +561,8 @@ export const applyToCamp = async (req, res) => {
       childName: childName?.trim() || "",
       childYear: childYear ? Number(childYear) : undefined,
       parentPhone: parentPhone?.trim() || "",
-      leaderName: leaderName?.trim() || "",
-      leaderRole: leaderRole?.trim() || "",
+      servantName: servantName?.trim() || "",
+      servantRole: servantRole?.trim() || "",
       notes: notes?.trim() || "",
       paymentScreenshot: screenshotId,
       appliedAt: new Date(),
@@ -640,7 +640,7 @@ export const notifyCampApplicants = async (req, res) => {
     const { subject, message } = req.body;
     const userId = req.userId;
 
-    const notifyRoles = ["admin", "leader", "pascal"];
+    const notifyRoles = ["admin", "servant", "pascal"];
 
     if (!userId) {
       return res.status(401).json({

@@ -92,7 +92,7 @@ export const updateProfile = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    if (currentUser.role.includes("leader") && !canAccessAllAttendanceClasses(currentUser.role) &&
+    if (currentUser.role.includes("servant") && !canAccessAllAttendanceClasses(currentUser.role) &&
         updateData.class !== undefined) {
       if (updateData.class !== currentUser.class) {
         return res.status(403).json({

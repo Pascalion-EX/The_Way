@@ -19,7 +19,7 @@ excludes future private fields and populated user objects.
 
 `GET /api/camps/:id/applicants` is the separate private roster endpoint. It uses
 the existing `userAuth` and `requireStaff` middleware: a current, verified
-`admin`, `leader`, `pascal`, or `pamela` account is required. Current database
+`admin`, `servant`, `pascal`, or `pamela` account is required. Current database
 roles determine access; signed token/body role claims do not grant permission.
 Ordinary members are denied before camp lookup or user population. Revoked,
 deleted, anonymous, and unverified accounts cannot access the roster.

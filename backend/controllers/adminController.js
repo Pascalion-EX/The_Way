@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import { hasProtectedAccountRole, PROTECTED_ACCOUNT_ROLE_PATTERNS } from "../../shared/accountProtection.mjs";
 
 const allowedAdminRoles = ["admin", "pamela", "pascal"];
-const assignableRoles = ["pascal", "admin", "leader", "parent", "pamela", "unAssigned"];
+const assignableRoles = ["pascal", "admin", "servant", "parent", "pamela", "unAssigned"];
 
 const hasAdminAccess = (roles = []) => {
   const normalizedRoles = Array.isArray(roles) ? roles : [roles];
@@ -78,7 +78,7 @@ export const getAdminDashboard = async (req, res) => {
       .lean();
 
     // All role counts share one scan. Multi-role users still count in each role.
-    const roles = ["admin", "leader", "pascal", "pamela", "parent"];
+    const roles = ["admin", "servant", "pascal", "pamela", "parent"];
     const [users, counts, totalLessons] = await Promise.all([
       usersQuery,
       userModel.aggregate([{ $group: {
@@ -89,7 +89,7 @@ export const getAdminDashboard = async (req, res) => {
       } }]),
       lessonModel.countDocuments(),
     ]);
-    const { totalUsers = 0, adminCount = 0, leaderCount = 0, pascalCount = 0,
+    const { totalUsers = 0, adminCount = 0, servantCount = 0, pascalCount = 0,
       pamelaCount = 0, parentCount = 0 } = counts[0] || {};
 
     return res.status(200).json({
@@ -98,7 +98,7 @@ export const getAdminDashboard = async (req, res) => {
         totalUsers,
         totalLessons,
         adminCount,
-        leaderCount,
+        servantCount,
         pascalCount,
         pamelaCount,
         parentCount,

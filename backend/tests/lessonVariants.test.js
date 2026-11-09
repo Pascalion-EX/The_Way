@@ -48,7 +48,7 @@ function setup(t) {
     year: 3, createdBy: objectId(userId), createdAt: new Date("2026-01-01"), updatedAt: new Date("2026-01-01"),
   };
   const state = {
-    user: { _id: objectId(userId), role: ["leader"], tokenVersion: 0, isAccountVerified: true, email: "staff@example.com" },
+    user: { _id: objectId(userId), role: ["servant"], tokenVersion: 0, isAccountVerified: true, email: "staff@example.com" },
     lessons: new Map([[lessonId, source], [unrelatedId, { ...source, _id: objectId(unrelatedId), name: "Unrelated lesson" }]]),
     reads: 0, writes: 0, filters: [],
   };
@@ -322,7 +322,7 @@ test("variant creation uses current lesson permissions and requires verified aut
   state.user.isAccountVerified = false;
   assert.equal((await state.create("Unverified")).status, 403);
   state.user.isAccountVerified = true;
-  for (const role of ["admin", "leader", "pascal", "pamela"]) {
+  for (const role of ["admin", "servant", "pascal", "pamela"]) {
     state.user.role = [role];
     assert.equal((await state.create(`Variant ${role}`)).status, 201);
   }

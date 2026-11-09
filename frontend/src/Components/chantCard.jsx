@@ -9,7 +9,7 @@ const ChantCard = ({ chant, refreshChants }) => {
   const navigate = useNavigate();
   const { userData, backendUrl } = useContext(AppContent);
 
-  const allowedRoles = ["admin", "leader", "pascal", "pamela"];
+  const allowedRoles = ["admin", "servant", "pascal", "pamela"];
 
   const canManageChants = allowedRoles.some((role) =>
     Array.isArray(userData?.role)

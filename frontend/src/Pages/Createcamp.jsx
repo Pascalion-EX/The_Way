@@ -44,7 +44,7 @@ const CreateCamp = () => {
   const tripTypeOptions = ["Camp", "Trip", "Outing", "Other"];
 
   const canCreate = useMemo(() => {
-    const allowedRoles = ["pascal", "admin", "leader", "pamela"];
+    const allowedRoles = ["pascal", "admin", "servant", "pamela"];
 
     const rawRoles = userData?.role;
 
@@ -143,7 +143,7 @@ const CreateCamp = () => {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-gray-500 sm:text-base">
-                Only users with pascal, admin, leader, or pamela roles can create
+                Only users with pascal, admin, servant, or pamela roles can create
                 Trips.
               </p>
 

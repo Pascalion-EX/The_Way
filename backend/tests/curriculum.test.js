@@ -25,7 +25,7 @@ const curriculumRecord = () => ({
   _id: new mongoose.Types.ObjectId(curriculumId),
   name: "Faith", nodes, createdBy: new mongoose.Types.ObjectId(userId), __v: 0,
 });
-const allowEditor = (t, role = ["leader"]) => {
+const allowEditor = (t, role = ["servant"]) => {
   t.mock.method(userModel.collection, "findOne", async () => ({ role, email: "reader@example.com" }));
   // Each permission case represents an independent first denial. Persistent
   // counters and concurrent bans are exercised in accessDenials.test.js.
