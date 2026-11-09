@@ -3,64 +3,27 @@
 import mongoose from "mongoose";
 import notificationModel from "../models/notificationModel.js";
 import userModel from "../models/userModel.js";
-
-// ======================================================
-// ALLOWED ROLES
-// ======================================================
-
-const allowedRoles = [
-  "admin",
-  "servant",
-  "pascal",
-  "pamela",
-  "parent",
-  "child",
-  "unAssined",
-];
+import {
+  NOTIFICATION_ROLES as allowedRoles,
+  normalizeNotificationRole as normalizeRole,
+  normalizeNotificationRoles as normalizeRoles,
+  notificationAudienceRoles,
+} from "../services/notificationRoles.js";
 
 // ======================================================
 // ROLE HELPERS
 // ======================================================
 
-const normalizeRole = (role) => {
-  if (!role) return null;
-
-  const normalized = String(role).trim().toLowerCase();
-
-  // Keep compatibility with your current schema values
-  if (normalized === "pamela") {
-    return "pamela";
-  }
-
-  if (
-    normalized === "unassigned" ||
-    normalized === "unassined"
-  ) {
-    return "unAssined";
-  }
-
-  return normalized;
-};
-
-const normalizeRoles = (roles) => {
-  const roleArray = Array.isArray(roles)
-    ? roles
-    : [roles];
-
-  return [
-    ...new Set(
-      roleArray
-        .map(normalizeRole)
-        .filter(Boolean)
-    ),
-  ];
-};
-
 const hasValidRoles = (roles) => {
-  return roles.every((role) =>
+  return roles.length > 0 && roles.every((role) =>
     allowedRoles.includes(role)
   );
 };
+
+const toNotificationObject = (notification) => ({
+  ...notification.toObject(),
+  targetRoles: normalizeRoles(notification.targetRoles),
+});
 
 // ======================================================
 // CREATE / SEND NOTIFICATION
@@ -278,7 +241,7 @@ export const getMyNotifications = async (
       await notificationModel
         .find({
           targetRoles: mongoose.trusted({
-            $in: userRoles,
+            $in: notificationAudienceRoles(userRoles),
           }),
         })
         .sort({
@@ -288,7 +251,7 @@ export const getMyNotifications = async (
     const formattedNotifications =
       notifications.map((notification) => {
         const notificationObject =
-          notification.toObject();
+          toNotificationObject(notification);
 
         const isSeen =
           notification.seenBy?.some(
@@ -347,7 +310,7 @@ export const getUnseenNotifications = async (
       await notificationModel
         .find({
           targetRoles: mongoose.trusted({
-            $in: userRoles,
+            $in: notificationAudienceRoles(userRoles),
           }),
 
           seenBy: mongoose.trusted({
@@ -360,7 +323,7 @@ export const getUnseenNotifications = async (
 
     const formattedNotifications =
       notifications.map((notification) => ({
-        ...notification.toObject(),
+        ...toNotificationObject(notification),
         isSeen: false,
       }));
 
@@ -421,7 +384,7 @@ export const markNotificationAsSeen = async (req, res) => {
         {
           _id: id,
           targetRoles: mongoose.trusted({
-            $in: normalizeRoles(user.role),
+            $in: notificationAudienceRoles(user.role),
           }),
         },
         { $addToSet: { seenBy: userId } },
@@ -440,7 +403,7 @@ export const markNotificationAsSeen = async (req, res) => {
       message: "Notification marked as seen",
 
       notification: {
-        ...notification.toObject(),
+        ...toNotificationObject(notification),
         isSeen: true,
       },
     });
@@ -482,7 +445,7 @@ export const markAllNotificationsAsSeen = async (
       await notificationModel.updateMany(
         {
           targetRoles: mongoose.trusted({
-            $in: userRoles,
+            $in: notificationAudienceRoles(userRoles),
           }),
 
           seenBy: mongoose.trusted({
@@ -599,7 +562,7 @@ export const deleteNotificationsByRoles = async (req, res) => {
     const notifications =
       await notificationModel.find({
         targetRoles: mongoose.trusted({
-          $in: normalizedTargetRoles,
+          $in: notificationAudienceRoles(normalizedTargetRoles),
         }),
       });
 
@@ -611,7 +574,7 @@ export const deleteNotificationsByRoles = async (req, res) => {
         Remove only the selected target roles.
       */
       notification.targetRoles =
-        notification.targetRoles.filter(
+        normalizeRoles(notification.targetRoles).filter(
           (role) =>
             !normalizedTargetRoles.includes(
               normalizeRole(role)

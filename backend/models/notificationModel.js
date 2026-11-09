@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { NOTIFICATION_ROLES, normalizeNotificationRoles } from "../services/notificationRoles.js";
 
 const notificationSchema = new mongoose.Schema(
   {
@@ -24,15 +25,7 @@ const notificationSchema = new mongoose.Schema(
     targetRoles: [
       {
         type: String,
-        enum: [
-          "admin",
-          "servant",
-          "pascal",
-          "pamela",
-          "parent",
-          "child",
-          "unAssined",
-        ],
+        enum: NOTIFICATION_ROLES,
       },
     ],
 
@@ -50,6 +43,12 @@ const notificationSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Hydration does not run setters, so legacy stored audiences must be converted
+// before document validation as well as incoming notification requests.
+notificationSchema.pre("validate", function () {
+  this.targetRoles = normalizeNotificationRoles(this.targetRoles);
+});
 
 notificationSchema.index({ targetRoles: 1, createdAt: -1 });
 

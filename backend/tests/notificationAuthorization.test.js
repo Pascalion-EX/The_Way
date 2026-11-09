@@ -36,6 +36,8 @@ const setup = (t) => {
     roleLookupMissing: false,
     roleLookupError: false,
     writes: 0,
+    allowDocumentSaves: false,
+    savedNotifications: [],
   };
   t.mock.method(User.collection, "findOne", async (filter, options) => {
     assert.equal(String(filter._id), userId);
@@ -44,6 +46,30 @@ const setup = (t) => {
       if (state.roleLookupMissing) return null;
     }
     return state.user;
+  });
+  t.mock.method(User, "findOneAndUpdate", async () => ({ accessDeniedCount: 1 }));
+  const matchesAudience = (filter) => {
+    assert.ok(Array.isArray(filter.targetRoles?.$in), "Notification lookups must be scoped to roles");
+    return state.notification && filter.targetRoles.$in.some((role) => state.notification.targetRoles.includes(role)) &&
+      (!filter.seenBy?.$ne || !state.notification.seenBy.some((id) => String(id) === String(filter.seenBy.$ne)));
+  };
+  t.mock.method(Notification.collection, "find", (filter) => ({ toArray: async () => matchesAudience(filter) ? [state.notification] : [] }));
+  t.mock.method(Notification.collection, "insertOne", async (document) => {
+    state.savedNotifications.push(document);
+    state.writes++;
+    return { acknowledged: true, insertedId: document._id };
+  });
+  t.mock.method(Notification.collection, "deleteOne", async (filter) => {
+    assert.equal(String(filter._id), String(state.notification._id));
+    state.notification = null;
+    state.writes++;
+    return { acknowledged: true, deletedCount: 1 };
+  });
+  t.mock.method(Notification.collection, "updateMany", async (filter, update) => {
+    if (!matchesAudience(filter)) return { acknowledged: true, modifiedCount: 0 };
+    state.notification.seenBy.push(update.$addToSet.seenBy);
+    state.writes++;
+    return { acknowledged: true, modifiedCount: 1 };
   });
   // Keep real Mongoose sanitization/casting; emulate only the MongoDB collection.
   state.update = t.mock.method(Notification.collection, "findOneAndUpdate", async (filter, update, options) => {
@@ -60,19 +86,26 @@ const setup = (t) => {
     return { ...record, seenBy: [...record.seenBy] };
   });
   t.mock.method(Notification.collection, "findOne", () => assert.fail("Unscoped notification lookup"));
-  t.mock.method(Notification.collection, "updateOne", () => assert.fail("Non-atomic notification update"));
+  t.mock.method(Notification.collection, "updateOne", async (filter, update) => {
+    assert.equal(state.allowDocumentSaves, true, "Mark-as-seen must use an atomic notification update");
+    assert.equal(String(filter._id), String(state.notification._id));
+    Object.assign(state.notification, update.$set);
+    state.savedNotifications.push({ ...state.notification });
+    state.writes++;
+    return { acknowledged: true, matchedCount: 1, modifiedCount: 1 };
+  });
 
   const app = express();
   app.use(cookieParser());
   app.use("/api/notifications", notificationRouter);
   // Forged roles in the signed token and body must not override database roles.
   const token = jwt.sign({ id: userId, tokenVersion: 0, role: ["admin"] }, jwtSecret, { expiresIn: "1h" });
-  state.request = (id = notificationId, requestToken = token) => new Promise((resolve, reject) => {
+  state.requestRoute = (method, path, body = {}, requestToken = token) => new Promise((resolve, reject) => {
     const req = Readable.from([]);
-    req.method = "PUT";
-    req.url = `/api/notifications/${id}/seen`;
+    req.method = method;
+    req.url = `/api/notifications${path}`;
     req.headers = requestToken ? { cookie: `token=${requestToken}` } : {};
-    req.body = { userId: otherUserId, role: ["admin"], targetRoles: ["admin"] };
+    req.body = { userId: otherUserId, role: ["admin"], targetRoles: ["admin"], ...body };
     req.socket = {};
     req.connection = req.socket;
     const res = Object.create(express.response);
@@ -83,6 +116,7 @@ const setup = (t) => {
     res.json = (body) => resolve({ status: res.statusCode, body });
     app.handle(req, res, (error) => reject(error || new Error("Unmatched route")));
   });
+  state.request = (id = notificationId, requestToken = token) => state.requestRoute("PUT", `/${id}/seen`, {}, requestToken);
   return state;
 };
 
@@ -114,6 +148,7 @@ test("mark-as-seen permits any matching normalized role and stays idempotent und
   for (const identity of [
     { roles: ["parent"], targetRoles: ["admin", "parent"] },
     { roles: ["parent", "servant"], targetRoles: ["servant"] },
+    { roles: ["servant"], targetRoles: ["leader"] },
     { roles: ["unAssigned"], targetRoles: ["unAssined"] },
     { roles: [" PAMELA "], targetRoles: ["pamela"] },
   ]) {
@@ -131,6 +166,104 @@ test("mark-as-seen permits any matching normalized role and stays idempotent und
     }
     assert.equal(state.writes, 1);
   }
+});
+
+test("clearing another audience from a legacy notification saves servant instead of failing enum validation", async (t) => {
+  const state = setup(t);
+  state.user.role = ["admin"];
+  state.notification.targetRoles = ["leader", "parent"];
+  state.notification.seenBy = [objectId(otherUserId)];
+  state.allowDocumentSaves = true;
+  const result = await state.requestRoute("PUT", "/clear/roles", { targetRoles: ["parent"] });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.updatedCount, 1);
+  assert.equal(result.body.deletedCount, 0);
+  assert.deepEqual(Array.from(state.notification.targetRoles), ["servant"]);
+  assert.deepEqual(state.notification.seenBy.map(String), [otherUserId]);
+  assert.equal(state.notification.message, "Staff-only contents");
+  assert.equal(state.savedNotifications.length, 1);
+});
+
+test("servants can read and mark legacy audiences seen without exposing them to other roles", async (t) => {
+  const state = setup(t);
+  state.notification.targetRoles = ["leader"];
+  state.user.role = ["parent"];
+  assert.equal((await state.requestRoute("GET", "/")).body.count, 0);
+  assert.equal((await state.requestRoute("GET", "/unseen")).body.count, 0);
+  assert.equal((await state.request()).status, 404);
+  assert.equal((await state.requestRoute("PUT", "/seen/all")).body.modifiedCount, 0);
+  assert.equal(state.writes, 0);
+
+  state.user.role = ["servant"];
+  for (const path of ["/", "/unseen"]) {
+    const result = await state.requestRoute("GET", path);
+    assert.equal(result.status, 200);
+    assert.equal(result.body.count, 1);
+    assert.deepEqual(result.body.notifications[0].targetRoles, ["servant"]);
+  }
+  const seen = await state.request();
+  assert.equal(seen.status, 200);
+  assert.deepEqual(seen.body.notification.targetRoles, ["servant"]);
+  assert.equal((await state.requestRoute("GET", "/unseen")).body.count, 0);
+  state.notification.seenBy = [];
+  assert.equal((await state.requestRoute("PUT", "/seen/all")).body.modifiedCount, 1);
+  assert.deepEqual(state.notification.seenBy.map(String), [userId]);
+});
+
+test("clearing servant audiences also removes old leader audiences and retains unrelated audiences", async (t) => {
+  const state = setup(t);
+  state.user.role = ["admin"];
+  state.allowDocumentSaves = true;
+  state.notification.targetRoles = ["leader", "servant", "parent"];
+  const result = await state.requestRoute("PUT", "/clear/roles", { targetRoles: ["servant"] });
+  assert.equal(result.status, 200);
+  assert.equal(result.body.updatedCount, 1);
+  assert.deepEqual(Array.from(state.notification.targetRoles), ["parent"]);
+
+  state.notification.targetRoles = ["leader"];
+  const deleted = await state.requestRoute("PUT", "/clear/roles", { targetRoles: [" Leader "] });
+  assert.equal(deleted.status, 200);
+  assert.equal(deleted.body.deletedCount, 1);
+  assert.equal(state.notification, null);
+});
+
+test("cached notification forms and old single-role URLs store only canonical servant audiences", async (t) => {
+  const state = setup(t);
+  state.user.role = ["admin"];
+  const result = await state.requestRoute("POST", "/", {
+    title: "Legacy form", url: "/", targetRoles: ["Leader", "servant", "parent"],
+  });
+  assert.equal(result.status, 201);
+  assert.deepEqual(Array.from(state.savedNotifications[0].targetRoles), ["servant", "parent"]);
+  const singleRole = await state.requestRoute("POST", "/role/leader", { url: "/" });
+  assert.equal(singleRole.status, 201);
+  assert.deepEqual(Array.from(state.savedNotifications[1].targetRoles), ["servant"]);
+  for (const targetRoles of [["administrator"], [""], [null]]) {
+    assert.equal((await state.requestRoute("POST", "/", { url: "/", targetRoles })).status, 400);
+  }
+  assert.equal(state.writes, 2);
+});
+
+test("legacy audience compatibility does not grant staff mutation permissions", async (t) => {
+  const state = setup(t);
+  for (const role of ["parent", "leader"]) {
+    state.user.role = [role];
+    assert.equal((await state.requestRoute("POST", "/", { url: "/", targetRoles: ["leader"] })).status, 403);
+    assert.equal((await state.requestRoute("PUT", "/clear/roles", { targetRoles: ["servant"] })).status, 403);
+  }
+  assert.equal(state.writes, 0);
+});
+
+test("model validation canonicalizes new and hydrated legacy audiences but still rejects unknown roles", async () => {
+  const incoming = new Notification({ targetRoles: ["Leader", "servant", "parent"], url: "/" });
+  const existing = Notification.hydrate({ _id: objectId(notificationId), targetRoles: ["leader", "parent"], url: "/" });
+  assert.equal(existing.targetRoles[0], "leader", "The fixture must contain a real legacy stored value");
+  for (const notification of [incoming, existing]) {
+    await notification.validate();
+    assert.deepEqual(Array.from(notification.targetRoles), ["servant", "parent"]);
+  }
+  const invalid = new Notification({ targetRoles: ["administrator"], url: "/" });
+  await assert.rejects(invalid.validate(), /not a valid enum value/);
 });
 
 test("mark-as-seen uses current database roles after access is revoked", async (t) => {

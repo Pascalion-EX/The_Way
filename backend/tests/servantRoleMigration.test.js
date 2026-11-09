@@ -152,7 +152,6 @@ test("the current schemas accept servant roles and application details and rejec
   assert.equal(camp.applicants[0].servantName, "Name");
   assert.equal(camp.applicants[0].servantRole, "Service");
   user.role = ["leader"];
-  notice.targetRoles = ["leader"];
   camp.applicants[0].applicationType = "leader";
-  for (const model of [user, notice, camp]) await assert.rejects(model.validate(), /not a valid enum value/);
+  for (const model of [user, camp]) await assert.rejects(model.validate(), /not a valid enum value/);
 });

@@ -131,6 +131,8 @@ preselects Servant in place of the retired role; only saving changes the account
 This requires the updated frontend and API to be deployed. Protected Pascal and
 Pamela accounts still require a Pascal or Pamela operator to edit their roles.
 
-Admin role changes only update users. Existing notification audiences and trip
-applicant fields still need the migration; it safely skips users already updated
-through the admin panel.
+Admin role changes only update users. Notification reads include legacy audiences,
+and notification saves convert the old audience to `servant` before validation,
+so old records and cached forms remain usable. Run the migration to permanently
+update all stored notification audiences and trip applicant fields; it safely
+skips users already updated through the admin panel.
