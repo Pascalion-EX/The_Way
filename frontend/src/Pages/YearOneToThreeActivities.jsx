@@ -154,7 +154,7 @@ function ActivityRow({ entry, canEdit, onSave }) {
           <form onSubmit={save}>
             <textarea aria-label={`Activity for ${entry.dateLabel}`} value={activity} onChange={(event) => setDraft(event.target.value)}
               maxLength={2000} rows={3} disabled={saving} placeholder="Add the day's activity…"
-              className="block w-full min-w-40 resize-y rounded-xl border border-gray-300 bg-white px-3 py-3 text-4xl leading-6 outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60" />
+              className="block w-full min-w-40 resize-y rounded-xl border border-gray-300 bg-white px-3 py-3 text-4xl leading-relaxed outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60" />
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <button type="submit" disabled={saving || !changed} className="min-h-10 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50">
                 {saving ? "Saving…" : "Save activity"}
