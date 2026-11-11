@@ -6,6 +6,7 @@ import {
   IMAGE_TYPES, MAX_IMAGE_BYTES, UPLOADED_IMAGE_NAME, ImageUploadError,
   saveUploadedImage, uploadsDirectory,
 } from "../services/imageUploads.js";
+import { imageThumbnailPath } from "../services/imageThumbnails.js";
 
 const uploadRateLimit = createAuthRateLimit({
   scope: "image-upload-account", limit: 60, windowMs: 60 * 60 * 1000,
@@ -17,6 +18,23 @@ const uploadRateLimit = createAuthRateLimit({
 
 export const createUploadRouter = ({ directory = uploadsDirectory() } = {}) => {
   const router = express.Router();
+  router.get("/thumbnails/v1/:filename", async (req, res, next) => {
+    const fail = (error) => {
+      if (res.headersSent) return next(error);
+      res.set("Cache-Control", "no-store");
+      res.status(error.code === "ENOENT" || error.status === 404 ? 404 : 503).end();
+    };
+    try {
+      const path = await imageThumbnailPath(req.params.filename, directory);
+      res.set("X-Content-Type-Options", "nosniff");
+      // The service validates the hash filename before selecting this hidden cache.
+      res.sendFile(path, { dotfiles: "allow", immutable: true, maxAge: "1y" }, (error) => {
+        if (error) fail(error);
+      });
+    } catch (error) {
+      fail(error);
+    }
+  });
   router.post("/images", userAuth, requireStaff, (req, res, next) => {
     const type = req.get("content-type")?.split(";")[0].trim().toLowerCase();
     if (!IMAGE_TYPES.has(type) || (req.get("content-encoding") || "identity") !== "identity") {

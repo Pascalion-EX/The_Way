@@ -57,3 +57,13 @@ initialized by the one-off `uploads-init` service. Do not bake uploaded files
 into images. `/api/uploads/images` accepts JPEG, PNG, and WebP file bytes with
 the corresponding `Content-Type`; it requires a verified staff account and
 returns a relative `/uploads/…webp` URL for the content’s existing image field.
+
+Lesson cards request `/api/uploads/thumbnails/v1/<image-hash>.webp`: WebP previews
+bounded to 480 pixels on either side and 40 KiB, at quality 60. The API generates
+these on first request for existing or new uploads and caches them in
+`UPLOADS_DIR/.thumbnails/v1/`, shared by both API replicas. Concurrent requests
+reuse generation work, and each worker decodes one thumbnail at a time. Responses
+allow one year of immutable browser caching. Originals remain available for
+lesson viewing; no database migration or re-upload is needed. Deploy the API
+before or alongside the frontend so the thumbnail endpoint is available.
+Derived thumbnails are excluded from image backups and regenerate after restore.

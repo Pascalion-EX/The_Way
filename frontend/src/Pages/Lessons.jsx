@@ -166,7 +166,7 @@ const Lessons = () => {
   */
 
   return (
-    <div className="relative isolate min-h-screen text-gray-900 bg-transparent">
+    <div className="lessons-page relative isolate text-gray-900 bg-transparent">
       <Navbar />
 
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2 bg-transparent">
@@ -174,7 +174,7 @@ const Lessons = () => {
 
         <div className="relative hidden overflow-hidden lg:block">
 
-          <div className="relative z-10 flex h-full items-center justify-center px-12">
+          <div className="relative z-10 flex h-screen items-center justify-center px-12">
             <div className="max-w-md">
               <p className="text-sm font-medium uppercase tracking-[0.3em] text-gray-700 drop-shadow-md">
                 Saint George Church
@@ -286,11 +286,24 @@ const Lessons = () => {
 
             {/* Lessons */}
 
-            <section className="mt-8 sm:mt-10">
-              {loading ? (
-                <p className="text-sm text-gray-500">
-                  Loading lessons...
-                </p>
+            <section aria-label="Lesson results" aria-busy={loading} className="mt-8 sm:mt-10">
+              {loading && lessons.length > 0 && <p role="status" className="sr-only">Updating lessons...</p>}
+              {loading && lessons.length === 0 ? (
+                <>
+                  <p role="status" className="sr-only">Loading lessons...</p>
+                  <div aria-hidden="true" className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                    {Array.from({ length: pagination.pageSize }, (_, index) => (
+                      <div key={index} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="h-40 bg-gray-100 sm:h-48 lg:h-56" />
+                        <div className="p-4 sm:p-6">
+                          <div className="h-14 rounded-lg bg-gray-100" />
+                          <div className="mt-1 h-5 w-2/3 rounded bg-gray-100" />
+                          <div className="mt-6 h-12 rounded-xl bg-gray-100" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : lessons.length ===
                 0 ? (
                 <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5 text-sm text-gray-600 sm:p-6">
@@ -311,6 +324,9 @@ const Lessons = () => {
 
                           {lesson.image && (
                             <ContentImage
+                              thumbnail
+                              loading="lazy"
+                              decoding="async"
                               src={
                                 lesson.image
                               }

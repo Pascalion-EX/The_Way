@@ -65,7 +65,15 @@ for (const page of ["Lessons", "Games", "Activities", "Chants", "Camps"]) {
       React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: ["servant"] }, isLoggedin: true } },
         React.createElement(Page))));
     assert.match(html, /Card (?:name|title)/);
-    assert.match(html, /src="\/uploads\/a{64}\.webp"/);
+    if (page === "Lessons") {
+      assert.match(html, /src="\/api\/uploads\/thumbnails\/v1\/a{64}\.webp"/);
+      assert.match(html, /loading="lazy"/);
+      assert.match(html, /decoding="async"/);
+      assert.doesNotMatch(html, /src="\/uploads\//);
+      assert.doesNotMatch(html, /<link[^>]+rel="preload"[^>]+as="image"/);
+    } else {
+      assert.match(html, /src="\/uploads\/a{64}\.webp"/);
+    }
     assert.doesNotMatch(html, new RegExp(hiddenContent));
     assert.doesNotMatch(html, /No preview available|No description available|No explanation available|No lyrics available/);
     assert.match(html, /(?:View|Open)<\/button>/);
@@ -73,6 +81,34 @@ for (const page of ["Lessons", "Games", "Activities", "Chants", "Camps"]) {
     if (page === "Chants") assert.match(html, /★ Favorite/);
     if (page === "Camps") assert.match(html, /Withdraw/);
     else assert.match(html, /Edit<\/button>/);
+  });
+}
+
+for (const items of [[], [record]]) {
+  test(`pending lessons ${items.length ? "keep existing cards visible during refresh" : "reserve results without flashing an empty list or downloading images"}`, async () => {
+    const pendingHook = dataUrl(`export default () => ({
+      items: ${JSON.stringify(items)}, loading: true,
+      pagination: { page: 1, pageSize: 6, totalItems: ${items.length}, totalPages: 1 },
+      setPage() {}, setFilters() {}, refresh() {}
+    });`);
+    const { default: Page } = await import(await compile("../src/Pages/Lessons.jsx", {
+      ...overrides, "../hooks/usePaginatedList.js": pendingHook,
+    }));
+    const html = renderToStaticMarkup(React.createElement(MemoryRouter, null,
+      React.createElement(AppContent.Provider, { value: { backendUrl: "", userData: { role: ["servant"] }, isLoggedin: true } },
+        React.createElement(Page))));
+    assert.match(html, /aria-label="Lesson results" aria-busy="true"/);
+    assert.doesNotMatch(html, /No lessons found/);
+    if (items.length) {
+      assert.match(html, /Updating lessons/);
+      assert.match(html, /Card title/);
+      assert.match(html, /<article/);
+      assert.match(html, /src="\/api\/uploads\/thumbnails\/v1\//);
+    } else {
+      assert.match(html, /role="status"[^>]*>Loading lessons/);
+      assert.match(html, /aria-hidden="true"/);
+      assert.doesNotMatch(html, /<article|<img/);
+    }
   });
 }
 

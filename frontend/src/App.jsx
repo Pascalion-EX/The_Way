@@ -92,7 +92,7 @@ const App = () => {
       />
 
       <div className="relative z-10 flex flex-1 flex-col">
-      <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center" role="status">Loading page…</div>}>
+      <Suspense fallback={<div className="page-loading flex items-center justify-center" role="status">Loading page…</div>}>
       <Routes>
         {/* =========================
             PUBLIC ROUTES

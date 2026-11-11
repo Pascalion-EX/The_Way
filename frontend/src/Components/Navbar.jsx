@@ -137,7 +137,9 @@ const hasVideoRequestAccess = userData
             <img
               src={assets.logo}
               alt="The Way logo"
-              className="block w-24 sm:w-28 lg:w-32"
+              width="905"
+              height="873"
+              className="block h-auto w-24 sm:w-28 lg:w-32"
             />
           </button>
         </div>

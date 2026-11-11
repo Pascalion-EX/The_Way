@@ -41,6 +41,8 @@ test("backup and recovery keep a matching database/image pair, exclude partial u
   const state = await setup(t);
   await writeFile(join(state.uploads, filename), "stored-image-bytes");
   await writeFile(join(state.uploads, ".unfinished.tmp"), "partial");
+  await mkdir(join(state.uploads, ".thumbnails", "v1"), { recursive: true });
+  await writeFile(join(state.uploads, ".thumbnails", "v1", filename), "derived-thumbnail-bytes");
   await execFile("sh", [await state.script("backup")], { env: state.env });
   const files = await readdir(state.backups);
   assert.equal(files.length, 2);
@@ -49,7 +51,7 @@ test("backup and recovery keep a matching database/image pair, exclude partial u
   assert.ok(files.includes(images));
   const listed = await execFile("tar", ["-tzf", join(state.backups, images)]);
   assert.match(listed.stdout, new RegExp(filename));
-  assert.doesNotMatch(listed.stdout, /unfinished/);
+  assert.doesNotMatch(listed.stdout, /unfinished|thumbnails/);
   await rm(join(state.uploads, filename));
   await execFile("sh", [await state.script("restore"), join(state.backups, archive)], { env: state.env });
   assert.equal(await readFile(join(state.uploads, filename), "utf8"), "stored-image-bytes");

@@ -12,7 +12,7 @@ const ProtectedRoute = ({ requireVerified = true }) => {
   // Prevent redirecting before the authentication cookie is checked
   if (authLoading || (isLoggedin && !userData)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-transparent">
+      <div className="page-loading flex items-center justify-center bg-transparent" role="status" aria-label="Checking your session">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
       </div>
     );
@@ -58,7 +58,7 @@ const PageAccessGate = ({ pathname }) => {
   }, [backendUrl, pathname]);
 
   if (!access) {
-    return <div className="flex min-h-screen items-center justify-center" role="status">Checking access…</div>;
+    return <div className="page-loading flex items-center justify-center" role="status">Checking access…</div>;
   }
 
   if (!access.allowed) {

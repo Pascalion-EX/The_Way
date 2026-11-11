@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=optional');
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@700;800;900&display=optional');
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -321,12 +321,16 @@
     }
   html {
     zoom: var(--app-zoom);
+    scrollbar-gutter: stable;
     @apply font-sans;
     }
 }
 
-/* CSS zoom also scales viewport lengths; keep the layout and projector full height. */
+/* Keep pending routes as tall as the viewport so the footer does not jump.
+   CSS zoom also scales viewport lengths; compensate in every full-height shell. */
 .app-shell,
+.page-loading,
+.lessons-page,
 [data-projector-mode] {
   min-height: calc(100vh / var(--app-zoom));
   min-height: calc(100dvh / var(--app-zoom));

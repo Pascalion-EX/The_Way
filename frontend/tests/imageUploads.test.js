@@ -21,6 +21,20 @@ test("uploaded image paths use the configured API origin while existing links re
   }
 });
 
+test("lesson thumbnails use the API origin and preserve legacy links and full-size images", async () => {
+  const filename = `${"a".repeat(64)}.webp`;
+  for (const backend of ["", "https://api.example.invalid", "https://api.example.invalid/"]) {
+    const { contentImageUrl } = await import(helperUrl(backend));
+    const origin = backend.replace(/\/$/, "");
+    assert.equal(contentImageUrl(`/uploads/${filename}`, { thumbnail: true }), `${origin}/api/uploads/thumbnails/v1/${filename}`);
+    assert.equal(contentImageUrl(`/uploads/${filename}`), `${origin}/uploads/${filename}`);
+    for (const existing of ["https://images.example.invalid/old.jpg", "/avatars/mark.png", "", undefined]) {
+      assert.equal(contentImageUrl(existing, { thumbnail: true }), existing);
+    }
+    assert.equal(contentImageUrl("/uploads/old.webp", { thumbnail: true }), `${origin}/uploads/old.webp`);
+  }
+});
+
 test("real image picker renders file selection, upload constraints, previews, and required/optional states", async () => {
   const imageSource = await readFile(new URL("../src/Components/ContentImage.jsx", import.meta.url), "utf8");
   const compiledImage = await transformWithEsbuild(imageSource, "ContentImage.jsx", { jsx: "automatic", format: "esm" });

@@ -47,6 +47,18 @@ test("initial session restoration hides the login form instead of flashing anoth
   assert.doesNotMatch(html, /<form/);
 });
 
+test("a direct lesson visit reserves the page while the session is restored without exposing protected content", async () => {
+  for (const state of [
+    { authLoading: true, isLoggedin: false, userData: null },
+    { authLoading: false, isLoggedin: true, userData: null },
+  ]) {
+    const html = await renderPage("/lessons", state);
+    assert.match(html, /class="page-loading /);
+    assert.match(html, /role="status" aria-label="Checking your session"/);
+    assert.doesNotMatch(html, /Create Lesson|Search lesson content|Login<|No lessons found/);
+  }
+});
+
 for (const verified of [true, false]) {
   test(`a signed-in account cannot render another login or registration form (verified: ${verified})`, async () => {
     const html = await renderPage("/login", {
