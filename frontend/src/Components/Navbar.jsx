@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { assets } from "../assets/assets.js";
@@ -20,6 +20,26 @@ const Navbar = () => {
 
   const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const navToggleRef = useRef(null);
+  const navMenuRef = useRef(null);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    if (!navMenuOpen && !userMenuOpen) return;
+
+    const handleOutsideClick = (event) => {
+      const path = event.composedPath();
+      if (navMenuOpen && !path.includes(navMenuRef.current) && !path.includes(navToggleRef.current)) {
+        setNavMenuOpen(false);
+      }
+      if (userMenuOpen && !path.includes(userMenuRef.current)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("click", handleOutsideClick, true);
+    return () => document.removeEventListener("click", handleOutsideClick, true);
+  }, [navMenuOpen, userMenuOpen]);
 
   const allowedAdminRoles = ["admin", "pamela", "pascal"];
 
@@ -124,6 +144,7 @@ const hasVideoRequestAccess = userData
         {/* Logo */}
         <div className="pointer-events-auto relative z-[10001]">
           <button
+            ref={navToggleRef}
             type="button"
             onClick={toggleNavigationMenu}
            className="relative z-[10002] block cursor-pointer border-none bg-transparent outline-none transition duration-200 hover:scale-105 focus:outline-none focus:ring-0 focus:ring-offset-0"
@@ -153,7 +174,7 @@ const hasVideoRequestAccess = userData
               <NotificationBell />
 
               {/* User */}
-              <div className="relative">
+              <div ref={userMenuRef} className="relative">
                 <button
                   type="button"
                   onClick={toggleUserMenu}
@@ -222,7 +243,7 @@ const hasVideoRequestAccess = userData
 
       {/* Main navigation dropdown */}
       {navMenuOpen && (
-        <div className="pointer-events-auto absolute left-4 right-4 top-32 z-[10000] sm:left-8 sm:right-auto sm:top-36 sm:max-w-[calc(100vw-4rem)] lg:left-12 lg:top-40">
+        <div ref={navMenuRef} className="pointer-events-auto absolute left-4 right-4 top-32 z-[10000] sm:left-8 sm:right-auto sm:top-36 sm:max-w-[calc(100vw-4rem)] lg:left-12 lg:top-40">
           <div className="flex max-h-[70vh] flex-wrap gap-3 overflow-y-auto rounded-2xl border border-gray-200 bg-transparent p-4 shadow-xl backdrop-blur-md">
             <button
               type="button"

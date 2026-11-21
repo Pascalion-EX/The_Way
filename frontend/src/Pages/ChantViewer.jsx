@@ -9,6 +9,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "../utils/axios";
 import { toast } from "react-toastify";
 import jsPDF from "jspdf";
+import { Check, Moon } from "lucide-react";
 import { canManagePrayers } from "../../../shared/pageAccess.mjs";
 import { getPrayerSlides } from "../../../shared/prayerSlides.mjs";
 import ContentImage from "../Components/ContentImage.jsx";
@@ -196,6 +197,7 @@ const ChantViewer = ({ contentType = "chant" }) => {
   const projectorButtonClass = projectorDarkMode
     ? "bg-white/10 hover:bg-white/20"
     : "bg-black/5 hover:bg-black/10";
+  const DarkModeIcon = projectorDarkMode ? Check : Moon;
 
   return (
     <div
@@ -227,8 +229,13 @@ const ChantViewer = ({ contentType = "chant" }) => {
                   type="button"
                   aria-pressed={projectorDarkMode}
                   onClick={() => setProjectorDarkMode((previous) => !previous)}
-                  className={`px-4 py-2 rounded-lg transition ${projectorButtonClass}`}
+                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                    projectorDarkMode
+                      ? "bg-white text-slate-900 hover:bg-blue-100 focus-visible:outline-white"
+                      : "bg-black/5 hover:bg-black/10 focus-visible:outline-slate-900"
+                  }`}
                 >
+                  <DarkModeIcon aria-hidden="true" size={18} />
                   Dark Mode
                 </button>
                 <button

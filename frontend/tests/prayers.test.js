@@ -176,7 +176,7 @@ async function mountViewer({ roles = ["parent"], contentType = "prayer", failure
       } };
       if (specifier === "react-toastify") return { toast: { error: (message) => messages.errors.push(message), success: (message) => messages.successes.push(message) } };
       if (specifier === "jspdf") return class {};
-      if (specifier === "lucide-react") return { BookOpen: () => null };
+      if (specifier === "lucide-react") return { BookOpen: () => null, Check: "check-icon", Moon: "moon-icon" };
       if (specifier.includes("Navbar") || specifier.includes("ContentVideo") || specifier.includes("ChantYouTubePlayer") || specifier.includes("Pagination")) return () => null;
       throw new Error(`Unexpected viewer import: ${specifier}`);
     },
@@ -237,6 +237,25 @@ test("prayers reuse the chant viewer's language, slide, keyboard, fullscreen and
     assert.equal(viewer.button("Edit"), null);
     assert.equal(viewer.button("Delete"), null);
     assert.equal(viewer.button("Delete prayer"), null);
+  } finally { viewer.cleanup(); }
+});
+
+test("the projector dark mode toggle shows a distinct pressed state", async () => {
+  const viewer = await mountViewer({ contentType: "chant" });
+  try {
+    viewer.button("Dark Mode Projector").props.onClick(); viewer.render();
+    const pressedButton = viewer.button("Dark Mode");
+    assert.equal(pressedButton.props["aria-pressed"], true);
+    assert.match(pressedButton.props.className, /\bbg-white\s/);
+    assert.ok(find(pressedButton, (node) => node.type === "check-icon"));
+
+    pressedButton.props.onClick(); viewer.render();
+    const releasedButton = viewer.button("Dark Mode");
+    assert.equal(releasedButton.props["aria-pressed"], false);
+    assert.ok(find(releasedButton, (node) => node.type === "moon-icon"));
+
+    releasedButton.props.onClick(); viewer.render();
+    assert.equal(viewer.button("Dark Mode").props["aria-pressed"], true);
   } finally { viewer.cleanup(); }
 });
 
