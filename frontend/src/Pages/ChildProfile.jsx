@@ -2,6 +2,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from "re
 import {
   AlertTriangle,
   BriefcaseBusiness,
+  CalendarDays,
   Loader2,
   MapPin,
   Pencil,
@@ -19,6 +20,7 @@ import { toast } from "react-toastify";
 import axios from "../utils/axios";
 import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar.jsx";
+import DatePicker from "../Components/DatePicker.jsx";
 import { canAccessChildrenProfiles, canEditChildrenProfiles, canManageChildrenProfiles } from "../../../shared/pageAccess.mjs";
 
 // ======================================================
@@ -28,6 +30,7 @@ import { canAccessChildrenProfiles, canEditChildrenProfiles, canManageChildrenPr
 const emptyForm = {
   name: "",
   grade: "",
+  birthday: "",
   firstParent: "",
   secondParent: "",
   firstParentJob: "",
@@ -156,6 +159,7 @@ const ChildProfiles = () => {
     setForm({
       name: child.name || "",
       grade: child.grade || "",
+      birthday: child.birthday?.slice(0, 10) || "",
       firstParent: child.firstParent || "",
       secondParent: child.secondParent || "",
       firstParentJob: child.firstParentJob || "",
@@ -214,6 +218,7 @@ const ChildProfiles = () => {
     const payload = {
       name: form.name.trim(),
       grade,
+      birthday: form.birthday || null,
 
       firstParent: form.firstParent.trim(),
 
@@ -885,6 +890,19 @@ const ChildCard = ({
 
       <div className="mt-6 space-y-4">
         <ProfileItem
+          icon={<CalendarDays />}
+          label="Birthday"
+          value={child.birthday
+            ? new Date(child.birthday).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+                timeZone: "UTC",
+              })
+            : "Not provided"}
+        />
+
+        <ProfileItem
           icon={<UserRound />}
           label="First Parent"
           value={
@@ -1266,6 +1284,18 @@ const ChildFormModal = ({
               </select>
             </div>
 
+            {/* BIRTHDAY */}
+
+            <div className="md:col-span-2">
+              <FormInput
+                label="Birthday (optional)"
+                name="birthday"
+                type="date"
+                value={form.birthday}
+                onChange={handleChange}
+              />
+            </div>
+
             {/* PARENT 1 */}
 
             <FormInput
@@ -1472,9 +1502,11 @@ const FormInput = ({
   placeholder,
   required = false,
 }) => {
+  const Input = type === "date" ? DatePicker : "input";
+
   return (
     <div>
-      <label className="mb-2 block text-sm font-semibold text-gray-700">
+      <label htmlFor={name} className="mb-2 block text-sm font-semibold text-gray-700">
         {label}
 
         {required && (
@@ -1485,7 +1517,8 @@ const FormInput = ({
         )}
       </label>
 
-      <input
+      <Input
+        id={name}
         type={type}
         name={name}
         value={value}

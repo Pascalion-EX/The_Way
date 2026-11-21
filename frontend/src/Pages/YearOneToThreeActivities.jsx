@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import Navbar from "../Components/Navbar.jsx";
+import DatePicker from "../Components/DatePicker.jsx";
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios.js";
 
@@ -77,12 +78,12 @@ export default function YearOneToThreeActivities() {
         <section className="rounded-3xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8" aria-labelledby="year-1-3-title">
           <h1 id="year-1-3-title" className="text-3xl font-bold tracking-tight">Year 1–3 Post Lesson Activities</h1>
           <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
-            <label className="text-sm font-medium text-gray-700">
-              Month
-              <input type="month" min="1900-01" max="9999-12" value={month || schedule?.month || ""}
-                onChange={(event) => { if (event.target.value) setMonth(event.target.value); }}
+            <div className="text-sm font-medium text-gray-700">
+              <label htmlFor="activity-month">Month</label>
+              <DatePicker id="activity-month" type="month" min="1900-01" max="9999-12" value={month || schedule?.month || ""}
+                onChange={(event) => setMonth(event.target.value || null)}
                 className="mt-2 block min-h-11 rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500" />
-            </label>
+            </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={buttonClass} disabled={loading || !visibleSchedule?.previousMonth}
                 onClick={() => setMonth(visibleSchedule.previousMonth)}>Previous month</button>

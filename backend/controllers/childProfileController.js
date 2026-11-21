@@ -8,6 +8,7 @@ export const createChildProfile = async (req, res) => {
     const {
       name,
       grade,
+      birthday,
       firstParent,
       secondParent,
       firstParentJob,
@@ -38,6 +39,7 @@ export const createChildProfile = async (req, res) => {
       createdBy: req.userId,
       name,
       grade,
+      birthday,
       firstParent,
       secondParent,
       firstParentJob,
@@ -54,6 +56,13 @@ export const createChildProfile = async (req, res) => {
       childProfile,
     });
   } catch (error) {
+    if (error.name === "ValidationError" && error.errors.birthday) {
+      return res.status(400).json({
+        success: false,
+        message: "Birthday must be a valid date",
+      });
+    }
+
     console.error("Create child profile error:", error);
 
     return res.status(500).json({
@@ -162,6 +171,7 @@ export const updateChildProfile = async (req, res) => {
     const {
       name,
       grade,
+      birthday,
       firstParent,
       secondParent,
       firstParentJob,
@@ -184,6 +194,7 @@ export const updateChildProfile = async (req, res) => {
       {
         name,
         grade,
+        birthday,
         firstParent,
         secondParent,
         firstParentJob,
@@ -212,6 +223,13 @@ export const updateChildProfile = async (req, res) => {
       childProfile,
     });
   } catch (error) {
+    if (error.name === "CastError" && error.path === "birthday") {
+      return res.status(400).json({
+        success: false,
+        message: "Birthday must be a valid date",
+      });
+    }
+
     console.error("Update child profile error:", error);
 
     return res.status(500).json({

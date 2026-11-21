@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../Components/Navbar.jsx";
+import DatePicker from "../Components/DatePicker.jsx";
 
 import { AppContent } from "../Context/AppContent.js";
 import axios from "../utils/axios";
@@ -460,7 +461,7 @@ const EditEvent = () => {
                       Start Date
                     </label>
 
-                    <input
+                    <DatePicker
                       id="startDate"
                       type={
                         formData.allDay
@@ -495,7 +496,7 @@ const EditEvent = () => {
                       End Date
                     </label>
 
-                    <input
+                    <DatePicker
                       id="endDate"
                       type={
                         formData.allDay

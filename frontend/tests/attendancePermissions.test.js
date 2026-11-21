@@ -54,6 +54,7 @@ async function mountPage({ roles = ["servant"], access = { allClasses: false, gr
       };
       if (specifier.includes("AppContent")) return { AppContent: {} };
       if (specifier.includes("Navbar")) return () => null;
+      if (specifier.includes("DatePicker")) return (props) => jsx("input", props);
       if (specifier === "lucide-react") return Object.fromEntries(
         ["CalendarDays", "CheckCircle2", "Clock3", "Loader2", "Save", "Search", "Users", "XCircle", "CircleHelp"].map((name) => [name, "svg"])
       );

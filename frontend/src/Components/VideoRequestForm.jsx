@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import axios from "../utils/axios";
+import DatePicker from "./DatePicker.jsx";
 
 const VideoRequestForm = ({ backendUrl, onRequestCreated }) => {
   const [formData, setFormData] = useState({
@@ -226,14 +227,15 @@ const VideoRequestForm = ({ backendUrl, onRequestCreated }) => {
         {/* Deadline / priority */}
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label htmlFor="video-deadline" className="mb-2 block text-sm font-medium text-gray-700">
               Deadline
               <span className="ml-1 font-normal text-gray-400">
                 optional
               </span>
             </label>
 
-            <input
+            <DatePicker
+              id="video-deadline"
               type="date"
               name="deadline"
               value={formData.deadline}

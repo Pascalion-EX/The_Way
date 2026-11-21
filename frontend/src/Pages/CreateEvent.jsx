@@ -1,5 +1,6 @@
 import React, { useContext, useState } from "react";
 import Navbar from "../Components/Navbar.jsx";
+import DatePicker from "../Components/DatePicker.jsx";
 
 import { AppContent } from "../Context/AppContent.js";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,20 @@ const CreateEvent = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === "allDay" && type === "checkbox") {
+      const convertDate = (date) => {
+        if (!date) return "";
+        return checked ? date.slice(0, 10) : `${date.slice(0, 10)}T${date.slice(11, 16) || "00:00"}`;
+      };
+      setFormData((prev) => ({
+        ...prev,
+        allDay: checked,
+        startDate: convertDate(prev.startDate),
+        endDate: convertDate(prev.endDate),
+      }));
+      return;
+    }
 
     setFormData((prev) => ({
       ...prev,
@@ -328,7 +343,7 @@ const CreateEvent = () => {
                       Start Date
                     </label>
 
-                    <input
+                    <DatePicker
                       id="startDate"
                       type={
                         formData.allDay
@@ -365,7 +380,7 @@ const CreateEvent = () => {
                       End Date
                     </label>
 
-                    <input
+                    <DatePicker
                       id="endDate"
                       type={
                         formData.allDay

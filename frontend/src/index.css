@@ -342,3 +342,13 @@
   zoom: calc(1 / var(--app-zoom));
   font-size: calc(1rem * var(--app-zoom));
 }
+
+/* Floating positions use viewport pixels. Cancel the page zoom on the positioning
+   wrapper, then restore the site's scale on the calendar itself. */
+[data-radix-popper-content-wrapper]:has([data-shared-date-picker]) {
+  zoom: calc(1 / var(--app-zoom));
+}
+
+[data-shared-date-picker] {
+  zoom: var(--app-zoom);
+}

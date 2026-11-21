@@ -15,6 +15,7 @@ import { toast } from "react-toastify";
 
 import { AppContent } from "../Context/AppContent.js";
 import Navbar from "../Components/Navbar";
+import DatePicker from "../Components/DatePicker.jsx";
 
 // ======================================================
 // HELPERS
@@ -474,11 +475,12 @@ const Attendance = () => {
           <div className="grid gap-5 md:grid-cols-2">
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">
+              <label htmlFor="serviceDate" className="mb-2 block text-sm font-semibold text-gray-700">
                 Wednesday Service Date
               </label>
 
-              <input
+              <DatePicker
+                id="serviceDate"
                 type="date"
                 value={serviceDate}
                 onChange={(event) =>

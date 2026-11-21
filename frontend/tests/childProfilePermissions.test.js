@@ -16,13 +16,13 @@ const find = (node, predicate) => {
   return predicate(node) ? node : find(node.props?.children, predicate);
 };
 
-async function mountPage(roles) {
+async function mountPage(roles, childOverrides = {}) {
   const values = [];
   const effects = [];
   const pending = [];
   const saves = [];
   const deletions = [];
-  const child = { _id: "child-id", name: "Existing child", grade: 2, firstParent: "Existing parent" };
+  const child = { _id: "child-id", name: "Existing child", grade: 2, firstParent: "Existing parent", ...childOverrides };
   let cursor = 0;
   let tree;
   const jsx = (type, props) => ({ type, props });
@@ -57,8 +57,9 @@ async function mountPage(roles) {
       if (specifier.includes("AppContent")) return { AppContent: {} };
       if (specifier.includes("pageAccess")) return permissions;
       if (specifier.includes("Navbar")) return () => null;
+      if (specifier.includes("DatePicker")) return (props) => jsx("input", props);
       if (specifier === "lucide-react") return Object.fromEntries(
-        ["AlertTriangle", "BriefcaseBusiness", "Loader2", "MapPin", "Pencil", "Phone", "Plus", "Save", "Search", "Trash2", "UserRound", "Users", "X"].map((name) => [name, "svg"])
+        ["AlertTriangle", "BriefcaseBusiness", "CalendarDays", "Loader2", "MapPin", "Pencil", "Phone", "Plus", "Save", "Search", "Trash2", "UserRound", "Users", "X"].map((name) => [name, "svg"])
       );
       if (specifier === "react-toastify") return { toast: { success() {}, error(message) { assert.fail(message); } } };
       if (specifier.includes("axios")) return {
@@ -85,6 +86,7 @@ async function mountPage(roles) {
   render();
   return {
     saves, deletions, render,
+    get tree() { return tree; },
     button(label) { return find(tree, (node) => node.type === "button" && nodeText(node).trim() === label); },
     field(name) { return find(tree, (node) => node.props?.name === name); },
     submit() { return find(tree, (node) => node.type === "form").props.onSubmit({ preventDefault() {} }); },
@@ -100,6 +102,7 @@ test("servants can create and edit child profiles without a Delete action", asyn
 
     page.button("Add Child").props.onClick(); page.render();
     assert.equal(page.field("firstParent").props.value, "");
+    assert.equal(page.field("birthday").props.value, "");
     page.field("name").props.onChange({ target: { name: "name", value: "New child" } });
     page.field("grade").props.onChange({ target: { name: "grade", value: "3" } });
     page.render();
@@ -108,16 +111,66 @@ test("servants can create and edit child profiles without a Delete action", asyn
     assert.equal(page.saves[0].url, "/api/children");
     assert.equal(page.saves[0].body.name, "New child");
     assert.equal(page.saves[0].body.grade, 3);
+    assert.equal(page.saves[0].body.birthday, null);
 
     page.button("Edit").props.onClick(); page.render();
     assert.equal(page.field("name").props.value, "Existing child");
+    assert.equal(page.field("birthday").props.value, "");
     page.field("name").props.onChange({ target: { name: "name", value: "Edited child" } });
     page.render();
     await page.submit(); page.render();
     assert.equal(page.saves[1].method, "PUT");
     assert.equal(page.saves[1].url, "/api/children/child-id");
     assert.equal(page.saves[1].body.name, "Edited child");
+    assert.equal(page.saves[1].body.birthday, null);
     assert.deepEqual(page.deletions, []);
+  }
+});
+
+test("parents can create a child with an optional birthday", async () => {
+  const page = await mountPage(["parent"]);
+  page.button("Add Child").props.onClick(); page.render();
+  const birthday = page.field("birthday");
+  assert.equal(birthday.props.type, "date");
+  assert.equal(birthday.props.required, false);
+  assert.ok(find(page.tree, (node) => node.type === "label" && node.props.htmlFor === birthday.props.id));
+  for (const [name, value] of [["name", "New child"], ["grade", "3"], ["birthday", "2016-05-14"]]) {
+    page.field(name).props.onChange({ target: { name, value } });
+  }
+  page.render();
+  await page.submit();
+  assert.equal(page.saves[0].method, "POST");
+  assert.equal(page.saves[0].body.birthday, "2016-05-14");
+});
+
+test("saved birthdays display, prefill the date picker, survive unrelated edits, and can be changed or cleared", async () => {
+  const page = await mountPage(["servant"], { birthday: "2016-05-14T00:00:00.000Z" });
+  assert.match(nodeText(page.tree), /Birthday14 May 2016/);
+  page.button("Edit").props.onClick(); page.render();
+  assert.equal(page.field("birthday").props.value, "2016-05-14");
+  page.field("name").props.onChange({ target: { name: "name", value: "Renamed child" } });
+  page.render();
+  await page.submit(); page.render();
+  assert.equal(page.saves[0].method, "PUT");
+  assert.equal(page.saves[0].body.birthday, "2016-05-14");
+
+  for (const [index, value] of ["2016-05-15", ""].entries()) {
+    page.button("Edit").props.onClick(); page.render();
+    page.field("birthday").props.onChange({ target: { name: "birthday", value } });
+    page.render();
+    await page.submit(); page.render();
+    assert.equal(page.saves[index + 1].body.birthday, value || null);
+  }
+});
+
+test("existing children without birthdays remain readable and editable", async () => {
+  for (const birthday of [undefined, null]) {
+    const page = await mountPage(["servant"], { birthday });
+    assert.match(nodeText(page.tree), /BirthdayNot provided/);
+    page.button("Edit").props.onClick(); page.render();
+    assert.equal(page.field("birthday").props.value, "");
+    await page.submit();
+    assert.equal(page.saves[0].body.birthday, null);
   }
 });
 

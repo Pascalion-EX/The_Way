@@ -17,6 +17,11 @@ const childProfileschema = new mongoose.Schema(
             type: Number,
             required: true,
         },
+        birthday: {
+            type: Date,
+            // Existing profiles can stay valid without a known birthday.
+            default: null,
+        },
         firstParent: {
             type: String,
             trim:true,

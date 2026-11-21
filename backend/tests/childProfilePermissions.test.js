@@ -100,11 +100,61 @@ test("parents can create children through both aliases and cannot forge profile 
     assert.equal(result.status, 201);
     assert.equal(String(result.body.childProfile.createdBy), userId);
     assert.equal(result.body.childProfile.firstParentJob, "Teacher");
+    assert.equal(result.body.childProfile.birthday, null);
     const loaded = await state.request("GET", `${prefix}/${result.body.childProfile._id}`);
     assert.equal(loaded.status, 200);
     assert.equal(loaded.body.childProfile.name, "New child");
   }
   assert.equal(state.writes, 2);
+});
+
+test("birthdays persist on create and edit, survive unrelated updates, and can be cleared", async (t) => {
+  const state = setup(t);
+  state.user.role = ["servant"];
+  for (const prefix of prefixes) {
+    const created = await state.request("POST", prefix, {
+      name: "Child with birthday", grade: 2, birthday: "2016-05-14",
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.body.childProfile.birthday.toISOString(), "2016-05-14T00:00:00.000Z");
+    const id = String(created.body.childProfile._id);
+    assert.equal(state.children.find((child) => String(child._id) === id).birthday.toISOString(), "2016-05-14T00:00:00.000Z");
+
+    const updated = await state.request("PUT", `${prefix}/${id}`, { birthday: "2016-05-15" });
+    assert.equal(updated.status, 200);
+    assert.equal(updated.body.childProfile.birthday.toISOString(), "2016-05-15T00:00:00.000Z");
+    const renamed = await state.request("PUT", `${prefix}/${id}`, { name: "Renamed child" });
+    assert.equal(renamed.status, 200);
+    assert.equal(renamed.body.childProfile.birthday.toISOString(), "2016-05-15T00:00:00.000Z");
+    const loaded = await state.request("GET", `${prefix}/${id}`);
+    assert.equal(loaded.status, 200);
+    assert.equal(loaded.body.childProfile.birthday.toISOString(), "2016-05-15T00:00:00.000Z");
+
+    for (const birthday of [null, ""]) {
+      const cleared = await state.request("PUT", `${prefix}/${id}`, { birthday });
+      assert.equal(cleared.status, 200);
+      assert.equal(cleared.body.childProfile.birthday, null);
+      assert.equal(state.children.find((child) => String(child._id) === id).birthday, null);
+    }
+  }
+});
+
+test("invalid birthdays reject creation and edits without writing child records", async (t) => {
+  const state = setup(t);
+  state.user.role = ["servant"];
+  const original = structuredClone(state.children);
+  for (const prefix of prefixes) {
+    for (const birthday of ["not-a-date", {}, [], { $ne: null }]) {
+      for (const [method, path] of [["POST", prefix], ["PUT", `${prefix}/${legacyChildId}`]]) {
+        const result = await state.request(method, path, { name: "Invalid edit", grade: 2, birthday });
+        assert.equal(result.status, 400);
+        assert.equal(result.body.success, false);
+        assert.equal(result.body.message, "Birthday must be a valid date");
+      }
+    }
+  }
+  assert.equal(state.writes, 0);
+  assert.deepEqual(structuredClone(state.children), original);
 });
 
 test("parent lists, grade filters, and direct lookups expose only their own children", async (t) => {
@@ -162,6 +212,7 @@ test("servants can view all children, including other parents' and legacy profil
         const result = await state.request("GET", `${prefix}/${id}`);
         assert.equal(result.status, 200);
         assert.equal(String(result.body.childProfile._id), id);
+        assert.equal(result.body.childProfile.birthday, null);
       }
     }
   }
@@ -184,6 +235,7 @@ test("servants can create and edit any child through both aliases without changi
         assert.equal(result.body.childProfile.name, "Updated child");
         assert.equal(result.body.childProfile.grade, 4);
         assert.equal(result.body.childProfile.firstParentJob, "Teacher");
+        assert.equal(result.body.childProfile.birthday, null);
         assert.equal(String(result.body.childProfile.createdBy), String(owner ?? null));
         const loaded = await state.request("GET", `${prefix}/${id}`);
         assert.equal(loaded.status, 200);
